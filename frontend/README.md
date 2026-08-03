@@ -1,16 +1,119 @@
-# React + Vite
+# 📦 MyStock
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> **AI-Powered Business Management Platform**
 
-Currently, two official plugins are available:
+MyStock es una plataforma SaaS para la gestión de pequeños y medianos negocios.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Permite administrar productos, inventario, ventas, compras, clientes y proveedores desde una única aplicación moderna, con una arquitectura preparada para integrar Inteligencia Artificial.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+# 🚀 Estado del proyecto
 
-## Expanding the ESLint configuration
+🟢 En desarrollo activo
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Versión actual: **0.2 Alpha**
+
+---
+
+# ✨ Funcionalidades implementadas
+
+- ✅ Arquitectura inicial del proyecto
+- ✅ Dashboard profesional
+- ✅ Sidebar reutilizable
+- ✅ Navbar
+- ✅ Sistema de diseño (Design System)
+- ✅ Tarjetas KPI reutilizables
+- ✅ Gráfico de ventas con Recharts
+- ✅ Panel preparado para IA
+
+---
+
+# 🛣️ Roadmap
+
+## Sprint 1 ✅
+
+- Arquitectura
+- Layout
+- Navegación
+
+## Sprint 2 ✅
+
+- Dashboard
+- KPI Cards
+- Design System
+- Recharts
+- Arquitectura de datos
+
+## Próximos módulos
+
+- Empresa
+- Productos
+- Inventario
+- Ventas
+- Compras
+- Clientes
+- Proveedores
+- Caja diaria
+- Reportes
+- IA Assistant
+- API REST
+
+---
+
+# 🛠️ Tecnologías
+
+## Frontend
+
+- React
+- Vite
+- React Router
+- Bootstrap
+- Recharts
+- Lucide React
+
+## Backend (en desarrollo)
+
+- Python
+- Flask
+- SQLAlchemy
+- PostgreSQL
+
+## Inteligencia Artificial
+
+- OpenAI API (próximamente)
+
+---
+
+# 📂 Estructura del proyecto
+
+```text
+MyStock/
+│
+├── frontend/
+├── backend/
+├── assets/
+├── docs/
+├── scripts/
+├── tests/
+│
+├── README.md
+├── LICENSE
+└── CONTRIBUTING.md
+```
+
+---
+
+# 🎯 Objetivo
+
+Construir una plataforma moderna de gestión empresarial que permita a cualquier negocio controlar su operación diaria desde una interfaz intuitiva y preparada para asistentes de Inteligencia Artificial.
+
+---
+
+# 👨‍💻 Autor
+
+**Erwin Alexander González Bonilla**
+
+GitHub:
+
+https://github.com/ErwinGonzalezBonilla
