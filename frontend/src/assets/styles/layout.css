@@ -1,0 +1,26 @@
+.stat-card{
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
+    transition: .25s;
+}
+
+.stat-card:hover{
+    transform: translateY(-3px);
+}
+
+.stat-card-title{
+    color: var(--text-secondary);
+    margin-bottom:12px;
+}
+
+.stat-card-value{
+    font-size:32px;
+    font-weight:700;
+}
+
+.stat-card-subtitle{
+    color: var(--success-color);
+}
