@@ -1,0 +1,38 @@
+:root {
+
+  /* ========= BRAND ========= */
+
+  --primary-color: #0D6EFD;
+  --primary-hover: #0B5ED7;
+
+  /* ========= BACKGROUND ========= */
+
+  --background-color: #F6F6F7;
+  --surface-color: #FFFFFF;
+
+  /* ========= TEXT ========= */
+
+  --text-color: #303030;
+  --text-secondary: #6D7175;
+
+  /* ========= BORDER ========= */
+
+  --border-color: #E3E3E3;
+
+  /* ========= STATUS ========= */
+
+  --success-color: #008060;
+  --warning-color: #E2B203;
+  --danger-color: #D72C0D;
+
+  /* ========= BORDER RADIUS ========= */
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  /* ========= SHADOW ========= */
+
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.05);
+
+}
