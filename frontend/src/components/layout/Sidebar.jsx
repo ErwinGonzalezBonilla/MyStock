@@ -1,9 +1,14 @@
 import logo from "../../assets/images/mystock-logo.png";
+import { NavLink } from "react-router-dom";
 
 const menuItems = [
   {
     name: "Dashboard",
     path: "/",
+  },
+  {
+    name: "Empresa",
+    path: "/company",
   },
   {
     name: "Productos",
@@ -53,7 +58,6 @@ export default function Sidebar() {
       }}
     >
       <div className="p-4">
-
         {/* Logo */}
         <div className="d-flex justify-content-center mb-3">
           <img
@@ -72,13 +76,19 @@ export default function Sidebar() {
         <ul className="nav flex-column">
           {menuItems.map((item) => (
             <li key={item.path} className="nav-item mb-2">
-              <button className="btn btn-light w-100 text-start">
+              <NavLink
+                to={item.path}
+                className={({ isActive }) =>
+                  `btn w-100 text-start ${
+                    isActive ? "btn-primary" : "btn-light"
+                  }`
+                }
+              >
                 {item.name}
-              </button>
+              </NavLink>
             </li>
           ))}
         </ul>
-
       </div>
     </aside>
   );
