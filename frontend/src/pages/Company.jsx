@@ -1,18 +1,24 @@
-import { useState } from "react";
+import { useContext } from "react";
+import CompanyContext from "../context/CompanyContext";
 
 export default function Company() {
-  const [company, setCompany] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    country: "",
-    currency: "",
-  });
+  const { company, setCompany } = useContext(CompanyContext);
 
   const handleChange = (e) => {
     setCompany({
       ...company,
       [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleLogo = (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    setCompany({
+      ...company,
+      logo: URL.createObjectURL(file),
     });
   };
 
@@ -31,8 +37,35 @@ export default function Company() {
       </h2>
 
       <div className="stat-card">
-
         <form onSubmit={handleSubmit}>
+
+          <div className="mb-4">
+            <label className="form-label fw-bold">
+              Logo de la empresa
+            </label>
+
+            <input
+              type="file"
+              className="form-control"
+              accept="image/*"
+              onChange={handleLogo}
+            />
+          </div>
+
+          {company.logo && (
+            <div className="mb-4 text-center">
+              <img
+                src={company.logo}
+                alt="Logo empresa"
+                style={{
+                  width: "160px",
+                  maxHeight: "160px",
+                  objectFit: "contain",
+                  borderRadius: "10px",
+                }}
+              />
+            </div>
+          )}
 
           <div className="mb-3">
             <label className="form-label">
@@ -112,7 +145,6 @@ export default function Company() {
           </button>
 
         </form>
-
       </div>
     </div>
   );
