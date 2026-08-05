@@ -13,7 +13,15 @@ export default function Products() {
     stock: "",
   });
 
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState([
+  {
+    id: crypto.randomUUID(),
+    name: "",
+
+  }
+]);
+
+  const [editingIndex, setEditingIndex] = useState(null);
 
   const handleChange = (e) => {
     setProduct({
@@ -30,13 +38,28 @@ export default function Products() {
   setProducts(updatedProducts);
 };
 
+const handleEdit = (index) => {
+  setProduct(products[index]);
+  setEditingIndex(index);
+};
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    setProducts([
-      ...products,
-      product,
-    ]);
+    if (editingIndex !== null) {
+      const updatedProducts = [...products];
+
+      updatedProducts[editingIndex] = product;
+
+      setProducts(updatedProducts);
+
+      setEditingIndex(null);
+    } else {
+      setProducts([
+        ...products,
+        product,
+      ]);
+    }
 
     setProduct({
       name: "",
@@ -59,11 +82,13 @@ export default function Products() {
         product={product}
         handleChange={handleChange}
         handleSubmit={handleSubmit}
+        editingIndex={editingIndex}
       />
 
       <ProductTable
-    products={products}
-    handleDelete={handleDelete}
+  products={products}
+  handleDelete={handleDelete}
+  handleEdit={handleEdit}
 />
 
     </div>

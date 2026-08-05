@@ -1,6 +1,7 @@
 export default function ProductTable({
   products,
   handleDelete,
+  handleEdit,
 }) {
   return (
     <div className="stat-card">
@@ -47,7 +48,14 @@ export default function ProductTable({
                 <td>€ {item.buyPrice}</td>
                 <td>€ {item.sellPrice}</td>
 
-                <td>
+                <td className="d-flex gap-2">
+
+                  <button
+                    className="btn btn-warning btn-sm"
+                    onClick={() => handleEdit(index)}
+                  >
+                    ✏️
+                  </button>
 
                   <button
                     className="btn btn-danger btn-sm"

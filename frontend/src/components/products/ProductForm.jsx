@@ -2,6 +2,7 @@ export default function ProductForm({
   product,
   handleChange,
   handleSubmit,
+  editingIndex,
 }) {
   return (
     <div className="stat-card mb-4">
@@ -120,11 +121,13 @@ export default function ProductForm({
         </div>
 
         <button
-          className="btn btn-primary mt-4"
-          type="submit"
-        >
-          Guardar producto
-        </button>
+  className="btn btn-primary mt-4"
+  type="submit"
+>
+  {editingIndex !== null
+    ? "Actualizar producto"
+    : "Guardar producto"}
+</button>
 
       </form>
 
