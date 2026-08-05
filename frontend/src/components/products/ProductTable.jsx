@@ -1,4 +1,7 @@
-export default function ProductTable({ products }) {
+export default function ProductTable({
+  products,
+  handleDelete,
+}) {
   return (
     <div className="stat-card">
 
@@ -9,15 +12,14 @@ export default function ProductTable({ products }) {
       <table className="table table-striped table-hover">
 
         <thead className="table-light">
-
           <tr>
             <th>Producto</th>
             <th>Categoría</th>
             <th>Stock</th>
             <th>Compra</th>
             <th>Venta</th>
+            <th>Acciones</th>
           </tr>
-
         </thead>
 
         <tbody>
@@ -26,7 +28,7 @@ export default function ProductTable({ products }) {
 
             <tr>
               <td
-                colSpan="5"
+                colSpan="6"
                 className="text-center text-muted"
               >
                 No hay productos registrados.
@@ -40,14 +42,21 @@ export default function ProductTable({ products }) {
               <tr key={index}>
 
                 <td>{item.name}</td>
-
                 <td>{item.category}</td>
-
                 <td>{item.stock}</td>
-
                 <td>€ {item.buyPrice}</td>
-
                 <td>€ {item.sellPrice}</td>
+
+                <td>
+
+                  <button
+                    className="btn btn-danger btn-sm"
+                    onClick={() => handleDelete(index)}
+                  >
+                    🗑️
+                  </button>
+
+                </td>
 
               </tr>
 

@@ -22,6 +22,14 @@ export default function Products() {
     });
   };
 
+  const handleDelete = (index) => {
+  const updatedProducts = products.filter(
+    (_, i) => i !== index
+  );
+
+  setProducts(updatedProducts);
+};
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -54,8 +62,9 @@ export default function Products() {
       />
 
       <ProductTable
-        products={products}
-      />
+    products={products}
+    handleDelete={handleDelete}
+/>
 
     </div>
   );
