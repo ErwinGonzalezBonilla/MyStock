@@ -13,15 +13,8 @@ export default function Products() {
     stock: "",
   });
 
-  const [products, setProducts] = useState([
-  {
-    id: crypto.randomUUID(),
-    name: "",
-
-  }
-]);
-
-  const [editingIndex, setEditingIndex] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [search, setSearch] = useState("");
 
   const handleChange = (e) => {
     setProduct({
@@ -30,36 +23,14 @@ export default function Products() {
     });
   };
 
-  const handleDelete = (index) => {
-  const updatedProducts = products.filter(
-    (_, i) => i !== index
-  );
-
-  setProducts(updatedProducts);
-};
-
-const handleEdit = (index) => {
-  setProduct(products[index]);
-  setEditingIndex(index);
-};
-
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (editingIndex !== null) {
-      const updatedProducts = [...products];
+    const updatedProducts = [...products, product];
 
-      updatedProducts[editingIndex] = product;
+    console.log(updatedProducts);
 
-      setProducts(updatedProducts);
-
-      setEditingIndex(null);
-    } else {
-      setProducts([
-        ...products,
-        product,
-      ]);
-    }
+    setProducts(updatedProducts);
 
     setProduct({
       name: "",
@@ -70,6 +41,18 @@ const handleEdit = (index) => {
       stock: "",
     });
   };
+
+  const handleDelete = (index) => {
+    const updatedProducts = products.filter(
+      (_, i) => i !== index
+    );
+
+    setProducts(updatedProducts);
+  };
+
+  const filteredProducts = products.filter((item) =>
+    item.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="container-fluid p-4">
@@ -82,14 +65,24 @@ const handleEdit = (index) => {
         product={product}
         handleChange={handleChange}
         handleSubmit={handleSubmit}
-        editingIndex={editingIndex}
+        editingIndex={null}
       />
 
+      <div className="mb-4">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="🔍 Buscar producto..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
       <ProductTable
-  products={products}
-  handleDelete={handleDelete}
-  handleEdit={handleEdit}
-/>
+        products={filteredProducts}
+        handleDelete={handleDelete}
+        handleEdit={() => {}}
+      />
 
     </div>
   );
