@@ -10,10 +10,11 @@ export default function ProductTable({
         Lista de productos
       </h4>
 
-      <table className="table table-striped table-hover">
+      <table className="table table-striped table-hover align-middle">
 
         <thead className="table-light">
           <tr>
+            <th>Imagen</th>
             <th>Producto</th>
             <th>Categoría</th>
             <th>Stock</th>
@@ -29,7 +30,7 @@ export default function ProductTable({
 
             <tr>
               <td
-                colSpan="6"
+                colSpan="7"
                 className="text-center text-muted"
               >
                 No hay productos registrados.
@@ -42,11 +43,56 @@ export default function ProductTable({
 
               <tr key={index}>
 
-                <td>{item.name}</td>
-                <td>{item.category}</td>
-                <td>{item.stock}</td>
-                <td>€ {item.buyPrice}</td>
-                <td>€ {item.sellPrice}</td>
+                <td>
+
+                  {item.image ? (
+
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      style={{
+                        width: "60px",
+                        height: "60px",
+                        objectFit: "cover",
+                        borderRadius: "10px",
+                        border: "1px solid #ddd",
+                      }}
+                    />
+
+                  ) : (
+
+                    <div
+                      style={{
+                        width: "60px",
+                        height: "60px",
+                        background: "#f2f2f2",
+                        borderRadius: "10px",
+                      }}
+                    />
+
+                  )}
+
+                </td>
+
+                <td className="fw-semibold">
+                  {item.name}
+                </td>
+
+                <td>
+                  {item.category}
+                </td>
+
+                <td>
+                  {item.stock}
+                </td>
+
+                <td>
+                  € {item.buyPrice}
+                </td>
+
+                <td>
+                  € {item.sellPrice}
+                </td>
 
                 <td className="d-flex gap-2">
 

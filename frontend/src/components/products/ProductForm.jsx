@@ -2,16 +2,58 @@ export default function ProductForm({
   product,
   handleChange,
   handleSubmit,
+  handleImage,
   editingIndex,
 }) {
   return (
     <div className="stat-card mb-4">
 
       <h4 className="mb-4">
-        Nuevo Producto
+        {editingIndex !== null ? "Editar Producto" : "Nuevo Producto"}
       </h4>
 
       <form onSubmit={handleSubmit}>
+
+        {/* Imagen */}
+
+        <div className="mb-4">
+
+          <label className="form-label fw-bold">
+            Imagen del producto
+          </label>
+
+          <input
+            type="file"
+            className="form-control"
+            accept="image/*"
+            onChange={handleImage}
+          />
+
+        </div>
+
+        {/* Vista previa */}
+
+        {product.image && (
+
+          <div className="text-center mb-4">
+
+            <img
+              src={product.image}
+              alt="Producto"
+              style={{
+                width: "150px",
+                height: "150px",
+                objectFit: "cover",
+                borderRadius: "12px",
+                border: "1px solid #ddd",
+              }}
+            />
+
+          </div>
+
+        )}
+
+        {/* Nombre */}
 
         <div className="mb-3">
 
@@ -28,6 +70,8 @@ export default function ProductForm({
           />
 
         </div>
+
+        {/* Categoría */}
 
         <div className="mb-3">
 
@@ -51,6 +95,8 @@ export default function ProductForm({
           </select>
 
         </div>
+
+        {/* Descripción */}
 
         <div className="mb-3">
 
@@ -121,13 +167,13 @@ export default function ProductForm({
         </div>
 
         <button
-  className="btn btn-primary mt-4"
-  type="submit"
->
-  {editingIndex !== null
-    ? "Actualizar producto"
-    : "Guardar producto"}
-</button>
+          className="btn btn-primary mt-4"
+          type="submit"
+        >
+          {editingIndex !== null
+            ? "Actualizar producto"
+            : "Guardar producto"}
+        </button>
 
       </form>
 

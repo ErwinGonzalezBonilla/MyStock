@@ -11,6 +11,7 @@ export default function Products() {
     buyPrice: "",
     sellPrice: "",
     stock: "",
+    image: "",
   });
 
   const [products, setProducts] = useState([]);
@@ -20,6 +21,17 @@ export default function Products() {
     setProduct({
       ...product,
       [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleImage = (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    setProduct({
+      ...product,
+      image: URL.createObjectURL(file),
     });
   };
 
@@ -39,6 +51,7 @@ export default function Products() {
       buyPrice: "",
       sellPrice: "",
       stock: "",
+      image: "",
     });
   };
 
@@ -65,6 +78,7 @@ export default function Products() {
         product={product}
         handleChange={handleChange}
         handleSubmit={handleSubmit}
+        handleImage={handleImage}
         editingIndex={null}
       />
 
