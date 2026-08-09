@@ -18,8 +18,10 @@ export default function ProductTable({
             <th>Producto</th>
             <th>Categoría</th>
             <th>Stock</th>
+            <th>Estado</th>
             <th>Compra</th>
             <th>Venta</th>
+            <th>Margen</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -30,7 +32,7 @@ export default function ProductTable({
 
             <tr>
               <td
-                colSpan="7"
+                colSpan="8"
                 className="text-center text-muted"
               >
                 No hay productos registrados.
@@ -39,82 +41,102 @@ export default function ProductTable({
 
           ) : (
 
-            products.map((item, index) => (
+            products.map((item, index) => {
 
-              <tr key={index}>
+              const buy = Number(item.buyPrice);
+              const sell = Number(item.sellPrice);
 
-                <td>
+              const margin =
+                buy > 0
+                  ? (((sell - buy) / buy) * 100).toFixed(0)
+                  : 0;
 
-                  {item.image ? (
+              return (
 
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      style={{
-                        width: "60px",
-                        height: "60px",
-                        objectFit: "cover",
-                        borderRadius: "10px",
-                        border: "1px solid #ddd",
-                      }}
-                    />
+                <tr key={index}>
 
-                  ) : (
+                  <td>
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        style={{
+                          width: "60px",
+                          height: "60px",
+                          objectFit: "cover",
+                          borderRadius: "10px",
+                          border: "1px solid #ddd",
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: "60px",
+                          height: "60px",
+                          background: "#f2f2f2",
+                          borderRadius: "10px",
+                        }}
+                      />
+                    )}
+                  </td>
 
-                    <div
-                      style={{
-                        width: "60px",
-                        height: "60px",
-                        background: "#f2f2f2",
-                        borderRadius: "10px",
-                      }}
-                    />
+                  <td className="fw-semibold">
+                    {item.name}
+                  </td>
 
-                  )}
+                  <td>
+                    {item.category}
+                  </td>
 
-                </td>
+                  <td>
+                    {item.stock}
+                  </td>
 
-                <td className="fw-semibold">
-                  {item.name}
-                </td>
+                  <td>
+                    € {item.buyPrice}
+                  </td>
 
-                <td>
-                  {item.category}
-                </td>
+                  <td>
+                    € {item.sellPrice}
+                  </td>
 
-                <td>
-                  {item.stock}
-                </td>
+                  <td>
+                    <span
+                      className={
+                        margin >= 50
+                          ? "badge bg-success"
+                          : margin >= 20
+                          ? "badge bg-warning text-dark"
+                          : "badge bg-danger"
+                      }
+                    >
+                      {margin}%
+                    </span>
+                  </td>
 
-                <td>
-                  € {item.buyPrice}
-                </td>
+                  <td className="d-flex gap-2">
 
-                <td>
-                  € {item.sellPrice}
-                </td>
+                    <button
+                      className="btn btn-warning btn-sm"
+                      onClick={() => handleEdit(index)}
+                    >
+                      ✏️
+                    </button>
 
-                <td className="d-flex gap-2">
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleDelete(index)}
+                    >
+                      🗑️
+                    </button>
 
-                  <button
-                    className="btn btn-warning btn-sm"
-                    onClick={() => handleEdit(index)}
-                  >
-                    ✏️
-                  </button>
+                  </td>
 
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() => handleDelete(index)}
-                  >
-                    🗑️
-                  </button>
+                </tr>
 
-                </td>
+              );
 
-              </tr>
-
-            ))
+            })
 
           )}
 
