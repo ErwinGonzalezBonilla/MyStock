@@ -16,6 +16,7 @@ export default function Products() {
 
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
+  const [editingIndex, setEditingIndex] = useState(null);
 
   const handleChange = (e) => {
     setProduct({
@@ -36,24 +37,37 @@ export default function Products() {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const updatedProducts = [...products, product];
+  if (editingIndex !== null) {
 
-    console.log(updatedProducts);
+    const updatedProducts = [...products];
+
+    updatedProducts[editingIndex] = product;
 
     setProducts(updatedProducts);
 
-    setProduct({
-      name: "",
-      category: "",
-      description: "",
-      buyPrice: "",
-      sellPrice: "",
-      stock: "",
-      image: "",
-    });
-  };
+    setEditingIndex(null);
+
+  } else {
+
+    setProducts([
+      ...products,
+      product,
+    ]);
+
+  }
+
+  setProduct({
+    name: "",
+    category: "",
+    description: "",
+    buyPrice: "",
+    sellPrice: "",
+    stock: "",
+    image: "",
+  });
+};
 
   const handleDelete = (index) => {
     const updatedProducts = products.filter(
@@ -62,6 +76,11 @@ export default function Products() {
 
     setProducts(updatedProducts);
   };
+  
+  const handleEdit = (index) => {
+  setProduct(products[index]);
+  setEditingIndex(index);
+};
 
   const filteredProducts = products.filter((item) =>
     item.name.toLowerCase().includes(search.toLowerCase())
@@ -79,7 +98,7 @@ export default function Products() {
         handleChange={handleChange}
         handleSubmit={handleSubmit}
         handleImage={handleImage}
-        editingIndex={null}
+        editingIndex={editingIndex}
       />
 
       <div className="mb-4">
@@ -95,7 +114,7 @@ export default function Products() {
       <ProductTable
         products={filteredProducts}
         handleDelete={handleDelete}
-        handleEdit={() => {}}
+        handleEdit={handleEdit}
       />
 
     </div>
