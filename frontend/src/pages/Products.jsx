@@ -3,26 +3,29 @@ import { useState } from "react";
 import ProductForm from "../components/products/ProductForm";
 import ProductTable from "../components/products/ProductTable";
 
+const EMPTY_PRODUCT = {
+  id: "",
+  name: "",
+  category: "",
+  description: "",
+  buyPrice: "",
+  sellPrice: "",
+  stock: "",
+  image: "",
+};
+
 export default function Products() {
-  const [product, setProduct] = useState({
-    name: "",
-    category: "",
-    description: "",
-    buyPrice: "",
-    sellPrice: "",
-    stock: "",
-    image: "",
-  });
+  const [product, setProduct] = useState(EMPTY_PRODUCT);
 
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
-  const [editingIndex, setEditingIndex] = useState(null);
+  const [editingId, setEditingId] = useState(null);
 
   const handleChange = (e) => {
-    setProduct({
-      ...product,
+    setProduct((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handleImage = (e) => {
@@ -30,57 +33,52 @@ export default function Products() {
 
     if (!file) return;
 
-    setProduct({
-      ...product,
+    setProduct((prev) => ({
+      ...prev,
       image: URL.createObjectURL(file),
-    });
+    }));
   };
 
   const handleSubmit = (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (editingIndex !== null) {
+    if (editingId) {
+      setProducts((prev) =>
+        prev.map((item) =>
+          item.id === editingId ? { ...product, id: editingId } : item
+        )
+      );
 
-    const updatedProducts = [...products];
+      setEditingId(null);
+    } else {
+      const newProduct = {
+        ...product,
+        id: crypto.randomUUID(),
+      };
 
-    updatedProducts[editingIndex] = product;
+      setProducts((prev) => [...prev, newProduct]);
+    }
 
-    setProducts(updatedProducts);
-
-    setEditingIndex(null);
-
-  } else {
-
-    setProducts([
-      ...products,
-      product,
-    ]);
-
-  }
-
-  setProduct({
-    name: "",
-    category: "",
-    description: "",
-    buyPrice: "",
-    sellPrice: "",
-    stock: "",
-    image: "",
-  });
-};
-
-  const handleDelete = (index) => {
-    const updatedProducts = products.filter(
-      (_, i) => i !== index
-    );
-
-    setProducts(updatedProducts);
+    setProduct(EMPTY_PRODUCT);
   };
-  
-  const handleEdit = (index) => {
-  setProduct(products[index]);
-  setEditingIndex(index);
-};
+
+  const handleDelete = (id) => {
+    setProducts((prev) => prev.filter((item) => item.id !== id));
+
+    if (editingId === id) {
+      setEditingId(null);
+      setProduct(EMPTY_PRODUCT);
+    }
+  };
+
+  const handleEdit = (id) => {
+    const selected = products.find((item) => item.id === id);
+
+    if (!selected) return;
+
+    setProduct({ ...selected });
+    setEditingId(id);
+  };
 
   const filteredProducts = products.filter((item) =>
     item.name.toLowerCase().includes(search.toLowerCase())
@@ -88,7 +86,6 @@ export default function Products() {
 
   return (
     <div className="container-fluid p-4">
-
       <h2 className="fw-bold mb-4">
         Productos
       </h2>
@@ -98,7 +95,7 @@ export default function Products() {
         handleChange={handleChange}
         handleSubmit={handleSubmit}
         handleImage={handleImage}
-        editingIndex={editingIndex}
+        editingIndex={editingId}
       />
 
       <div className="mb-4">
@@ -116,7 +113,6 @@ export default function Products() {
         handleDelete={handleDelete}
         handleEdit={handleEdit}
       />
-
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { PRODUCT_CATEGORIES } from "../../constants/productCategories";
+
 export default function ProductForm({
   product,
   handleChange,
@@ -10,12 +11,10 @@ export default function ProductForm({
     <div className="stat-card mb-4">
 
       <h4 className="mb-4">
-        {editingIndex !== null ? "Editar Producto" : "Nuevo Producto"}
+        {editingIndex ? "Editar Producto" : "Nuevo Producto"}
       </h4>
 
       <form onSubmit={handleSubmit}>
-
-        {/* Imagen */}
 
         <div className="mb-4">
 
@@ -31,8 +30,6 @@ export default function ProductForm({
           />
 
         </div>
-
-        {/* Vista previa */}
 
         {product.image && (
 
@@ -54,8 +51,6 @@ export default function ProductForm({
 
         )}
 
-        {/* Nombre */}
-
         <div className="mb-3">
 
           <label className="form-label">
@@ -68,11 +63,10 @@ export default function ProductForm({
             name="name"
             value={product.name}
             onChange={handleChange}
+            required
           />
 
         </div>
-
-        {/* Categoría */}
 
         <div className="mb-3">
 
@@ -85,19 +79,22 @@ export default function ProductForm({
             name="category"
             value={product.category}
             onChange={handleChange}
+            required
           >
             <option value="">Seleccione...</option>
 
-{PRODUCT_CATEGORIES.map((category) => (
-  <option key={category} value={category}>
-    {category}
-  </option>
-))}
+            {PRODUCT_CATEGORIES.map((category) => (
+              <option
+                key={category}
+                value={category}
+              >
+                {category}
+              </option>
+            ))}
+
           </select>
 
         </div>
-
-        {/* Descripción */}
 
         <div className="mb-3">
 
@@ -129,6 +126,8 @@ export default function ProductForm({
               name="buyPrice"
               value={product.buyPrice}
               onChange={handleChange}
+              min="0"
+              required
             />
 
           </div>
@@ -145,6 +144,8 @@ export default function ProductForm({
               name="sellPrice"
               value={product.sellPrice}
               onChange={handleChange}
+              min="0"
+              required
             />
 
           </div>
@@ -161,6 +162,8 @@ export default function ProductForm({
               name="stock"
               value={product.stock}
               onChange={handleChange}
+              min="0"
+              required
             />
 
           </div>
@@ -168,10 +171,14 @@ export default function ProductForm({
         </div>
 
         <button
-          className="btn btn-primary mt-4"
+          className={`btn mt-4 ${
+            editingIndex
+              ? "btn-warning"
+              : "btn-primary"
+          }`}
           type="submit"
         >
-          {editingIndex !== null
+          {editingIndex
             ? "Actualizar producto"
             : "Guardar producto"}
         </button>

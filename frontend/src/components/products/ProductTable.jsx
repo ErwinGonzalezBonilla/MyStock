@@ -41,7 +41,7 @@ export default function ProductTable({
 
           ) : (
 
-            products.map((item, index) => {
+            products.map((item) => {
 
               const buy = Number(item.buyPrice);
               const sell = Number(item.sellPrice);
@@ -69,7 +69,7 @@ export default function ProductTable({
 
               return (
 
-                <tr key={index}>
+                <tr key={item.id}>
 
                   <td>
                     {item.image ? (
@@ -140,14 +140,14 @@ export default function ProductTable({
 
                     <button
                       className="btn btn-warning btn-sm"
-                      onClick={() => handleEdit(index)}
+                      onClick={() => handleEdit(item.id)}
                     >
                       ✏️
                     </button>
 
                     <button
                       className="btn btn-danger btn-sm"
-                      onClick={() => handleDelete(index)}
+                      onClick={() => handleDelete(item.id)}
                     >
                       🗑️
                     </button>
