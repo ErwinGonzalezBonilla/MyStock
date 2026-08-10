@@ -1,3 +1,4 @@
+import { PRODUCT_CATEGORIES } from "../../constants/productCategories";
 export default function ProductForm({
   product,
   handleChange,
@@ -86,12 +87,12 @@ export default function ProductForm({
             onChange={handleChange}
           >
             <option value="">Seleccione...</option>
-            <option>Alimentos</option>
-            <option>Higiene</option>
-            <option>Accesorios</option>
-            <option>Juguetes</option>
-            <option>Medicamentos</option>
-            <option>Otros</option>
+
+{PRODUCT_CATEGORIES.map((category) => (
+  <option key={category} value={category}>
+    {category}
+  </option>
+))}
           </select>
 
         </div>

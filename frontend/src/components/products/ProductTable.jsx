@@ -32,7 +32,7 @@ export default function ProductTable({
 
             <tr>
               <td
-                colSpan="8"
+                colSpan="9"
                 className="text-center text-muted"
               >
                 No hay productos registrados.
@@ -50,6 +50,22 @@ export default function ProductTable({
                 buy > 0
                   ? (((sell - buy) / buy) * 100).toFixed(0)
                   : 0;
+
+              const stockInfo =
+                Number(item.stock) === 0
+                  ? {
+                      text: "Sin stock",
+                      className: "bg-danger",
+                    }
+                  : Number(item.stock) <= 10
+                  ? {
+                      text: "Stock bajo",
+                      className: "bg-warning text-dark",
+                    }
+                  : {
+                      text: "Disponible",
+                      className: "bg-success",
+                    };
 
               return (
 
@@ -90,6 +106,12 @@ export default function ProductTable({
 
                   <td>
                     {item.stock}
+                  </td>
+
+                  <td>
+                    <span className={`badge ${stockInfo.className}`}>
+                      {stockInfo.text}
+                    </span>
                   </td>
 
                   <td>
