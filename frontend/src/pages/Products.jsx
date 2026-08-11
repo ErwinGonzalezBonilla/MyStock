@@ -1,5 +1,4 @@
-import { useState } from "react";
-
+import { useState, useEffect } from "react";
 import ProductForm from "../components/products/ProductForm";
 import ProductTable from "../components/products/ProductTable";
 
@@ -17,9 +16,22 @@ const EMPTY_PRODUCT = {
 export default function Products() {
   const [product, setProduct] = useState(EMPTY_PRODUCT);
 
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(() => {
+  const savedProducts = localStorage.getItem("products");
+
+  return savedProducts
+    ? JSON.parse(savedProducts)
+    : [];
+});
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
+  
+  useEffect(() => {
+  localStorage.setItem(
+    "products",
+    JSON.stringify(products)
+  );
+}, [products]);
 
   const handleChange = (e) => {
     setProduct((prev) => ({
