@@ -146,12 +146,106 @@ export default function Products() {
       .includes(search.toLowerCase())
   );
 
+  // =========================
+  // INVENTORY SUMMARY
+  // =========================
+
+  const totalProducts = products.length;
+
+  const inventoryValue = products.reduce(
+    (total, item) => {
+      const buyPrice = Number(item.buyPrice) || 0;
+      const stock = Number(item.stock) || 0;
+
+      return total + buyPrice * stock;
+    },
+    0
+  );
+
+  const lowStockProducts = products.filter(
+    (item) =>
+      Number(item.stock) > 0 &&
+      Number(item.stock) <= 10
+  ).length;
+
+  const outOfStockProducts = products.filter(
+    (item) => Number(item.stock) === 0
+  ).length;
+
   return (
     <div className="container-fluid p-4">
 
       <h2 className="fw-bold mb-4">
         Productos
       </h2>
+
+      {/* =========================
+          INVENTORY SUMMARY
+      ========================= */}
+
+      <div className="row g-3 mb-4">
+
+        <div className="col-md-3">
+          <div className="stat-card h-100">
+
+            <div className="text-muted">
+              📦 Productos
+            </div>
+
+            <h3 className="fw-bold mt-2 mb-0">
+              {totalProducts}
+            </h3>
+
+          </div>
+        </div>
+
+        <div className="col-md-3">
+          <div className="stat-card h-100">
+
+            <div className="text-muted">
+              💰 Valor del inventario
+            </div>
+
+            <h3 className="fw-bold mt-2 mb-0">
+              € {inventoryValue.toFixed(2)}
+            </h3>
+
+          </div>
+        </div>
+
+        <div className="col-md-3">
+          <div className="stat-card h-100">
+
+            <div className="text-muted">
+              ⚠️ Stock bajo
+            </div>
+
+            <h3 className="fw-bold mt-2 mb-0">
+              {lowStockProducts}
+            </h3>
+
+          </div>
+        </div>
+
+        <div className="col-md-3">
+          <div className="stat-card h-100">
+
+            <div className="text-muted">
+              ❌ Sin stock
+            </div>
+
+            <h3 className="fw-bold mt-2 mb-0">
+              {outOfStockProducts}
+            </h3>
+
+          </div>
+        </div>
+
+      </div>
+
+      {/* =========================
+          PRODUCT FORM
+      ========================= */}
 
       <ProductForm
         product={product}
@@ -160,6 +254,10 @@ export default function Products() {
         handleImage={handleImage}
         editingIndex={editingId}
       />
+
+      {/* =========================
+          SEARCH
+      ========================= */}
 
       <div className="mb-4">
 
@@ -172,6 +270,10 @@ export default function Products() {
         />
 
       </div>
+
+      {/* =========================
+          PRODUCT TABLE
+      ========================= */}
 
       <ProductTable
         products={filteredProducts}
