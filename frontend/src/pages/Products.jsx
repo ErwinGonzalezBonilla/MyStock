@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+
 import ProductForm from "../components/products/ProductForm";
 import ProductTable from "../components/products/ProductTable";
 
 const EMPTY_PRODUCT = {
   id: "",
+  sku: "",
   name: "",
   category: "",
   description: "",
@@ -13,25 +15,55 @@ const EMPTY_PRODUCT = {
   image: "",
 };
 
+const generateSku = (products) => {
+  let highestNumber = 0;
+
+  products.forEach((item) => {
+    if (!item.sku) return;
+
+    const match = item.sku.match(/^PET-(\d+)$/);
+
+    if (match) {
+      const number = Number(match[1]);
+
+      if (number > highestNumber) {
+        highestNumber = number;
+      }
+    }
+  });
+
+  const nextNumber = highestNumber + 1;
+
+  return `PET-${String(nextNumber).padStart(6, "0")}`;
+};
+
 export default function Products() {
   const [product, setProduct] = useState(EMPTY_PRODUCT);
 
   const [products, setProducts] = useState(() => {
-  const savedProducts = localStorage.getItem("products");
+    const savedProducts = localStorage.getItem("products");
 
-  return savedProducts
-    ? JSON.parse(savedProducts)
-    : [];
-});
+    if (!savedProducts) {
+      return [];
+    }
+
+    try {
+      return JSON.parse(savedProducts);
+    } catch (error) {
+      console.error("Error al cargar productos:", error);
+      return [];
+    }
+  });
+
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState(null);
-  
+
   useEffect(() => {
-  localStorage.setItem(
-    "products",
-    JSON.stringify(products)
-  );
-}, [products]);
+    localStorage.setItem(
+      "products",
+      JSON.stringify(products)
+    );
+  }, [products]);
 
   const handleChange = (e) => {
     setProduct((prev) => ({
@@ -57,7 +89,12 @@ export default function Products() {
     if (editingId) {
       setProducts((prev) =>
         prev.map((item) =>
-          item.id === editingId ? { ...product, id: editingId } : item
+          item.id === editingId
+            ? {
+                ...product,
+                id: editingId,
+              }
+            : item
         )
       );
 
@@ -66,16 +103,22 @@ export default function Products() {
       const newProduct = {
         ...product,
         id: crypto.randomUUID(),
+        sku: generateSku(products),
       };
 
-      setProducts((prev) => [...prev, newProduct]);
+      setProducts((prev) => [
+        ...prev,
+        newProduct,
+      ]);
     }
 
     setProduct(EMPTY_PRODUCT);
   };
 
   const handleDelete = (id) => {
-    setProducts((prev) => prev.filter((item) => item.id !== id));
+    setProducts((prev) =>
+      prev.filter((item) => item.id !== id)
+    );
 
     if (editingId === id) {
       setEditingId(null);
@@ -84,20 +127,28 @@ export default function Products() {
   };
 
   const handleEdit = (id) => {
-    const selected = products.find((item) => item.id === id);
+    const selected = products.find(
+      (item) => item.id === id
+    );
 
     if (!selected) return;
 
-    setProduct({ ...selected });
+    setProduct({
+      ...selected,
+    });
+
     setEditingId(id);
   };
 
   const filteredProducts = products.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase())
+    item.name
+      .toLowerCase()
+      .includes(search.toLowerCase())
   );
 
   return (
     <div className="container-fluid p-4">
+
       <h2 className="fw-bold mb-4">
         Productos
       </h2>
@@ -111,6 +162,7 @@ export default function Products() {
       />
 
       <div className="mb-4">
+
         <input
           type="text"
           className="form-control"
@@ -118,6 +170,7 @@ export default function Products() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+
       </div>
 
       <ProductTable
@@ -125,6 +178,7 @@ export default function Products() {
         handleDelete={handleDelete}
         handleEdit={handleEdit}
       />
+
     </div>
   );
 }
