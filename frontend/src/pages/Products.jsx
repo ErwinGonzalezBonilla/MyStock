@@ -32,9 +32,7 @@ const generateSku = (products) => {
     }
   });
 
-  const nextNumber = highestNumber + 1;
-
-  return `PET-${String(nextNumber).padStart(6, "0")}`;
+  return `PET-${String(highestNumber + 1).padStart(6, "0")}`;
 };
 
 export default function Products() {
@@ -140,15 +138,37 @@ export default function Products() {
     setEditingId(id);
   };
 
+  const handleIncreaseStock = (id) => {
+    setProducts((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              stock: Number(item.stock) + 1,
+            }
+          : item
+      )
+    );
+  };
+
+  const handleDecreaseStock = (id) => {
+    setProducts((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              stock: Math.max(0, Number(item.stock) - 1),
+            }
+          : item
+      )
+    );
+  };
+
   const filteredProducts = products.filter((item) =>
     item.name
       .toLowerCase()
       .includes(search.toLowerCase())
   );
-
-  // =========================
-  // INVENTORY SUMMARY
-  // =========================
 
   const totalProducts = products.length;
 
@@ -179,15 +199,10 @@ export default function Products() {
         Productos
       </h2>
 
-      {/* =========================
-          INVENTORY SUMMARY
-      ========================= */}
-
       <div className="row g-3 mb-4">
 
         <div className="col-md-3">
           <div className="stat-card h-100">
-
             <div className="text-muted">
               📦 Productos
             </div>
@@ -195,13 +210,11 @@ export default function Products() {
             <h3 className="fw-bold mt-2 mb-0">
               {totalProducts}
             </h3>
-
           </div>
         </div>
 
         <div className="col-md-3">
           <div className="stat-card h-100">
-
             <div className="text-muted">
               💰 Valor del inventario
             </div>
@@ -209,13 +222,11 @@ export default function Products() {
             <h3 className="fw-bold mt-2 mb-0">
               € {inventoryValue.toFixed(2)}
             </h3>
-
           </div>
         </div>
 
         <div className="col-md-3">
           <div className="stat-card h-100">
-
             <div className="text-muted">
               ⚠️ Stock bajo
             </div>
@@ -223,13 +234,11 @@ export default function Products() {
             <h3 className="fw-bold mt-2 mb-0">
               {lowStockProducts}
             </h3>
-
           </div>
         </div>
 
         <div className="col-md-3">
           <div className="stat-card h-100">
-
             <div className="text-muted">
               ❌ Sin stock
             </div>
@@ -237,15 +246,10 @@ export default function Products() {
             <h3 className="fw-bold mt-2 mb-0">
               {outOfStockProducts}
             </h3>
-
           </div>
         </div>
 
       </div>
-
-      {/* =========================
-          PRODUCT FORM
-      ========================= */}
 
       <ProductForm
         product={product}
@@ -254,10 +258,6 @@ export default function Products() {
         handleImage={handleImage}
         editingIndex={editingId}
       />
-
-      {/* =========================
-          SEARCH
-      ========================= */}
 
       <div className="mb-4">
 
@@ -271,14 +271,12 @@ export default function Products() {
 
       </div>
 
-      {/* =========================
-          PRODUCT TABLE
-      ========================= */}
-
       <ProductTable
         products={filteredProducts}
         handleDelete={handleDelete}
         handleEdit={handleEdit}
+        handleIncreaseStock={handleIncreaseStock}
+        handleDecreaseStock={handleDecreaseStock}
       />
 
     </div>

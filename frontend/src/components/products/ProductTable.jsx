@@ -2,6 +2,8 @@ export default function ProductTable({
   products,
   handleDelete,
   handleEdit,
+  handleIncreaseStock,
+  handleDecreaseStock,
 }) {
   return (
     <div className="stat-card">
@@ -11,6 +13,7 @@ export default function ProductTable({
       </h4>
 
       <div className="table-responsive">
+
         <table className="table table-striped table-hover align-middle">
 
           <thead className="table-light">
@@ -47,6 +50,7 @@ export default function ProductTable({
 
                 const buy = Number(item.buyPrice);
                 const sell = Number(item.sellPrice);
+                const stock = Number(item.stock) || 0;
 
                 const margin =
                   buy > 0
@@ -54,12 +58,12 @@ export default function ProductTable({
                     : 0;
 
                 const stockInfo =
-                  Number(item.stock) === 0
+                  stock === 0
                     ? {
                         text: "Sin stock",
                         className: "bg-danger",
                       }
-                    : Number(item.stock) <= 10
+                    : stock <= 10
                     ? {
                         text: "Stock bajo",
                         className: "bg-warning text-dark",
@@ -73,7 +77,7 @@ export default function ProductTable({
 
                   <tr key={item.id}>
 
-                    {/* Imagen */}
+                    {/* IMAGEN */}
 
                     <td>
                       {item.image ? (
@@ -112,25 +116,56 @@ export default function ProductTable({
                       </span>
                     </td>
 
-                    {/* Producto */}
+                    {/* PRODUCTO */}
 
                     <td className="fw-semibold">
                       {item.name}
                     </td>
 
-                    {/* Categoría */}
+                    {/* CATEGORÍA */}
 
                     <td>
                       {item.category}
                     </td>
 
-                    {/* Stock */}
+                    {/* STOCK */}
 
                     <td>
-                      {item.stock}
+
+                      <div className="d-flex align-items-center gap-2">
+
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary btn-sm"
+                          onClick={() =>
+                            handleDecreaseStock(item.id)
+                          }
+                          disabled={stock === 0}
+                          title="Disminuir stock"
+                        >
+                          −
+                        </button>
+
+                        <strong>
+                          {stock}
+                        </strong>
+
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary btn-sm"
+                          onClick={() =>
+                            handleIncreaseStock(item.id)
+                          }
+                          title="Aumentar stock"
+                        >
+                          +
+                        </button>
+
+                      </div>
+
                     </td>
 
-                    {/* Estado */}
+                    {/* ESTADO */}
 
                     <td>
                       <span
@@ -140,21 +175,22 @@ export default function ProductTable({
                       </span>
                     </td>
 
-                    {/* Precio compra */}
+                    {/* PRECIO COMPRA */}
 
                     <td>
                       € {item.buyPrice}
                     </td>
 
-                    {/* Precio venta */}
+                    {/* PRECIO VENTA */}
 
                     <td>
                       € {item.sellPrice}
                     </td>
 
-                    {/* Margen */}
+                    {/* MARGEN */}
 
                     <td>
+
                       <span
                         className={
                           margin >= 50
@@ -166,17 +202,21 @@ export default function ProductTable({
                       >
                         {margin}%
                       </span>
+
                     </td>
 
-                    {/* Acciones */}
+                    {/* ACCIONES */}
 
                     <td>
+
                       <div className="d-flex gap-2">
 
                         <button
                           type="button"
                           className="btn btn-warning btn-sm"
-                          onClick={() => handleEdit(item.id)}
+                          onClick={() =>
+                            handleEdit(item.id)
+                          }
                           title="Editar producto"
                         >
                           ✏️
@@ -185,13 +225,16 @@ export default function ProductTable({
                         <button
                           type="button"
                           className="btn btn-danger btn-sm"
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() =>
+                            handleDelete(item.id)
+                          }
                           title="Eliminar producto"
                         >
                           🗑️
                         </button>
 
                       </div>
+
                     </td>
 
                   </tr>
@@ -204,6 +247,7 @@ export default function ProductTable({
           </tbody>
 
         </table>
+
       </div>
 
     </div>
