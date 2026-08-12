@@ -5,6 +5,20 @@ export default function ProductTable({
   handleIncreaseStock,
   handleDecreaseStock,
 }) {
+  const formatLastUpdate = (date) => {
+    if (!date) {
+      return "Sin movimientos";
+    }
+
+    return new Date(date).toLocaleString("es-ES", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   return (
     <div className="stat-card">
 
@@ -27,6 +41,7 @@ export default function ProductTable({
               <th>Compra</th>
               <th>Venta</th>
               <th>Margen</th>
+              <th>Último movimiento</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -37,7 +52,7 @@ export default function ProductTable({
 
               <tr>
                 <td
-                  colSpan="10"
+                  colSpan="11"
                   className="text-center text-muted"
                 >
                   No hay productos registrados.
@@ -77,8 +92,6 @@ export default function ProductTable({
 
                   <tr key={item.id}>
 
-                    {/* IMAGEN */}
-
                     <td>
                       {item.image ? (
 
@@ -108,27 +121,19 @@ export default function ProductTable({
                       )}
                     </td>
 
-                    {/* SKU */}
-
                     <td>
                       <span className="badge bg-dark">
                         {item.sku || "Sin SKU"}
                       </span>
                     </td>
 
-                    {/* PRODUCTO */}
-
                     <td className="fw-semibold">
                       {item.name}
                     </td>
 
-                    {/* CATEGORÍA */}
-
                     <td>
                       {item.category}
                     </td>
-
-                    {/* STOCK */}
 
                     <td>
 
@@ -165,8 +170,6 @@ export default function ProductTable({
 
                     </td>
 
-                    {/* ESTADO */}
-
                     <td>
                       <span
                         className={`badge ${stockInfo.className}`}
@@ -175,19 +178,13 @@ export default function ProductTable({
                       </span>
                     </td>
 
-                    {/* PRECIO COMPRA */}
-
                     <td>
                       € {item.buyPrice}
                     </td>
 
-                    {/* PRECIO VENTA */}
-
                     <td>
                       € {item.sellPrice}
                     </td>
-
-                    {/* MARGEN */}
 
                     <td>
 
@@ -205,7 +202,13 @@ export default function ProductTable({
 
                     </td>
 
-                    {/* ACCIONES */}
+                    <td>
+                      <small className="text-muted">
+                        {formatLastUpdate(
+                          item.lastStockUpdate
+                        )}
+                      </small>
+                    </td>
 
                     <td>
 

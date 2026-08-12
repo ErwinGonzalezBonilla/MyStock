@@ -102,6 +102,7 @@ export default function Products() {
         ...product,
         id: crypto.randomUUID(),
         sku: generateSku(products),
+        lastStockUpdate: new Date().toISOString(),
       };
 
       setProducts((prev) => [
@@ -145,6 +146,7 @@ export default function Products() {
           ? {
               ...item,
               stock: Number(item.stock) + 1,
+              lastStockUpdate: new Date().toISOString(),
             }
           : item
       )
@@ -157,7 +159,11 @@ export default function Products() {
         item.id === id
           ? {
               ...item,
-              stock: Math.max(0, Number(item.stock) - 1),
+              stock: Math.max(
+                0,
+                Number(item.stock) - 1
+              ),
+              lastStockUpdate: new Date().toISOString(),
             }
           : item
       )
