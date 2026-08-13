@@ -170,11 +170,19 @@ export default function Products() {
     );
   };
 
-  const filteredProducts = products.filter((item) =>
-    item.name
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  const filteredProducts = products.filter((item) => {
+    const searchTerm = search.toLowerCase().trim();
+
+    if (!searchTerm) {
+      return true;
+    }
+
+    return (
+      item.name?.toLowerCase().includes(searchTerm) ||
+      item.sku?.toLowerCase().includes(searchTerm) ||
+      item.category?.toLowerCase().includes(searchTerm)
+    );
+  });
 
   const totalProducts = products.length;
 
@@ -270,7 +278,7 @@ export default function Products() {
         <input
           type="text"
           className="form-control"
-          placeholder="🔍 Buscar producto..."
+          placeholder="🔍 Buscar por nombre, SKU o categoría..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
