@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 import ProductForm from "../components/products/ProductForm";
 import ProductTable from "../components/products/ProductTable";
+import StockHistory from "../components/products/StockHistory";
 
 const EMPTY_PRODUCT = {
   id: "",
@@ -39,7 +40,8 @@ export default function Products() {
   const [product, setProduct] = useState(EMPTY_PRODUCT);
 
   const [products, setProducts] = useState(() => {
-    const savedProducts = localStorage.getItem("products");
+    const savedProducts =
+      localStorage.getItem("products");
 
     if (!savedProducts) {
       return [];
@@ -48,7 +50,31 @@ export default function Products() {
     try {
       return JSON.parse(savedProducts);
     } catch (error) {
-      console.error("Error al cargar productos:", error);
+      console.error(
+        "Error al cargar productos:",
+        error
+      );
+
+      return [];
+    }
+  });
+
+  const [movements, setMovements] = useState(() => {
+    const savedMovements =
+      localStorage.getItem("stockMovements");
+
+    if (!savedMovements) {
+      return [];
+    }
+
+    try {
+      return JSON.parse(savedMovements);
+    } catch (error) {
+      console.error(
+        "Error al cargar movimientos:",
+        error
+      );
+
       return [];
     }
   });
@@ -62,6 +88,13 @@ export default function Products() {
       JSON.stringify(products)
     );
   }, [products]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "stockMovements",
+      JSON.stringify(movements)
+    );
+  }, [movements]);
 
   const handleChange = (e) => {
     setProduct((prev) => ({
@@ -98,17 +131,42 @@ export default function Products() {
 
       setEditingId(null);
     } else {
+      const initialStock =
+        Number(product.stock) || 0;
+
       const newProduct = {
         ...product,
         id: crypto.randomUUID(),
         sku: generateSku(products),
-        lastStockUpdate: new Date().toISOString(),
+        stock: initialStock,
+        lastStockUpdate:
+          initialStock > 0
+            ? new Date().toISOString()
+            : "",
       };
 
       setProducts((prev) => [
         ...prev,
         newProduct,
       ]);
+
+      if (initialStock > 0) {
+        const initialMovement = {
+          id: crypto.randomUUID(),
+          productId: newProduct.id,
+          productName: newProduct.name,
+          sku: newProduct.sku,
+          type: "entrada",
+          quantity: initialStock,
+          resultingStock: initialStock,
+          date: new Date().toISOString(),
+        };
+
+        setMovements((prev) => [
+          initialMovement,
+          ...prev,
+        ]);
+      }
     }
 
     setProduct(EMPTY_PRODUCT);
@@ -117,6 +175,13 @@ export default function Products() {
   const handleDelete = (id) => {
     setProducts((prev) =>
       prev.filter((item) => item.id !== id)
+    );
+
+    setMovements((prev) =>
+      prev.filter(
+        (movement) =>
+          movement.productId !== id
+      )
     );
 
     if (editingId === id) {
@@ -140,71 +205,154 @@ export default function Products() {
   };
 
   const handleIncreaseStock = (id) => {
+    const selectedProduct = products.find(
+      (item) => item.id === id
+    );
+
+    if (!selectedProduct) return;
+
+    const currentStock =
+      Number(selectedProduct.stock) || 0;
+
+    const newStock =
+      currentStock + 1;
+
+    const now =
+      new Date().toISOString();
+
+    const movement = {
+      id: crypto.randomUUID(),
+      productId: selectedProduct.id,
+      productName: selectedProduct.name,
+      sku: selectedProduct.sku,
+      type: "entrada",
+      quantity: 1,
+      resultingStock: newStock,
+      date: now,
+    };
+
     setProducts((prev) =>
       prev.map((item) =>
         item.id === id
           ? {
               ...item,
-              stock: Number(item.stock) + 1,
-              lastStockUpdate: new Date().toISOString(),
+              stock: newStock,
+              lastStockUpdate: now,
             }
           : item
       )
     );
+
+    setMovements((prev) => [
+      movement,
+      ...prev,
+    ]);
   };
 
   const handleDecreaseStock = (id) => {
+    const selectedProduct = products.find(
+      (item) => item.id === id
+    );
+
+    if (!selectedProduct) return;
+
+    const currentStock =
+      Number(selectedProduct.stock) || 0;
+
+    if (currentStock <= 0) {
+      return;
+    }
+
+    const newStock =
+      currentStock - 1;
+
+    const now =
+      new Date().toISOString();
+
+    const movement = {
+      id: crypto.randomUUID(),
+      productId: selectedProduct.id,
+      productName: selectedProduct.name,
+      sku: selectedProduct.sku,
+      type: "salida",
+      quantity: 1,
+      resultingStock: newStock,
+      date: now,
+    };
+
     setProducts((prev) =>
       prev.map((item) =>
         item.id === id
           ? {
               ...item,
-              stock: Math.max(
-                0,
-                Number(item.stock) - 1
-              ),
-              lastStockUpdate: new Date().toISOString(),
+              stock: newStock,
+              lastStockUpdate: now,
             }
           : item
       )
     );
+
+    setMovements((prev) => [
+      movement,
+      ...prev,
+    ]);
   };
 
-  const filteredProducts = products.filter((item) => {
-    const searchTerm = search.toLowerCase().trim();
+  const filteredProducts = products.filter(
+    (item) => {
+      const searchTerm =
+        search.toLowerCase().trim();
 
-    if (!searchTerm) {
-      return true;
+      if (!searchTerm) {
+        return true;
+      }
+
+      return (
+        item.name
+          ?.toLowerCase()
+          .includes(searchTerm) ||
+        item.sku
+          ?.toLowerCase()
+          .includes(searchTerm) ||
+        item.category
+          ?.toLowerCase()
+          .includes(searchTerm)
+      );
     }
-
-    return (
-      item.name?.toLowerCase().includes(searchTerm) ||
-      item.sku?.toLowerCase().includes(searchTerm) ||
-      item.category?.toLowerCase().includes(searchTerm)
-    );
-  });
-
-  const totalProducts = products.length;
-
-  const inventoryValue = products.reduce(
-    (total, item) => {
-      const buyPrice = Number(item.buyPrice) || 0;
-      const stock = Number(item.stock) || 0;
-
-      return total + buyPrice * stock;
-    },
-    0
   );
 
-  const lowStockProducts = products.filter(
-    (item) =>
-      Number(item.stock) > 0 &&
-      Number(item.stock) <= 10
-  ).length;
+  const totalProducts =
+    products.length;
 
-  const outOfStockProducts = products.filter(
-    (item) => Number(item.stock) === 0
-  ).length;
+  const inventoryValue =
+    products.reduce(
+      (total, item) => {
+        const buyPrice =
+          Number(item.buyPrice) || 0;
+
+        const stock =
+          Number(item.stock) || 0;
+
+        return (
+          total +
+          buyPrice * stock
+        );
+      },
+      0
+    );
+
+  const lowStockProducts =
+    products.filter(
+      (item) =>
+        Number(item.stock) > 0 &&
+        Number(item.stock) <= 10
+    ).length;
+
+  const outOfStockProducts =
+    products.filter(
+      (item) =>
+        Number(item.stock) === 0
+    ).length;
 
   return (
     <div className="container-fluid p-4">
@@ -217,6 +365,7 @@ export default function Products() {
 
         <div className="col-md-3">
           <div className="stat-card h-100">
+
             <div className="text-muted">
               📦 Productos
             </div>
@@ -224,11 +373,13 @@ export default function Products() {
             <h3 className="fw-bold mt-2 mb-0">
               {totalProducts}
             </h3>
+
           </div>
         </div>
 
         <div className="col-md-3">
           <div className="stat-card h-100">
+
             <div className="text-muted">
               💰 Valor del inventario
             </div>
@@ -236,11 +387,13 @@ export default function Products() {
             <h3 className="fw-bold mt-2 mb-0">
               € {inventoryValue.toFixed(2)}
             </h3>
+
           </div>
         </div>
 
         <div className="col-md-3">
           <div className="stat-card h-100">
+
             <div className="text-muted">
               ⚠️ Stock bajo
             </div>
@@ -248,11 +401,13 @@ export default function Products() {
             <h3 className="fw-bold mt-2 mb-0">
               {lowStockProducts}
             </h3>
+
           </div>
         </div>
 
         <div className="col-md-3">
           <div className="stat-card h-100">
+
             <div className="text-muted">
               ❌ Sin stock
             </div>
@@ -260,6 +415,7 @@ export default function Products() {
             <h3 className="fw-bold mt-2 mb-0">
               {outOfStockProducts}
             </h3>
+
           </div>
         </div>
 
@@ -280,7 +436,9 @@ export default function Products() {
           className="form-control"
           placeholder="🔍 Buscar por nombre, SKU o categoría..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) =>
+            setSearch(e.target.value)
+          }
         />
 
       </div>
@@ -289,8 +447,16 @@ export default function Products() {
         products={filteredProducts}
         handleDelete={handleDelete}
         handleEdit={handleEdit}
-        handleIncreaseStock={handleIncreaseStock}
-        handleDecreaseStock={handleDecreaseStock}
+        handleIncreaseStock={
+          handleIncreaseStock
+        }
+        handleDecreaseStock={
+          handleDecreaseStock
+        }
+      />
+
+      <StockHistory
+        movements={movements}
       />
 
     </div>
