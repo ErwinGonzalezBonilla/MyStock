@@ -204,18 +204,33 @@ export default function Products() {
     setEditingId(id);
   };
 
-  const handleIncreaseStock = (id) => {
+  // =========================
+  // ENTRADA DE STOCK
+  // =========================
+
+  const handleIncreaseStock = (
+    id,
+    quantity = 1
+  ) => {
+    const amount = Number(quantity);
+
+    if (!amount || amount <= 0) {
+      return;
+    }
+
     const selectedProduct = products.find(
       (item) => item.id === id
     );
 
-    if (!selectedProduct) return;
+    if (!selectedProduct) {
+      return;
+    }
 
     const currentStock =
       Number(selectedProduct.stock) || 0;
 
     const newStock =
-      currentStock + 1;
+      currentStock + amount;
 
     const now =
       new Date().toISOString();
@@ -226,7 +241,7 @@ export default function Products() {
       productName: selectedProduct.name,
       sku: selectedProduct.sku,
       type: "entrada",
-      quantity: 1,
+      quantity: amount,
       resultingStock: newStock,
       date: now,
     };
@@ -249,22 +264,37 @@ export default function Products() {
     ]);
   };
 
-  const handleDecreaseStock = (id) => {
+  // =========================
+  // SALIDA DE STOCK
+  // =========================
+
+  const handleDecreaseStock = (
+    id,
+    quantity = 1
+  ) => {
+    const amount = Number(quantity);
+
+    if (!amount || amount <= 0) {
+      return;
+    }
+
     const selectedProduct = products.find(
       (item) => item.id === id
     );
 
-    if (!selectedProduct) return;
+    if (!selectedProduct) {
+      return;
+    }
 
     const currentStock =
       Number(selectedProduct.stock) || 0;
 
-    if (currentStock <= 0) {
+    if (amount > currentStock) {
       return;
     }
 
     const newStock =
-      currentStock - 1;
+      currentStock - amount;
 
     const now =
       new Date().toISOString();
@@ -275,7 +305,7 @@ export default function Products() {
       productName: selectedProduct.name,
       sku: selectedProduct.sku,
       type: "salida",
-      quantity: 1,
+      quantity: amount,
       resultingStock: newStock,
       date: now,
     };
@@ -297,6 +327,10 @@ export default function Products() {
       ...prev,
     ]);
   };
+
+  // =========================
+  // BÚSQUEDA
+  // =========================
 
   const filteredProducts = products.filter(
     (item) => {
@@ -320,6 +354,10 @@ export default function Products() {
       );
     }
   );
+
+  // =========================
+  // RESUMEN INVENTARIO
+  // =========================
 
   const totalProducts =
     products.length;
@@ -361,9 +399,12 @@ export default function Products() {
         Productos
       </h2>
 
+      {/* RESUMEN */}
+
       <div className="row g-3 mb-4">
 
         <div className="col-md-3">
+
           <div className="stat-card h-100">
 
             <div className="text-muted">
@@ -375,9 +416,11 @@ export default function Products() {
             </h3>
 
           </div>
+
         </div>
 
         <div className="col-md-3">
+
           <div className="stat-card h-100">
 
             <div className="text-muted">
@@ -389,9 +432,11 @@ export default function Products() {
             </h3>
 
           </div>
+
         </div>
 
         <div className="col-md-3">
+
           <div className="stat-card h-100">
 
             <div className="text-muted">
@@ -403,9 +448,11 @@ export default function Products() {
             </h3>
 
           </div>
+
         </div>
 
         <div className="col-md-3">
+
           <div className="stat-card h-100">
 
             <div className="text-muted">
@@ -417,9 +464,12 @@ export default function Products() {
             </h3>
 
           </div>
+
         </div>
 
       </div>
+
+      {/* FORMULARIO */}
 
       <ProductForm
         product={product}
@@ -428,6 +478,8 @@ export default function Products() {
         handleImage={handleImage}
         editingIndex={editingId}
       />
+
+      {/* BUSCADOR */}
 
       <div className="mb-4">
 
@@ -443,6 +495,8 @@ export default function Products() {
 
       </div>
 
+      {/* TABLA */}
+
       <ProductTable
         products={filteredProducts}
         handleDelete={handleDelete}
@@ -454,6 +508,8 @@ export default function Products() {
           handleDecreaseStock
         }
       />
+
+      {/* HISTORIAL */}
 
       <StockHistory
         movements={movements}

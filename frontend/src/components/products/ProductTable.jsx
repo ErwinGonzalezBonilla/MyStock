@@ -1,3 +1,6 @@
+import { useState } from "react";
+import StockMovementModal from "./StockMovementModal";
+
 export default function ProductTable({
   products,
   handleDelete,
@@ -5,6 +8,9 @@ export default function ProductTable({
   handleIncreaseStock,
   handleDecreaseStock,
 }) {
+  const [movementProduct, setMovementProduct] = useState(null);
+  const [movementType, setMovementType] = useState(null);
+
   const formatLastUpdate = (date) => {
     if (!date) {
       return "Sin movimientos";
@@ -17,6 +23,36 @@ export default function ProductTable({
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const openMovementModal = (product, type) => {
+    setMovementProduct(product);
+    setMovementType(type);
+  };
+
+  const closeMovementModal = () => {
+    setMovementProduct(null);
+    setMovementType(null);
+  };
+
+  const handleMovementConfirm = (quantity) => {
+    if (!movementProduct || !movementType) {
+      return;
+    }
+
+    if (movementType === "entrada") {
+      handleIncreaseStock(
+        movementProduct.id,
+        quantity
+      );
+    } else {
+      handleDecreaseStock(
+        movementProduct.id,
+        quantity
+      );
+    }
+
+    closeMovementModal();
   };
 
   return (
@@ -92,6 +128,8 @@ export default function ProductTable({
 
                   <tr key={item.id}>
 
+                    {/* IMAGEN */}
+
                     <td>
                       {item.image ? (
 
@@ -121,19 +159,27 @@ export default function ProductTable({
                       )}
                     </td>
 
+                    {/* SKU */}
+
                     <td>
                       <span className="badge bg-dark">
                         {item.sku || "Sin SKU"}
                       </span>
                     </td>
 
+                    {/* PRODUCTO */}
+
                     <td className="fw-semibold">
                       {item.name}
                     </td>
 
+                    {/* CATEGORÍA */}
+
                     <td>
                       {item.category}
                     </td>
+
+                    {/* STOCK */}
 
                     <td>
 
@@ -141,12 +187,15 @@ export default function ProductTable({
 
                         <button
                           type="button"
-                          className="btn btn-outline-secondary btn-sm"
+                          className="btn btn-outline-danger btn-sm"
                           onClick={() =>
-                            handleDecreaseStock(item.id)
+                            openMovementModal(
+                              item,
+                              "salida"
+                            )
                           }
                           disabled={stock === 0}
-                          title="Disminuir stock"
+                          title="Registrar salida"
                         >
                           −
                         </button>
@@ -157,11 +206,14 @@ export default function ProductTable({
 
                         <button
                           type="button"
-                          className="btn btn-outline-secondary btn-sm"
+                          className="btn btn-outline-success btn-sm"
                           onClick={() =>
-                            handleIncreaseStock(item.id)
+                            openMovementModal(
+                              item,
+                              "entrada"
+                            )
                           }
-                          title="Aumentar stock"
+                          title="Registrar entrada"
                         >
                           +
                         </button>
@@ -169,6 +221,8 @@ export default function ProductTable({
                       </div>
 
                     </td>
+
+                    {/* ESTADO */}
 
                     <td>
                       <span
@@ -178,13 +232,19 @@ export default function ProductTable({
                       </span>
                     </td>
 
+                    {/* COMPRA */}
+
                     <td>
                       € {item.buyPrice}
                     </td>
 
+                    {/* VENTA */}
+
                     <td>
                       € {item.sellPrice}
                     </td>
+
+                    {/* MARGEN */}
 
                     <td>
 
@@ -202,6 +262,8 @@ export default function ProductTable({
 
                     </td>
 
+                    {/* ÚLTIMO MOVIMIENTO */}
+
                     <td>
                       <small className="text-muted">
                         {formatLastUpdate(
@@ -209,6 +271,8 @@ export default function ProductTable({
                         )}
                       </small>
                     </td>
+
+                    {/* ACCIONES */}
 
                     <td>
 
@@ -252,6 +316,17 @@ export default function ProductTable({
         </table>
 
       </div>
+
+      {movementProduct && (
+
+        <StockMovementModal
+          product={movementProduct}
+          type={movementType}
+          onClose={closeMovementModal}
+          onConfirm={handleMovementConfirm}
+        />
+
+      )}
 
     </div>
   );
