@@ -43,6 +43,9 @@ export default function StockHistory({ movements }) {
         .includes(searchTerm) ||
       movement.sku
         ?.toLowerCase()
+        .includes(searchTerm) ||
+      movement.reason
+        ?.toLowerCase()
         .includes(searchTerm);
 
     const matchesType =
@@ -109,7 +112,7 @@ export default function StockHistory({ movements }) {
           <input
             type="text"
             className="form-control"
-            placeholder="🔍 Producto o SKU..."
+            placeholder="🔍 Producto, SKU o motivo..."
             value={search}
             onChange={(e) =>
               setSearch(e.target.value)
@@ -260,6 +263,8 @@ export default function StockHistory({ movements }) {
 
                 <th>Cantidad</th>
 
+                <th>Motivo</th>
+
                 <th>Stock resultante</th>
 
               </tr>
@@ -341,6 +346,23 @@ export default function StockHistory({ movements }) {
                         {movement.quantity}
 
                       </strong>
+
+                    </td>
+
+                    {/* MOTIVO */}
+
+                    <td>
+
+                      <span
+                        className={
+                          movement.reason
+                            ? "badge bg-light text-dark border"
+                            : "text-muted"
+                        }
+                      >
+                        {movement.reason ||
+                          "Sin especificar"}
+                      </span>
 
                     </td>
 

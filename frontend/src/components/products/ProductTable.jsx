@@ -8,8 +8,11 @@ export default function ProductTable({
   handleIncreaseStock,
   handleDecreaseStock,
 }) {
-  const [movementProduct, setMovementProduct] = useState(null);
-  const [movementType, setMovementType] = useState(null);
+  const [movementProduct, setMovementProduct] =
+    useState(null);
+
+  const [movementType, setMovementType] =
+    useState(null);
 
   const formatLastUpdate = (date) => {
     if (!date) {
@@ -35,20 +38,29 @@ export default function ProductTable({
     setMovementType(null);
   };
 
-  const handleMovementConfirm = (quantity) => {
+  const handleMovementConfirm = (
+    quantity,
+    reason
+  ) => {
     if (!movementProduct || !movementType) {
+      return;
+    }
+
+    if (!quantity || !reason) {
       return;
     }
 
     if (movementType === "entrada") {
       handleIncreaseStock(
         movementProduct.id,
-        quantity
+        quantity,
+        reason
       );
     } else {
       handleDecreaseStock(
         movementProduct.id,
-        quantity
+        quantity,
+        reason
       );
     }
 
@@ -99,29 +111,40 @@ export default function ProductTable({
 
               products.map((item) => {
 
-                const buy = Number(item.buyPrice);
-                const sell = Number(item.sellPrice);
-                const stock = Number(item.stock) || 0;
+                const buy =
+                  Number(item.buyPrice);
+
+                const sell =
+                  Number(item.sellPrice);
+
+                const stock =
+                  Number(item.stock) || 0;
 
                 const margin =
                   buy > 0
-                    ? (((sell - buy) / buy) * 100).toFixed(0)
+                    ? (
+                        ((sell - buy) / buy) *
+                        100
+                      ).toFixed(0)
                     : 0;
 
                 const stockInfo =
                   stock === 0
                     ? {
                         text: "Sin stock",
-                        className: "bg-danger",
+                        className:
+                          "bg-danger",
                       }
                     : stock <= 10
                     ? {
                         text: "Stock bajo",
-                        className: "bg-warning text-dark",
+                        className:
+                          "bg-warning text-dark",
                       }
                     : {
                         text: "Disponible",
-                        className: "bg-success",
+                        className:
+                          "bg-success",
                       };
 
                 return (
@@ -131,6 +154,7 @@ export default function ProductTable({
                     {/* IMAGEN */}
 
                     <td>
+
                       {item.image ? (
 
                         <img
@@ -141,7 +165,8 @@ export default function ProductTable({
                             height: "60px",
                             objectFit: "cover",
                             borderRadius: "10px",
-                            border: "1px solid #ddd",
+                            border:
+                              "1px solid #ddd",
                           }}
                         />
 
@@ -151,20 +176,25 @@ export default function ProductTable({
                           style={{
                             width: "60px",
                             height: "60px",
-                            background: "#f2f2f2",
+                            background:
+                              "#f2f2f2",
                             borderRadius: "10px",
                           }}
                         />
 
                       )}
+
                     </td>
 
                     {/* SKU */}
 
                     <td>
+
                       <span className="badge bg-dark">
-                        {item.sku || "Sin SKU"}
+                        {item.sku ||
+                          "Sin SKU"}
                       </span>
+
                     </td>
 
                     {/* PRODUCTO */}
@@ -194,7 +224,9 @@ export default function ProductTable({
                               "salida"
                             )
                           }
-                          disabled={stock === 0}
+                          disabled={
+                            stock === 0
+                          }
                           title="Registrar salida"
                         >
                           −
@@ -225,11 +257,13 @@ export default function ProductTable({
                     {/* ESTADO */}
 
                     <td>
+
                       <span
                         className={`badge ${stockInfo.className}`}
                       >
                         {stockInfo.text}
                       </span>
+
                     </td>
 
                     {/* COMPRA */}
@@ -265,11 +299,13 @@ export default function ProductTable({
                     {/* ÚLTIMO MOVIMIENTO */}
 
                     <td>
+
                       <small className="text-muted">
                         {formatLastUpdate(
                           item.lastStockUpdate
                         )}
                       </small>
+
                     </td>
 
                     {/* ACCIONES */}
@@ -282,7 +318,9 @@ export default function ProductTable({
                           type="button"
                           className="btn btn-warning btn-sm"
                           onClick={() =>
-                            handleEdit(item.id)
+                            handleEdit(
+                              item.id
+                            )
                           }
                           title="Editar producto"
                         >
@@ -293,7 +331,9 @@ export default function ProductTable({
                           type="button"
                           className="btn btn-danger btn-sm"
                           onClick={() =>
-                            handleDelete(item.id)
+                            handleDelete(
+                              item.id
+                            )
                           }
                           title="Eliminar producto"
                         >
@@ -317,13 +357,17 @@ export default function ProductTable({
 
       </div>
 
+      {/* MODAL DE MOVIMIENTO */}
+
       {movementProduct && (
 
         <StockMovementModal
           product={movementProduct}
           type={movementType}
           onClose={closeMovementModal}
-          onConfirm={handleMovementConfirm}
+          onConfirm={
+            handleMovementConfirm
+          }
         />
 
       )}

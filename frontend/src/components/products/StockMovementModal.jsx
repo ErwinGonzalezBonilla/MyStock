@@ -1,5 +1,20 @@
 import { useState } from "react";
 
+const ENTRY_REASONS = [
+  "Compra a proveedor",
+  "Devolución",
+  "Ajuste de inventario",
+  "Otro",
+];
+
+const EXIT_REASONS = [
+  "Venta",
+  "Producto dañado",
+  "Pérdida",
+  "Ajuste de inventario",
+  "Otro",
+];
+
 export default function StockMovementModal({
   product,
   type,
@@ -7,12 +22,17 @@ export default function StockMovementModal({
   onConfirm,
 }) {
   const [quantity, setQuantity] = useState(1);
+  const [reason, setReason] = useState("");
 
   if (!product) {
     return null;
   }
 
   const isEntry = type === "entrada";
+
+  const reasons = isEntry
+    ? ENTRY_REASONS
+    : EXIT_REASONS;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -23,6 +43,10 @@ export default function StockMovementModal({
       return;
     }
 
+    if (!reason) {
+      return;
+    }
+
     if (
       !isEntry &&
       amount > Number(product.stock)
@@ -30,8 +54,17 @@ export default function StockMovementModal({
       return;
     }
 
-    onConfirm(amount);
+    onConfirm(amount, reason);
   };
+
+  const resultingStock = isEntry
+    ? Number(product.stock) +
+      Number(quantity || 0)
+    : Math.max(
+        0,
+        Number(product.stock) -
+          Number(quantity || 0)
+      );
 
   return (
     <>
@@ -48,6 +81,8 @@ export default function StockMovementModal({
         <div className="modal-dialog modal-dialog-centered">
 
           <div className="modal-content">
+
+            {/* CABECERA */}
 
             <div className="modal-header">
 
@@ -69,6 +104,8 @@ export default function StockMovementModal({
 
               <div className="modal-body">
 
+                {/* PRODUCTO */}
+
                 <div className="mb-3">
 
                   <label className="form-label text-muted">
@@ -80,6 +117,8 @@ export default function StockMovementModal({
                   </div>
 
                 </div>
+
+                {/* SKU */}
 
                 <div className="mb-3">
 
@@ -95,6 +134,8 @@ export default function StockMovementModal({
 
                 </div>
 
+                {/* STOCK ACTUAL */}
+
                 <div className="mb-3">
 
                   <label className="form-label text-muted">
@@ -106,6 +147,8 @@ export default function StockMovementModal({
                   </div>
 
                 </div>
+
+                {/* CANTIDAD */}
 
                 <div className="mb-3">
 
@@ -135,6 +178,48 @@ export default function StockMovementModal({
 
                 </div>
 
+                {/* MOTIVO */}
+
+                <div className="mb-3">
+
+                  <label
+                    htmlFor="movementReason"
+                    className="form-label fw-semibold"
+                  >
+                    Motivo del movimiento
+                  </label>
+
+                  <select
+                    id="movementReason"
+                    className="form-select"
+                    value={reason}
+                    onChange={(e) =>
+                      setReason(e.target.value)
+                    }
+                    required
+                  >
+
+                    <option value="">
+                      Selecciona un motivo...
+                    </option>
+
+                    {reasons.map(
+                      (item) => (
+                        <option
+                          key={item}
+                          value={item}
+                        >
+                          {item}
+                        </option>
+                      )
+                    )}
+
+                  </select>
+
+                </div>
+
+                {/* RESUMEN */}
+
                 <div
                   className={`alert ${
                     isEntry
@@ -142,6 +227,7 @@ export default function StockMovementModal({
                       : "alert-danger"
                   } mb-0`}
                 >
+
                   {isEntry ? (
                     <>
                       El stock pasará de{" "}
@@ -150,8 +236,7 @@ export default function StockMovementModal({
                       </strong>{" "}
                       a{" "}
                       <strong>
-                        {Number(product.stock) +
-                          Number(quantity || 0)}
+                        {resultingStock}
                       </strong>
                       .
                     </>
@@ -163,18 +248,17 @@ export default function StockMovementModal({
                       </strong>{" "}
                       a{" "}
                       <strong>
-                        {Math.max(
-                          0,
-                          Number(product.stock) -
-                            Number(quantity || 0)
-                        )}
+                        {resultingStock}
                       </strong>
                       .
                     </>
                   )}
+
                 </div>
 
               </div>
+
+              {/* BOTONES */}
 
               <div className="modal-footer">
 
@@ -193,6 +277,7 @@ export default function StockMovementModal({
                       ? "btn btn-success"
                       : "btn btn-danger"
                   }
+                  disabled={!reason}
                 >
                   {isEntry
                     ? "Añadir stock"

@@ -159,6 +159,7 @@ export default function Products() {
           type: "entrada",
           quantity: initialStock,
           resultingStock: initialStock,
+          reason: "Stock inicial",
           date: new Date().toISOString(),
         };
 
@@ -210,7 +211,8 @@ export default function Products() {
 
   const handleIncreaseStock = (
     id,
-    quantity = 1
+    quantity = 1,
+    reason = "Entrada de stock"
   ) => {
     const amount = Number(quantity);
 
@@ -243,6 +245,7 @@ export default function Products() {
       type: "entrada",
       quantity: amount,
       resultingStock: newStock,
+      reason: reason,
       date: now,
     };
 
@@ -270,7 +273,8 @@ export default function Products() {
 
   const handleDecreaseStock = (
     id,
-    quantity = 1
+    quantity = 1,
+    reason = "Salida de stock"
   ) => {
     const amount = Number(quantity);
 
@@ -307,6 +311,7 @@ export default function Products() {
       type: "salida",
       quantity: amount,
       resultingStock: newStock,
+      reason: reason,
       date: now,
     };
 
@@ -404,7 +409,6 @@ export default function Products() {
       <div className="row g-3 mb-4">
 
         <div className="col-md-3">
-
           <div className="stat-card h-100">
 
             <div className="text-muted">
@@ -416,11 +420,9 @@ export default function Products() {
             </h3>
 
           </div>
-
         </div>
 
         <div className="col-md-3">
-
           <div className="stat-card h-100">
 
             <div className="text-muted">
@@ -432,11 +434,9 @@ export default function Products() {
             </h3>
 
           </div>
-
         </div>
 
         <div className="col-md-3">
-
           <div className="stat-card h-100">
 
             <div className="text-muted">
@@ -448,11 +448,9 @@ export default function Products() {
             </h3>
 
           </div>
-
         </div>
 
         <div className="col-md-3">
-
           <div className="stat-card h-100">
 
             <div className="text-muted">
@@ -464,7 +462,6 @@ export default function Products() {
             </h3>
 
           </div>
-
         </div>
 
       </div>
