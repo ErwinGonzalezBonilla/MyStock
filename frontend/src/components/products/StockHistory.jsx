@@ -1,4 +1,10 @@
+import { useState } from "react";
+
 export default function StockHistory({ movements }) {
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("todos");
+  const [productFilter, setProductFilter] = useState("todos");
+
   const formatDate = (date) => {
     if (!date) {
       return "Sin fecha";
@@ -13,8 +19,62 @@ export default function StockHistory({ movements }) {
     });
   };
 
+  const uniqueProducts = [
+    ...new Map(
+      movements.map((movement) => [
+        movement.productId,
+        {
+          id: movement.productId,
+          name: movement.productName,
+        },
+      ])
+    ).values(),
+  ];
+
+  const filteredMovements = movements.filter((movement) => {
+    const searchTerm = search
+      .toLowerCase()
+      .trim();
+
+    const matchesSearch =
+      !searchTerm ||
+      movement.productName
+        ?.toLowerCase()
+        .includes(searchTerm) ||
+      movement.sku
+        ?.toLowerCase()
+        .includes(searchTerm);
+
+    const matchesType =
+      typeFilter === "todos" ||
+      movement.type === typeFilter;
+
+    const matchesProduct =
+      productFilter === "todos" ||
+      movement.productId === productFilter;
+
+    return (
+      matchesSearch &&
+      matchesType &&
+      matchesProduct
+    );
+  });
+
+  const clearFilters = () => {
+    setSearch("");
+    setTypeFilter("todos");
+    setProductFilter("todos");
+  };
+
+  const filtersActive =
+    search !== "" ||
+    typeFilter !== "todos" ||
+    productFilter !== "todos";
+
   return (
     <div className="stat-card mt-4">
+
+      {/* CABECERA */}
 
       <div className="d-flex justify-content-between align-items-center mb-4">
 
@@ -24,19 +84,130 @@ export default function StockHistory({ movements }) {
           </h4>
 
           <small className="text-muted">
-            Últimos movimientos del inventario
+            Control de entradas y salidas del inventario
           </small>
         </div>
 
         <span className="badge bg-dark">
-          {movements.length} movimientos
+          {filteredMovements.length} movimientos
         </span>
 
       </div>
 
+      {/* FILTROS */}
+
+      <div className="row g-3 mb-4">
+
+        {/* BUSCAR */}
+
+        <div className="col-md-5">
+
+          <label className="form-label fw-semibold">
+            Buscar
+          </label>
+
+          <input
+            type="text"
+            className="form-control"
+            placeholder="🔍 Producto o SKU..."
+            value={search}
+            onChange={(e) =>
+              setSearch(e.target.value)
+            }
+          />
+
+        </div>
+
+        {/* PRODUCTO */}
+
+        <div className="col-md-3">
+
+          <label className="form-label fw-semibold">
+            Producto
+          </label>
+
+          <select
+            className="form-select"
+            value={productFilter}
+            onChange={(e) =>
+              setProductFilter(e.target.value)
+            }
+          >
+
+            <option value="todos">
+              Todos los productos
+            </option>
+
+            {uniqueProducts.map((product) => (
+
+              <option
+                key={product.id}
+                value={product.id}
+              >
+                {product.name}
+              </option>
+
+            ))}
+
+          </select>
+
+        </div>
+
+        {/* TIPO */}
+
+        <div className="col-md-2">
+
+          <label className="form-label fw-semibold">
+            Movimiento
+          </label>
+
+          <select
+            className="form-select"
+            value={typeFilter}
+            onChange={(e) =>
+              setTypeFilter(e.target.value)
+            }
+          >
+
+            <option value="todos">
+              Todos
+            </option>
+
+            <option value="entrada">
+              Entradas
+            </option>
+
+            <option value="salida">
+              Salidas
+            </option>
+
+          </select>
+
+        </div>
+
+        {/* LIMPIAR */}
+
+        <div className="col-md-2 d-flex align-items-end">
+
+          <button
+            type="button"
+            className="btn btn-outline-secondary w-100"
+            onClick={clearFilters}
+            disabled={!filtersActive}
+          >
+            🔄 Limpiar
+          </button>
+
+        </div>
+
+      </div>
+
+      {/* RESULTADOS */}
+
       {movements.length === 0 ? (
 
         <div className="text-center text-muted py-4">
+
           <div className="fs-1 mb-2">
             📦
           </div>
@@ -44,6 +215,29 @@ export default function StockHistory({ movements }) {
           <p className="mb-0">
             Todavía no hay movimientos registrados.
           </p>
+
+        </div>
+
+      ) : filteredMovements.length === 0 ? (
+
+        <div className="text-center text-muted py-4">
+
+          <div className="fs-1 mb-2">
+            🔍
+          </div>
+
+          <p className="mb-2">
+            No encontramos movimientos.
+          </p>
+
+          <button
+            type="button"
+            className="btn btn-outline-primary btn-sm"
+            onClick={clearFilters}
+          >
+            Limpiar filtros
+          </button>
+
         </div>
 
       ) : (
@@ -55,82 +249,117 @@ export default function StockHistory({ movements }) {
             <thead className="table-light">
 
               <tr>
+
                 <th>Fecha</th>
+
                 <th>Producto</th>
+
                 <th>SKU</th>
+
                 <th>Tipo</th>
+
                 <th>Cantidad</th>
+
                 <th>Stock resultante</th>
+
               </tr>
 
             </thead>
 
             <tbody>
 
-              {movements.map((movement) => (
+              {filteredMovements.map(
+                (movement) => (
 
-                <tr key={movement.id}>
+                  <tr key={movement.id}>
 
-                  <td>
-                    <small>
-                      {formatDate(movement.date)}
-                    </small>
-                  </td>
+                    {/* FECHA */}
 
-                  <td className="fw-semibold">
-                    {movement.productName}
-                  </td>
+                    <td>
+                      <small>
+                        {formatDate(
+                          movement.date
+                        )}
+                      </small>
+                    </td>
 
-                  <td>
-                    <span className="badge bg-dark">
-                      {movement.sku || "Sin SKU"}
-                    </span>
-                  </td>
+                    {/* PRODUCTO */}
 
-                  <td>
+                    <td className="fw-semibold">
+                      {movement.productName}
+                    </td>
 
-                    {movement.type === "entrada" ? (
+                    {/* SKU */}
 
-                      <span className="badge bg-success">
-                        ↑ Entrada
+                    <td>
+
+                      <span className="badge bg-dark">
+                        {movement.sku ||
+                          "Sin SKU"}
                       </span>
 
-                    ) : (
+                    </td>
 
-                      <span className="badge bg-danger">
-                        ↓ Salida
-                      </span>
+                    {/* TIPO */}
 
-                    )}
+                    <td>
 
-                  </td>
+                      {movement.type ===
+                      "entrada" ? (
 
-                  <td>
+                        <span className="badge bg-success">
+                          ↑ Entrada
+                        </span>
 
-                    <strong
-                      className={
-                        movement.type === "entrada"
-                          ? "text-success"
-                          : "text-danger"
-                      }
-                    >
-                      {movement.type === "entrada"
-                        ? "+"
-                        : "-"}
-                      {movement.quantity}
-                    </strong>
+                      ) : (
 
-                  </td>
+                        <span className="badge bg-danger">
+                          ↓ Salida
+                        </span>
 
-                  <td>
-                    <strong>
-                      {movement.resultingStock}
-                    </strong>
-                  </td>
+                      )}
 
-                </tr>
+                    </td>
 
-              ))}
+                    {/* CANTIDAD */}
+
+                    <td>
+
+                      <strong
+                        className={
+                          movement.type ===
+                          "entrada"
+                            ? "text-success"
+                            : "text-danger"
+                        }
+                      >
+
+                        {movement.type ===
+                        "entrada"
+                          ? "+"
+                          : "-"}
+                        {movement.quantity}
+
+                      </strong>
+
+                    </td>
+
+                    {/* STOCK */}
+
+                    <td>
+
+                      <strong>
+                        {
+                          movement.resultingStock
+                        }
+                      </strong>
+
+                    </td>
+
+                  </tr>
+
+                )
+              )}
 
             </tbody>
 
