@@ -91,7 +91,7 @@ export default function Dashboard() {
     products.length;
 
   // =========================
-  // PRODUCTOS CON STOCK BAJO
+  // STOCK BAJO
   // =========================
 
   const lowStockProducts =
@@ -103,10 +103,10 @@ export default function Dashboard() {
     }).length;
 
   // =========================
-  // VALOR DEL INVENTARIO
+  // COSTE DEL INVENTARIO
   // =========================
 
-  const inventoryValue =
+  const inventoryCost =
     products.reduce(
       (total, product) => {
         const stock =
@@ -122,6 +122,48 @@ export default function Dashboard() {
       },
       0
     );
+
+  // =========================
+  // VALOR POTENCIAL DE VENTA
+  // =========================
+
+  const inventorySalesValue =
+    products.reduce(
+      (total, product) => {
+        const stock =
+          Number(product.stock) || 0;
+
+        const sellPrice =
+          Number(product.sellPrice) || 0;
+
+        return (
+          total +
+          stock * sellPrice
+        );
+      },
+      0
+    );
+
+  // =========================
+  // BENEFICIO POTENCIAL
+  // =========================
+
+  const potentialProfit =
+    inventorySalesValue -
+    inventoryCost;
+
+  // =========================
+  // MARGEN POTENCIAL
+  // =========================
+
+  const potentialMargin =
+    inventorySalesValue > 0
+      ? (
+          (potentialProfit /
+            inventorySalesValue) *
+          100
+        ).toFixed(1)
+      : 0;
 
   // =========================
   // FORMATO MONEDA
@@ -145,7 +187,7 @@ export default function Dashboard() {
       </h2>
 
       {/* =========================
-          KPIs
+          KPIs PRINCIPALES
       ========================= */}
 
       <div className="row">
@@ -180,14 +222,14 @@ export default function Dashboard() {
 
         </div>
 
-        {/* VALOR INVENTARIO */}
+        {/* COSTE INVENTARIO */}
 
         <div className="col-lg-3 col-md-6 mb-4">
 
           <StatCard
-            title="Valor Inventario"
+            title="Coste Inventario"
             value={formatCurrency(
-              inventoryValue
+              inventoryCost
             )}
             subtitle="Valor según precio de compra"
           />
@@ -213,7 +255,49 @@ export default function Dashboard() {
       </div>
 
       {/* =========================
-          SEGUNDA FILA
+          RENTABILIDAD
+      ========================= */}
+
+      <div className="row">
+
+        <div className="col-lg-4 col-md-6 mb-4">
+
+          <StatCard
+            title="Valor Potencial de Venta"
+            value={formatCurrency(
+              inventorySalesValue
+            )}
+            subtitle="Si vendieras todo el stock"
+          />
+
+        </div>
+
+        <div className="col-lg-4 col-md-6 mb-4">
+
+          <StatCard
+            title="Beneficio Potencial"
+            value={formatCurrency(
+              potentialProfit
+            )}
+            subtitle="Venta total menos coste"
+          />
+
+        </div>
+
+        <div className="col-lg-4 col-md-12 mb-4">
+
+          <StatCard
+            title="Margen Potencial"
+            value={`${potentialMargin}%`}
+            subtitle="Margen sobre el valor de venta"
+          />
+
+        </div>
+
+      </div>
+
+      {/* =========================
+          GRÁFICO + IA
       ========================= */}
 
       <div className="row">
