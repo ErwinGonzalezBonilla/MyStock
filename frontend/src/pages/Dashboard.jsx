@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import StatCard from "../components/common/StatCard";
 import SalesChart from "../components/common/SalesChart";
+import RecentSales from "../components/common/RecentSales";
 
 export default function Dashboard() {
   const [products] = useState(() => {
@@ -192,8 +193,6 @@ export default function Dashboard() {
 
       <div className="row">
 
-        {/* VENTAS HOY */}
-
         <div className="col-lg-3 col-md-6 mb-4">
 
           <StatCard
@@ -210,8 +209,6 @@ export default function Dashboard() {
 
         </div>
 
-        {/* PRODUCTOS */}
-
         <div className="col-lg-3 col-md-6 mb-4">
 
           <StatCard
@@ -221,8 +218,6 @@ export default function Dashboard() {
           />
 
         </div>
-
-        {/* COSTE INVENTARIO */}
 
         <div className="col-lg-3 col-md-6 mb-4">
 
@@ -235,8 +230,6 @@ export default function Dashboard() {
           />
 
         </div>
-
-        {/* STOCK BAJO */}
 
         <div className="col-lg-3 col-md-6 mb-4">
 
@@ -302,8 +295,6 @@ export default function Dashboard() {
 
       <div className="row">
 
-        {/* GRÁFICO */}
-
         <div className="col-lg-8">
 
           <div
@@ -323,12 +314,10 @@ export default function Dashboard() {
 
         </div>
 
-        {/* IA */}
-
         <div className="col-lg-4">
 
           <div
-            className="stat-card"
+            className="stat-card mb-4"
             style={{
               minHeight: "350px",
             }}
@@ -357,6 +346,22 @@ export default function Dashboard() {
             </p>
 
           </div>
+
+        </div>
+
+      </div>
+
+      {/* =========================
+          ÚLTIMAS VENTAS
+      ========================= */}
+
+      <div className="row">
+
+        <div className="col-12">
+
+          <RecentSales
+            sales={sales}
+          />
 
         </div>
 
