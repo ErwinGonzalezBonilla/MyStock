@@ -3,6 +3,7 @@ import { useState } from "react";
 import StatCard from "../components/common/StatCard";
 import SalesChart from "../components/common/SalesChart";
 import RecentSales from "../components/common/RecentSales";
+import LowStockProducts from "../components/common/LowStockProducts";
 
 export default function Dashboard() {
   const [products] = useState(() => {
@@ -357,10 +358,22 @@ export default function Dashboard() {
 
       <div className="row">
 
-        <div className="col-12">
+        <div className="col-lg-8">
 
           <RecentSales
             sales={sales}
+          />
+
+        </div>
+
+        {/* =========================
+            STOCK BAJO
+        ========================= */}
+
+        <div className="col-lg-4">
+
+          <LowStockProducts
+            products={products}
           />
 
         </div>
