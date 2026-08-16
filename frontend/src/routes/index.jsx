@@ -4,6 +4,7 @@ import Dashboard from "../pages/Dashboard";
 import Company from "../pages/Company";
 import Products from "../pages/Products";
 import Sales from "../pages/Sales";
+import Clients from "../pages/Clients";
 
 export default function AppRouter() {
   return (
@@ -26,6 +27,10 @@ export default function AppRouter() {
       <Route
         path="/sales"
         element={<Sales />}
+      />
+      <Route
+        path="/clients"
+        element={<Clients />}
       />
     </Routes>
   );
