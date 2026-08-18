@@ -41,6 +41,9 @@ export default function Clients() {
   const [message, setMessage] =
     useState("");
 
+  const [search, setSearch] =
+    useState("");
+
   const handleChange = (e) => {
     setClient((prev) => ({
       ...prev,
@@ -76,6 +79,32 @@ export default function Clients() {
     setMessage(
       "Cliente guardado correctamente."
     );
+  };
+
+  const searchTerm =
+    search.toLowerCase().trim();
+
+  const filteredClients =
+    clients.filter((item) => {
+      if (!searchTerm) {
+        return true;
+      }
+
+      return (
+        item.name
+          ?.toLowerCase()
+          .includes(searchTerm) ||
+        item.taxId
+          ?.toLowerCase()
+          .includes(searchTerm) ||
+        item.email
+          ?.toLowerCase()
+          .includes(searchTerm)
+      );
+    });
+
+  const clearSearch = () => {
+    setSearch("");
   };
 
   return (
@@ -119,11 +148,48 @@ export default function Clients() {
           </div>
 
           <span className="badge bg-dark">
-            {clients.length}{" "}
-            {clients.length === 1
+            {filteredClients.length}{" "}
+            {filteredClients.length === 1
               ? "cliente"
               : "clientes"}
           </span>
+
+        </div>
+
+        {/* BUSCADOR */}
+
+        <div className="row mb-4">
+
+          <div className="col-md-8">
+
+            <label className="form-label fw-semibold">
+              Buscar cliente
+            </label>
+
+            <input
+              type="text"
+              className="form-control"
+              placeholder="🔍 Nombre, DNI/NIF o email..."
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+            />
+
+          </div>
+
+          <div className="col-md-4 d-flex align-items-end">
+
+            <button
+              type="button"
+              className="btn btn-outline-secondary w-100"
+              onClick={clearSearch}
+              disabled={!search}
+            >
+              🔄 Limpiar búsqueda
+            </button>
+
+          </div>
 
         </div>
 
@@ -138,6 +204,28 @@ export default function Clients() {
             <p className="mb-0">
               Todavía no hay clientes registrados.
             </p>
+
+          </div>
+
+        ) : filteredClients.length === 0 ? (
+
+          <div className="text-center text-muted py-4">
+
+            <div className="fs-1 mb-2">
+              🔍
+            </div>
+
+            <p className="mb-2">
+              No encontramos clientes.
+            </p>
+
+            <button
+              type="button"
+              className="btn btn-outline-primary btn-sm"
+              onClick={clearSearch}
+            >
+              Limpiar búsqueda
+            </button>
 
           </div>
 
@@ -160,29 +248,31 @@ export default function Clients() {
 
               <tbody>
 
-                {clients.map((item) => (
+                {filteredClients.map(
+                  (item) => (
 
-                  <tr key={item.id}>
+                    <tr key={item.id}>
 
-                    <td className="fw-semibold">
-                      {item.name}
-                    </td>
+                      <td className="fw-semibold">
+                        {item.name}
+                      </td>
 
-                    <td>
-                      {item.taxId || "—"}
-                    </td>
+                      <td>
+                        {item.taxId || "—"}
+                      </td>
 
-                    <td>
-                      {item.phone || "—"}
-                    </td>
+                      <td>
+                        {item.phone || "—"}
+                      </td>
 
-                    <td>
-                      {item.email || "—"}
-                    </td>
+                      <td>
+                        {item.email || "—"}
+                      </td>
 
-                  </tr>
+                    </tr>
 
-                ))}
+                  )
+                )}
 
               </tbody>
 
