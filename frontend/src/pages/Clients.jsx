@@ -17,19 +17,65 @@ export default function Clients() {
   const [client, setClient] =
     useState(EMPTY_CLIENT);
 
+  const [clients, setClients] =
+    useState(() => {
+      const savedClients =
+        localStorage.getItem("clients");
+
+      if (!savedClients) {
+        return [];
+      }
+
+      try {
+        return JSON.parse(savedClients);
+      } catch (error) {
+        console.error(
+          "Error al cargar clientes:",
+          error
+        );
+
+        return [];
+      }
+    });
+
+  const [message, setMessage] =
+    useState("");
+
   const handleChange = (e) => {
     setClient((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
     }));
+
+    setMessage("");
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    console.log("Cliente preparado:", client);
+    const newClient = {
+      ...client,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    };
+
+    const updatedClients = [
+      ...clients,
+      newClient,
+    ];
+
+    localStorage.setItem(
+      "clients",
+      JSON.stringify(updatedClients)
+    );
+
+    setClients(updatedClients);
 
     setClient(EMPTY_CLIENT);
+
+    setMessage(
+      "Cliente guardado correctamente."
+    );
   };
 
   return (
@@ -39,11 +85,114 @@ export default function Clients() {
         Clientes
       </h2>
 
+      {message && (
+        <div
+          className="alert alert-success"
+          role="alert"
+        >
+          ✅ {message}
+        </div>
+      )}
+
+      {/* FORMULARIO */}
+
       <ClientForm
         client={client}
         handleChange={handleChange}
         handleSubmit={handleSubmit}
       />
+
+      {/* LISTA DE CLIENTES */}
+
+      <div className="stat-card">
+
+        <div className="d-flex justify-content-between align-items-center mb-4">
+
+          <div>
+            <h4 className="mb-1">
+              Lista de clientes
+            </h4>
+
+            <small className="text-muted">
+              Clientes registrados en MyStock
+            </small>
+          </div>
+
+          <span className="badge bg-dark">
+            {clients.length}{" "}
+            {clients.length === 1
+              ? "cliente"
+              : "clientes"}
+          </span>
+
+        </div>
+
+        {clients.length === 0 ? (
+
+          <div className="text-center text-muted py-4">
+
+            <div className="fs-1 mb-2">
+              👤
+            </div>
+
+            <p className="mb-0">
+              Todavía no hay clientes registrados.
+            </p>
+
+          </div>
+
+        ) : (
+
+          <div className="table-responsive">
+
+            <table className="table table-hover align-middle">
+
+              <thead className="table-light">
+
+                <tr>
+                  <th>Cliente</th>
+                  <th>DNI / NIF</th>
+                  <th>Teléfono</th>
+                  <th>Email</th>
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                {clients.map((item) => (
+
+                  <tr key={item.id}>
+
+                    <td className="fw-semibold">
+                      {item.name}
+                    </td>
+
+                    <td>
+                      {item.taxId || "—"}
+                    </td>
+
+                    <td>
+                      {item.phone || "—"}
+                    </td>
+
+                    <td>
+                      {item.email || "—"}
+                    </td>
+
+                  </tr>
+
+                ))}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        )}
+
+      </div>
 
     </div>
   );
