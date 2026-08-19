@@ -44,6 +44,9 @@ export default function Clients() {
   const [search, setSearch] =
     useState("");
 
+  const [editingId, setEditingId] =
+    useState(null);
+
   const handleChange = (e) => {
     setClient((prev) => ({
       ...prev,
@@ -56,10 +59,52 @@ export default function Clients() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // =========================
+    // EDITAR CLIENTE
+    // =========================
+
+    if (editingId) {
+      const updatedClients =
+        clients.map((item) =>
+          item.id === editingId
+            ? {
+                ...client,
+                id: editingId,
+                createdAt:
+                  item.createdAt,
+                updatedAt:
+                  new Date().toISOString(),
+              }
+            : item
+        );
+
+      localStorage.setItem(
+        "clients",
+        JSON.stringify(updatedClients)
+      );
+
+      setClients(updatedClients);
+
+      setClient(EMPTY_CLIENT);
+
+      setEditingId(null);
+
+      setMessage(
+        "Cliente actualizado correctamente."
+      );
+
+      return;
+    }
+
+    // =========================
+    // CREAR CLIENTE
+    // =========================
+
     const newClient = {
       ...client,
       id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
+      createdAt:
+        new Date().toISOString(),
     };
 
     const updatedClients = [
@@ -80,6 +125,48 @@ export default function Clients() {
       "Cliente guardado correctamente."
     );
   };
+
+  // =========================
+  // EDITAR
+  // =========================
+
+  const handleEdit = (id) => {
+    const clientToEdit =
+      clients.find(
+        (item) => item.id === id
+      );
+
+    if (!clientToEdit) {
+      return;
+    }
+
+    setClient(clientToEdit);
+
+    setEditingId(id);
+
+    setMessage("");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  // =========================
+  // CANCELAR EDICIÓN
+  // =========================
+
+  const handleCancelEdit = () => {
+    setClient(EMPTY_CLIENT);
+
+    setEditingId(null);
+
+    setMessage("");
+  };
+
+  // =========================
+  // BUSCAR
+  // =========================
 
   const searchTerm =
     search.toLowerCase().trim();
@@ -116,14 +203,27 @@ export default function Clients() {
 
       {message && (
         <div
-          className="alert alert-success"
+          className={`alert ${
+            message.includes(
+              "actualizado"
+            )
+              ? "alert-primary"
+              : "alert-success"
+          }`}
           role="alert"
         >
-          ✅ {message}
+          {message.includes(
+            "actualizado"
+          )
+            ? "✏️"
+            : "✅"}{" "}
+          {message}
         </div>
       )}
 
-      {/* FORMULARIO */}
+      {/* =========================
+          FORMULARIO
+      ========================= */}
 
       <ClientForm
         client={client}
@@ -131,13 +231,30 @@ export default function Clients() {
         handleSubmit={handleSubmit}
       />
 
-      {/* LISTA DE CLIENTES */}
+      {editingId && (
+        <div className="mb-4">
+
+          <button
+            type="button"
+            className="btn btn-outline-secondary"
+            onClick={handleCancelEdit}
+          >
+            Cancelar edición
+          </button>
+
+        </div>
+      )}
+
+      {/* =========================
+          LISTA
+      ========================= */}
 
       <div className="stat-card">
 
         <div className="d-flex justify-content-between align-items-center mb-4">
 
           <div>
+
             <h4 className="mb-1">
               Lista de clientes
             </h4>
@@ -145,6 +262,7 @@ export default function Clients() {
             <small className="text-muted">
               Clientes registrados en MyStock
             </small>
+
           </div>
 
           <span className="badge bg-dark">
@@ -242,6 +360,7 @@ export default function Clients() {
                   <th>DNI / NIF</th>
                   <th>Teléfono</th>
                   <th>Email</th>
+                  <th>Acciones</th>
                 </tr>
 
               </thead>
@@ -267,6 +386,23 @@ export default function Clients() {
 
                       <td>
                         {item.email || "—"}
+                      </td>
+
+                      <td>
+
+                        <button
+                          type="button"
+                          className="btn btn-warning btn-sm"
+                          onClick={() =>
+                            handleEdit(
+                              item.id
+                            )
+                          }
+                          title="Editar cliente"
+                        >
+                          ✏️
+                        </button>
+
                       </td>
 
                     </tr>
