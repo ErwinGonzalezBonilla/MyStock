@@ -165,6 +165,50 @@ export default function Clients() {
   };
 
   // =========================
+  // ELIMINAR CLIENTE
+  // =========================
+
+  const handleDelete = (id) => {
+    const clientToDelete =
+      clients.find(
+        (item) => item.id === id
+      );
+
+    if (!clientToDelete) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `¿Seguro que quieres eliminar al cliente "${clientToDelete.name}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const updatedClients =
+      clients.filter(
+        (item) => item.id !== id
+      );
+
+    localStorage.setItem(
+      "clients",
+      JSON.stringify(updatedClients)
+    );
+
+    setClients(updatedClients);
+
+    if (editingId === id) {
+      setClient(EMPTY_CLIENT);
+      setEditingId(null);
+    }
+
+    setMessage(
+      "Cliente eliminado correctamente."
+    );
+  };
+
+  // =========================
   // BUSCAR
   // =========================
 
@@ -204,18 +248,18 @@ export default function Clients() {
       {message && (
         <div
           className={`alert ${
-            message.includes(
-              "actualizado"
-            )
+            message.includes("actualizado")
               ? "alert-primary"
+              : message.includes("eliminado")
+              ? "alert-danger"
               : "alert-success"
           }`}
           role="alert"
         >
-          {message.includes(
-            "actualizado"
-          )
+          {message.includes("actualizado")
             ? "✏️"
+            : message.includes("eliminado")
+            ? "🗑️"
             : "✅"}{" "}
           {message}
         </div>
@@ -390,18 +434,35 @@ export default function Clients() {
 
                       <td>
 
-                        <button
-                          type="button"
-                          className="btn btn-warning btn-sm"
-                          onClick={() =>
-                            handleEdit(
-                              item.id
-                            )
-                          }
-                          title="Editar cliente"
-                        >
-                          ✏️
-                        </button>
+                        <div className="d-flex gap-2">
+
+                          <button
+                            type="button"
+                            className="btn btn-warning btn-sm"
+                            onClick={() =>
+                              handleEdit(
+                                item.id
+                              )
+                            }
+                            title="Editar cliente"
+                          >
+                            ✏️
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btn-danger btn-sm"
+                            onClick={() =>
+                              handleDelete(
+                                item.id
+                              )
+                            }
+                            title="Eliminar cliente"
+                          >
+                            🗑️
+                          </button>
+
+                        </div>
 
                       </td>
 
