@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import ClientForm from "../components/clients/ClientForm";
 import ClientDetailsModal from "../components/clients/ClientDetailsModal";
+import StatCard from "../components/common/StatCard";
 
 const EMPTY_CLIENT = {
   id: "",
@@ -51,6 +52,10 @@ export default function Clients() {
   const [selectedClient, setSelectedClient] =
     useState(null);
 
+  // =========================
+  // FORMULARIO
+  // =========================
+
   const handleChange = (e) => {
     setClient((prev) => ({
       ...prev,
@@ -60,8 +65,14 @@ export default function Clients() {
     setMessage("");
   };
 
+  // =========================
+  // GUARDAR / EDITAR
+  // =========================
+
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // EDITAR CLIENTE
 
     if (editingId) {
       const updatedClients =
@@ -95,6 +106,8 @@ export default function Clients() {
 
       return;
     }
+
+    // CREAR CLIENTE
 
     const newClient = {
       ...client,
@@ -255,6 +268,45 @@ export default function Clients() {
     setSearch("");
   };
 
+  // =========================
+  // ESTADÍSTICAS
+  // =========================
+
+  const totalClients =
+    clients.length;
+
+  const clientsWithEmail =
+    clients.filter(
+      (item) =>
+        item.email?.trim()
+    ).length;
+
+  const clientsWithPhone =
+    clients.filter(
+      (item) =>
+        item.phone?.trim()
+    ).length;
+
+  const newClientsThisMonth =
+    clients.filter((item) => {
+      if (!item.createdAt) {
+        return false;
+      }
+
+      const date =
+        new Date(item.createdAt);
+
+      const now =
+        new Date();
+
+      return (
+        date.getMonth() ===
+          now.getMonth() &&
+        date.getFullYear() ===
+          now.getFullYear()
+      );
+    }).length;
+
   return (
     <div className="container-fluid p-4">
 
@@ -262,27 +314,41 @@ export default function Clients() {
         Clientes
       </h2>
 
+      {/* =========================
+          MENSAJE
+      ========================= */}
+
       {message && (
         <div
           className={`alert ${
-            message.includes("actualizado")
+            message.includes(
+              "actualizado"
+            )
               ? "alert-primary"
-              : message.includes("eliminado")
+              : message.includes(
+                  "eliminado"
+                )
               ? "alert-danger"
               : "alert-success"
           }`}
           role="alert"
         >
-          {message.includes("actualizado")
+          {message.includes(
+            "actualizado"
+          )
             ? "✏️"
-            : message.includes("eliminado")
+            : message.includes(
+                "eliminado"
+              )
             ? "🗑️"
             : "✅"}{" "}
           {message}
         </div>
       )}
 
-      {/* FORMULARIO */}
+      {/* =========================
+          FORMULARIO
+      ========================= */}
 
       <ClientForm
         client={client}
@@ -296,7 +362,9 @@ export default function Clients() {
           <button
             type="button"
             className="btn btn-outline-secondary"
-            onClick={handleCancelEdit}
+            onClick={
+              handleCancelEdit
+            }
           >
             Cancelar edición
           </button>
@@ -304,7 +372,57 @@ export default function Clients() {
         </div>
       )}
 
-      {/* LISTA */}
+      {/* =========================
+          ESTADÍSTICAS
+      ========================= */}
+
+      <div className="row mb-4">
+
+        <div className="col-lg-3 col-md-6 mb-3">
+
+          <StatCard
+            title="Total clientes"
+            value={totalClients}
+            subtitle="Clientes registrados"
+          />
+
+        </div>
+
+        <div className="col-lg-3 col-md-6 mb-3">
+
+          <StatCard
+            title="Con email"
+            value={clientsWithEmail}
+            subtitle="Clientes con correo"
+          />
+
+        </div>
+
+        <div className="col-lg-3 col-md-6 mb-3">
+
+          <StatCard
+            title="Con teléfono"
+            value={clientsWithPhone}
+            subtitle="Clientes con teléfono"
+          />
+
+        </div>
+
+        <div className="col-lg-3 col-md-6 mb-3">
+
+          <StatCard
+            title="Nuevos este mes"
+            value={newClientsThisMonth}
+            subtitle="Registrados este mes"
+          />
+
+        </div>
+
+      </div>
+
+      {/* =========================
+          LISTA DE CLIENTES
+      ========================= */}
 
       <div className="stat-card">
 
@@ -331,7 +449,9 @@ export default function Clients() {
 
         </div>
 
-        {/* BUSCADOR */}
+        {/* =========================
+            BUSCADOR
+        ========================= */}
 
         <div className="row mb-4">
 
@@ -347,7 +467,9 @@ export default function Clients() {
               placeholder="🔍 Nombre, DNI/NIF o email..."
               value={search}
               onChange={(e) =>
-                setSearch(e.target.value)
+                setSearch(
+                  e.target.value
+                )
               }
             />
 
@@ -358,7 +480,9 @@ export default function Clients() {
             <button
               type="button"
               className="btn btn-outline-secondary w-100"
-              onClick={clearSearch}
+              onClick={
+                clearSearch
+              }
               disabled={!search}
             >
               🔄 Limpiar búsqueda
@@ -367,6 +491,10 @@ export default function Clients() {
           </div>
 
         </div>
+
+        {/* =========================
+            SIN CLIENTES
+        ========================= */}
 
         {clients.length === 0 ? (
 
@@ -384,6 +512,10 @@ export default function Clients() {
 
         ) : filteredClients.length === 0 ? (
 
+          /* =========================
+             SIN RESULTADOS
+          ========================= */
+
           <div className="text-center text-muted py-4">
 
             <div className="fs-1 mb-2">
@@ -397,7 +529,9 @@ export default function Clients() {
             <button
               type="button"
               className="btn btn-outline-primary btn-sm"
-              onClick={clearSearch}
+              onClick={
+                clearSearch
+              }
             >
               Limpiar búsqueda
             </button>
@@ -406,6 +540,10 @@ export default function Clients() {
 
         ) : (
 
+          /* =========================
+             TABLA
+          ========================= */
+
           <div className="table-responsive">
 
             <table className="table table-hover align-middle">
@@ -413,11 +551,27 @@ export default function Clients() {
               <thead className="table-light">
 
                 <tr>
-                  <th>Cliente</th>
-                  <th>DNI / NIF</th>
-                  <th>Teléfono</th>
-                  <th>Email</th>
-                  <th>Acciones</th>
+
+                  <th>
+                    Cliente
+                  </th>
+
+                  <th>
+                    DNI / NIF
+                  </th>
+
+                  <th>
+                    Teléfono
+                  </th>
+
+                  <th>
+                    Email
+                  </th>
+
+                  <th>
+                    Acciones
+                  </th>
+
                 </tr>
 
               </thead>
@@ -427,9 +581,12 @@ export default function Clients() {
                 {filteredClients.map(
                   (item) => (
 
-                    <tr key={item.id}>
+                    <tr
+                      key={item.id}
+                    >
 
                       <td>
+
                         <button
                           type="button"
                           className="btn btn-link p-0 text-decoration-none fw-semibold"
@@ -441,18 +598,22 @@ export default function Clients() {
                         >
                           {item.name}
                         </button>
+
                       </td>
 
                       <td>
-                        {item.taxId || "—"}
+                        {item.taxId ||
+                          "—"}
                       </td>
 
                       <td>
-                        {item.phone || "—"}
+                        {item.phone ||
+                          "—"}
                       </td>
 
                       <td>
-                        {item.email || "—"}
+                        {item.email ||
+                          "—"}
                       </td>
 
                       <td>
@@ -517,11 +678,15 @@ export default function Clients() {
 
       </div>
 
-      {/* DETALLES DEL CLIENTE */}
+      {/* =========================
+          MODAL DETALLES
+      ========================= */}
 
       <ClientDetailsModal
         client={selectedClient}
-        onClose={handleCloseDetails}
+        onClose={
+          handleCloseDetails
+        }
       />
 
     </div>
