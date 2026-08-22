@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import ClientForm from "../components/clients/ClientForm";
+import ClientDetailsModal from "../components/clients/ClientDetailsModal";
 
 const EMPTY_CLIENT = {
   id: "",
@@ -47,6 +48,9 @@ export default function Clients() {
   const [editingId, setEditingId] =
     useState(null);
 
+  const [selectedClient, setSelectedClient] =
+    useState(null);
+
   const handleChange = (e) => {
     setClient((prev) => ({
       ...prev,
@@ -58,10 +62,6 @@ export default function Clients() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    // =========================
-    // EDITAR CLIENTE
-    // =========================
 
     if (editingId) {
       const updatedClients =
@@ -95,10 +95,6 @@ export default function Clients() {
 
       return;
     }
-
-    // =========================
-    // CREAR CLIENTE
-    // =========================
 
     const newClient = {
       ...client,
@@ -165,7 +161,7 @@ export default function Clients() {
   };
 
   // =========================
-  // ELIMINAR CLIENTE
+  // ELIMINAR
   // =========================
 
   const handleDelete = (id) => {
@@ -206,6 +202,27 @@ export default function Clients() {
     setMessage(
       "Cliente eliminado correctamente."
     );
+  };
+
+  // =========================
+  // VER DETALLES
+  // =========================
+
+  const handleViewDetails = (id) => {
+    const clientToView =
+      clients.find(
+        (item) => item.id === id
+      );
+
+    if (!clientToView) {
+      return;
+    }
+
+    setSelectedClient(clientToView);
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedClient(null);
   };
 
   // =========================
@@ -265,9 +282,7 @@ export default function Clients() {
         </div>
       )}
 
-      {/* =========================
-          FORMULARIO
-      ========================= */}
+      {/* FORMULARIO */}
 
       <ClientForm
         client={client}
@@ -289,9 +304,7 @@ export default function Clients() {
         </div>
       )}
 
-      {/* =========================
-          LISTA
-      ========================= */}
+      {/* LISTA */}
 
       <div className="stat-card">
 
@@ -416,8 +429,18 @@ export default function Clients() {
 
                     <tr key={item.id}>
 
-                      <td className="fw-semibold">
-                        {item.name}
+                      <td>
+                        <button
+                          type="button"
+                          className="btn btn-link p-0 text-decoration-none fw-semibold"
+                          onClick={() =>
+                            handleViewDetails(
+                              item.id
+                            )
+                          }
+                        >
+                          {item.name}
+                        </button>
                       </td>
 
                       <td>
@@ -435,6 +458,19 @@ export default function Clients() {
                       <td>
 
                         <div className="d-flex gap-2">
+
+                          <button
+                            type="button"
+                            className="btn btn-info btn-sm"
+                            onClick={() =>
+                              handleViewDetails(
+                                item.id
+                              )
+                            }
+                            title="Ver detalles"
+                          >
+                            👁️
+                          </button>
 
                           <button
                             type="button"
@@ -480,6 +516,13 @@ export default function Clients() {
         )}
 
       </div>
+
+      {/* DETALLES DEL CLIENTE */}
+
+      <ClientDetailsModal
+        client={selectedClient}
+        onClose={handleCloseDetails}
+      />
 
     </div>
   );
