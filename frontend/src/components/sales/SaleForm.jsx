@@ -1,5 +1,6 @@
 export default function SaleForm({
   products,
+  clients,
   sale,
   handleChange,
   handleSubmit,
@@ -7,6 +8,11 @@ export default function SaleForm({
   const selectedProduct = products.find(
     (product) =>
       product.id === sale.productId
+  );
+
+  const selectedClient = clients.find(
+    (client) =>
+      client.id === sale.clientId
   );
 
   const price = selectedProduct
@@ -30,6 +36,104 @@ export default function SaleForm({
       </h4>
 
       <form onSubmit={handleSubmit}>
+
+        {/* CLIENTE */}
+
+        <div className="mb-3">
+
+          <label
+            htmlFor="clientId"
+            className="form-label fw-semibold"
+          >
+            Cliente
+          </label>
+
+          <select
+            id="clientId"
+            name="clientId"
+            className="form-select"
+            value={sale.clientId}
+            onChange={handleChange}
+          >
+
+            <option value="">
+              Venta sin cliente
+            </option>
+
+            {clients.map((client) => (
+
+              <option
+                key={client.id}
+                value={client.id}
+              >
+                {client.name}
+                {client.taxId
+                  ? ` — ${client.taxId}`
+                  : ""}
+              </option>
+
+            ))}
+
+          </select>
+
+          <small className="text-muted">
+            Puedes registrar una venta sin
+            asociarla a un cliente.
+          </small>
+
+        </div>
+
+        {/* INFORMACIÓN DEL CLIENTE */}
+
+        {selectedClient && (
+
+          <div className="alert alert-light border mb-3">
+
+            <div className="row">
+
+              <div className="col-md-4">
+
+                <small className="text-muted">
+                  Cliente
+                </small>
+
+                <div className="fw-semibold">
+                  {selectedClient.name}
+                </div>
+
+              </div>
+
+              <div className="col-md-4">
+
+                <small className="text-muted">
+                  DNI / NIF
+                </small>
+
+                <div className="fw-semibold">
+                  {selectedClient.taxId ||
+                    "—"}
+                </div>
+
+              </div>
+
+              <div className="col-md-4">
+
+                <small className="text-muted">
+                  Teléfono
+                </small>
+
+                <div className="fw-semibold">
+                  {selectedClient.phone ||
+                    "—"}
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )}
 
         {/* PRODUCTO */}
 
@@ -65,7 +169,8 @@ export default function SaleForm({
                 }
               >
                 {product.name} —{" "}
-                {product.sku || "Sin SKU"} — Stock:{" "}
+                {product.sku ||
+                  "Sin SKU"} — Stock:{" "}
                 {product.stock}
               </option>
 
@@ -142,7 +247,10 @@ export default function SaleForm({
             name="quantity"
             type="number"
             min="1"
-            max={availableStock || undefined}
+            max={
+              availableStock ||
+              undefined
+            }
             className="form-control"
             value={sale.quantity}
             onChange={handleChange}

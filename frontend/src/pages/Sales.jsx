@@ -24,6 +24,26 @@ export default function Sales() {
     }
   });
 
+  const [clients] = useState(() => {
+    const savedClients =
+      localStorage.getItem("clients");
+
+    if (!savedClients) {
+      return [];
+    }
+
+    try {
+      return JSON.parse(savedClients);
+    } catch (error) {
+      console.error(
+        "Error al cargar clientes:",
+        error
+      );
+
+      return [];
+    }
+  });
+
   const [sales, setSales] = useState(() => {
     const savedSales =
       localStorage.getItem("sales");
@@ -45,6 +65,7 @@ export default function Sales() {
   });
 
   const [sale, setSale] = useState({
+    clientId: "",
     productId: "",
     quantity: 1,
   });
@@ -87,13 +108,16 @@ export default function Sales() {
       return;
     }
 
+    const selectedClient = clients.find(
+      (client) =>
+        client.id === sale.clientId
+    );
+
     const quantity =
       Number(sale.quantity);
 
     const currentStock =
       Number(selectedProduct.stock) || 0;
-
-    // Validar cantidad
 
     if (
       quantity <= 0 ||
@@ -122,6 +146,12 @@ export default function Sales() {
 
     const newSale = {
       id: crypto.randomUUID(),
+
+      clientId:
+        selectedClient?.id || "",
+
+      clientName:
+        selectedClient?.name || "Venta sin cliente",
 
       productId:
         selectedProduct.id,
@@ -244,6 +274,7 @@ export default function Sales() {
     // =========================
 
     setSale({
+      clientId: "",
       productId: "",
       quantity: 1,
     });
@@ -258,6 +289,7 @@ export default function Sales() {
 
       <SaleForm
         products={products}
+        clients={clients}
         sale={sale}
         handleChange={handleChange}
         handleSubmit={handleSubmit}
