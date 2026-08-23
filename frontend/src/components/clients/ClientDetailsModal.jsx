@@ -24,10 +24,18 @@ export default function ClientDetailsModal({
     );
   };
 
+  // =========================
+  // VENTAS DEL CLIENTE
+  // =========================
+
   const clientSales = sales.filter(
     (sale) =>
       sale.clientId === client.id
   );
+
+  // =========================
+  // TOTAL COMPRADO
+  // =========================
 
   const totalPurchases =
     clientSales.reduce(
@@ -37,6 +45,10 @@ export default function ClientDetailsModal({
       0
     );
 
+  // =========================
+  // ARTÍCULOS COMPRADOS
+  // =========================
+
   const totalItems =
     clientSales.reduce(
       (total, sale) =>
@@ -45,23 +57,57 @@ export default function ClientDetailsModal({
       0
     );
 
+  // =========================
+  // TICKET MEDIO
+  // =========================
+
+  const averageTicket =
+    clientSales.length > 0
+      ? totalPurchases /
+        clientSales.length
+      : 0;
+
+  // =========================
+  // ÚLTIMA COMPRA
+  // =========================
+
+  const sortedSales = [
+    ...clientSales,
+  ].sort(
+    (a, b) =>
+      new Date(b.date) -
+      new Date(a.date)
+  );
+
+  const lastPurchase =
+    sortedSales.length > 0
+      ? sortedSales[0]
+      : null;
+
   return (
     <>
+      {/* BACKDROP */}
+
       <div
         className="modal-backdrop fade show"
         style={{ zIndex: 1040 }}
       />
+
+      {/* MODAL */}
 
       <div
         className="modal d-block"
         tabIndex="-1"
         style={{ zIndex: 1050 }}
       >
+
         <div className="modal-dialog modal-dialog-centered modal-lg">
 
           <div className="modal-content">
 
-            {/* HEADER */}
+            {/* =========================
+                HEADER
+            ========================= */}
 
             <div className="modal-header">
 
@@ -77,11 +123,15 @@ export default function ClientDetailsModal({
 
             </div>
 
-            {/* BODY */}
+            {/* =========================
+                BODY
+            ========================= */}
 
             <div className="modal-body">
 
-              {/* DATOS CLIENTE */}
+              {/* =========================
+                  INFORMACIÓN CLIENTE
+              ========================= */}
 
               <div className="mb-4">
 
@@ -110,7 +160,8 @@ export default function ClientDetailsModal({
                     </small>
 
                     <div>
-                      {client.taxId || "—"}
+                      {client.taxId ||
+                        "—"}
                     </div>
 
                   </div>
@@ -122,7 +173,8 @@ export default function ClientDetailsModal({
                     </small>
 
                     <div>
-                      {client.phone || "—"}
+                      {client.phone ||
+                        "—"}
                     </div>
 
                   </div>
@@ -136,7 +188,8 @@ export default function ClientDetailsModal({
                   </small>
 
                   <div>
-                    {client.email || "—"}
+                    {client.email ||
+                      "—"}
                   </div>
 
                 </div>
@@ -148,7 +201,8 @@ export default function ClientDetailsModal({
                   </small>
 
                   <div>
-                    {client.address || "—"}
+                    {client.address ||
+                      "—"}
                   </div>
 
                 </div>
@@ -162,7 +216,8 @@ export default function ClientDetailsModal({
                     </small>
 
                     <div>
-                      {client.city || "—"}
+                      {client.city ||
+                        "—"}
                     </div>
 
                   </div>
@@ -174,7 +229,8 @@ export default function ClientDetailsModal({
                     </small>
 
                     <div>
-                      {client.postalCode || "—"}
+                      {client.postalCode ||
+                        "—"}
                     </div>
 
                   </div>
@@ -198,6 +254,7 @@ export default function ClientDetailsModal({
                 </div>
 
                 {client.updatedAt && (
+
                   <div className="mt-2">
 
                     <small className="text-muted">
@@ -211,23 +268,28 @@ export default function ClientDetailsModal({
                     </div>
 
                   </div>
+
                 )}
 
               </div>
 
-              {/* RESUMEN DE COMPRAS */}
+              {/* =========================
+                  RESUMEN ECONÓMICO
+              ========================= */}
 
               <div className="mb-4">
 
                 <h6 className="fw-bold mb-3">
-                  Resumen de compras
+                  Resumen económico
                 </h6>
 
                 <div className="row">
 
+                  {/* COMPRAS */}
+
                   <div className="col-md-4 mb-3">
 
-                    <div className="border rounded p-3">
+                    <div className="border rounded p-3 h-100">
 
                       <small className="text-muted">
                         Compras
@@ -237,13 +299,19 @@ export default function ClientDetailsModal({
                         {clientSales.length}
                       </div>
 
+                      <small className="text-muted">
+                        ventas registradas
+                      </small>
+
                     </div>
 
                   </div>
 
+                  {/* ARTÍCULOS */}
+
                   <div className="col-md-4 mb-3">
 
-                    <div className="border rounded p-3">
+                    <div className="border rounded p-3 h-100">
 
                       <small className="text-muted">
                         Artículos
@@ -253,16 +321,22 @@ export default function ClientDetailsModal({
                         {totalItems}
                       </div>
 
+                      <small className="text-muted">
+                        unidades compradas
+                      </small>
+
                     </div>
 
                   </div>
 
+                  {/* TOTAL */}
+
                   <div className="col-md-4 mb-3">
 
-                    <div className="border rounded p-3">
+                    <div className="border rounded p-3 h-100">
 
                       <small className="text-muted">
-                        Total comprado
+                        Total gastado
                       </small>
 
                       <div className="fs-4 fw-bold">
@@ -272,6 +346,75 @@ export default function ClientDetailsModal({
                         )}
                       </div>
 
+                      <small className="text-muted">
+                        gasto acumulado
+                      </small>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* SEGUNDA FILA */}
+
+                <div className="row">
+
+                  {/* TICKET MEDIO */}
+
+                  <div className="col-md-6 mb-3">
+
+                    <div className="border rounded p-3">
+
+                      <small className="text-muted">
+                        Ticket medio
+                      </small>
+
+                      <div className="fs-4 fw-bold">
+                        €{" "}
+                        {averageTicket.toFixed(
+                          2
+                        )}
+                      </div>
+
+                      <small className="text-muted">
+                        promedio por compra
+                      </small>
+
+                    </div>
+
+                  </div>
+
+                  {/* ÚLTIMA COMPRA */}
+
+                  <div className="col-md-6 mb-3">
+
+                    <div className="border rounded p-3">
+
+                      <small className="text-muted">
+                        Última compra
+                      </small>
+
+                      <div className="fw-bold mt-1">
+
+                        {lastPurchase
+                          ? formatDate(
+                              lastPurchase.date
+                            )
+                          : "Sin compras"}
+
+                      </div>
+
+                      {lastPurchase && (
+
+                        <small className="text-muted">
+
+                          {lastPurchase.productName}
+
+                        </small>
+
+                      )}
+
                     </div>
 
                   </div>
@@ -280,7 +423,9 @@ export default function ClientDetailsModal({
 
               </div>
 
-              {/* HISTORIAL */}
+              {/* =========================
+                  HISTORIAL
+              ========================= */}
 
               <div>
 
@@ -346,11 +491,13 @@ export default function ClientDetailsModal({
                             >
 
                               <td>
+
                                 <small>
                                   {formatDate(
                                     sale.date
                                   )}
                                 </small>
+
                               </td>
 
                               <td className="fw-semibold">
@@ -398,7 +545,9 @@ export default function ClientDetailsModal({
 
             </div>
 
-            {/* FOOTER */}
+            {/* =========================
+                FOOTER
+            ========================= */}
 
             <div className="modal-footer">
 
@@ -415,6 +564,7 @@ export default function ClientDetailsModal({
           </div>
 
         </div>
+
       </div>
     </>
   );
