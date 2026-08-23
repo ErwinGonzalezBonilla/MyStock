@@ -28,7 +28,7 @@ const menuItems = [
   },
   {
     name: "Clientes",
-    path: "/customers",
+    path: "/clients",
   },
   {
     name: "Proveedores",
@@ -58,8 +58,11 @@ export default function Sidebar() {
       }}
     >
       <div className="p-4">
-        {/* Logo */}
+
+        {/* LOGO */}
+
         <div className="d-flex justify-content-center mb-3">
+
           <img
             src={logo}
             alt="MyStock Logo"
@@ -68,27 +71,41 @@ export default function Sidebar() {
               height: "auto",
             }}
           />
+
         </div>
 
         <hr className="my-3" />
 
-        {/* Menú */}
+        {/* MENÚ */}
+
         <ul className="nav flex-column">
+
           {menuItems.map((item) => (
-            <li key={item.path} className="nav-item mb-2">
+
+            <li
+              key={item.path}
+              className="nav-item mb-2"
+            >
+
               <NavLink
                 to={item.path}
                 className={({ isActive }) =>
                   `btn w-100 text-start ${
-                    isActive ? "btn-primary" : "btn-light"
+                    isActive
+                      ? "btn-primary"
+                      : "btn-light"
                   }`
                 }
               >
                 {item.name}
               </NavLink>
+
             </li>
+
           ))}
+
         </ul>
+
       </div>
     </aside>
   );

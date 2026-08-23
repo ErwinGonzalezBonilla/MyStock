@@ -40,6 +40,30 @@ export default function Clients() {
       }
     });
 
+  // =========================
+  // VENTAS
+  // =========================
+
+  const [sales] = useState(() => {
+    const savedSales =
+      localStorage.getItem("sales");
+
+    if (!savedSales) {
+      return [];
+    }
+
+    try {
+      return JSON.parse(savedSales);
+    } catch (error) {
+      console.error(
+        "Error al cargar ventas:",
+        error
+      );
+
+      return [];
+    }
+  });
+
   const [message, setMessage] =
     useState("");
 
@@ -449,9 +473,7 @@ export default function Clients() {
 
         </div>
 
-        {/* =========================
-            BUSCADOR
-        ========================= */}
+        {/* BUSCADOR */}
 
         <div className="row mb-4">
 
@@ -493,7 +515,7 @@ export default function Clients() {
         </div>
 
         {/* =========================
-            SIN CLIENTES
+            CONTENIDO
         ========================= */}
 
         {clients.length === 0 ? (
@@ -511,10 +533,6 @@ export default function Clients() {
           </div>
 
         ) : filteredClients.length === 0 ? (
-
-          /* =========================
-             SIN RESULTADOS
-          ========================= */
 
           <div className="text-center text-muted py-4">
 
@@ -539,10 +557,6 @@ export default function Clients() {
           </div>
 
         ) : (
-
-          /* =========================
-             TABLA
-          ========================= */
 
           <div className="table-responsive">
 
@@ -684,6 +698,7 @@ export default function Clients() {
 
       <ClientDetailsModal
         client={selectedClient}
+        sales={sales}
         onClose={
           handleCloseDetails
         }
