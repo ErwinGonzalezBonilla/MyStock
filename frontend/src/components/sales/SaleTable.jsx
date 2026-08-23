@@ -36,7 +36,10 @@ export default function SaleTable({
         </div>
 
         <span className="badge bg-dark">
-          {sales.length} ventas
+          {sales.length}{" "}
+          {sales.length === 1
+            ? "venta"
+            : "ventas"}
         </span>
 
       </div>
@@ -66,10 +69,17 @@ export default function SaleTable({
               <tr>
 
                 <th>Fecha</th>
+
+                <th>Cliente</th>
+
                 <th>Producto</th>
+
                 <th>SKU</th>
+
                 <th>Cantidad</th>
+
                 <th>Precio</th>
+
                 <th>Total</th>
 
               </tr>
@@ -80,7 +90,11 @@ export default function SaleTable({
 
               {sales.map((sale) => (
 
-                <tr key={sale.id}>
+                <tr
+                  key={sale.id}
+                >
+
+                  {/* FECHA */}
 
                   <td>
                     <small>
@@ -90,9 +104,33 @@ export default function SaleTable({
                     </small>
                   </td>
 
+                  {/* CLIENTE */}
+
+                  <td>
+
+                    {sale.clientName ? (
+
+                      <span className="fw-semibold">
+                        {sale.clientName}
+                      </span>
+
+                    ) : (
+
+                      <span className="text-muted">
+                        Venta sin cliente
+                      </span>
+
+                    )}
+
+                  </td>
+
+                  {/* PRODUCTO */}
+
                   <td className="fw-semibold">
                     {sale.productName}
                   </td>
+
+                  {/* SKU */}
 
                   <td>
 
@@ -103,21 +141,27 @@ export default function SaleTable({
 
                   </td>
 
+                  {/* CANTIDAD */}
+
                   <td>
                     {sale.quantity}
                   </td>
 
+                  {/* PRECIO */}
+
                   <td>
                     €{" "}
                     {Number(
-                      sale.unitPrice
+                      sale.unitPrice || 0
                     ).toFixed(2)}
                   </td>
+
+                  {/* TOTAL */}
 
                   <td className="fw-bold">
                     €{" "}
                     {Number(
-                      sale.total
+                      sale.total || 0
                     ).toFixed(2)}
                   </td>
 
