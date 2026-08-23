@@ -46,6 +46,26 @@ export default function Dashboard() {
     }
   });
 
+  const [clients] = useState(() => {
+    const savedClients =
+      localStorage.getItem("clients");
+
+    if (!savedClients) {
+      return [];
+    }
+
+    try {
+      return JSON.parse(savedClients);
+    } catch (error) {
+      console.error(
+        "Error al cargar clientes:",
+        error
+      );
+
+      return [];
+    }
+  });
+
   // =========================
   // FECHA ACTUAL
   // =========================
@@ -165,6 +185,39 @@ export default function Dashboard() {
             inventorySalesValue) *
           100
         ).toFixed(1)
+      : 0;
+
+  // =========================
+  // CLIENTES
+  // =========================
+
+  const totalClients =
+    clients.length;
+
+  const clientSales =
+    sales.filter(
+      (sale) => sale.clientId
+    );
+
+  const clientsWithPurchases =
+    new Set(
+      clientSales.map(
+        (sale) => sale.clientId
+      )
+    ).size;
+
+  const clientSalesRevenue =
+    clientSales.reduce(
+      (total, sale) =>
+        total +
+        (Number(sale.total) || 0),
+      0
+    );
+
+  const clientAverageTicket =
+    clientSales.length > 0
+      ? clientSalesRevenue /
+        clientSales.length
       : 0;
 
   // =========================
@@ -291,6 +344,58 @@ export default function Dashboard() {
       </div>
 
       {/* =========================
+          CLIENTES
+      ========================= */}
+
+      <div className="row">
+
+        <div className="col-lg-3 col-md-6 mb-4">
+
+          <StatCard
+            title="Clientes"
+            value={totalClients}
+            subtitle="Clientes registrados"
+          />
+
+        </div>
+
+        <div className="col-lg-3 col-md-6 mb-4">
+
+          <StatCard
+            title="Clientes con compras"
+            value={clientsWithPurchases}
+            subtitle="Clientes que han comprado"
+          />
+
+        </div>
+
+        <div className="col-lg-3 col-md-6 mb-4">
+
+          <StatCard
+            title="Ventas a clientes"
+            value={formatCurrency(
+              clientSalesRevenue
+            )}
+            subtitle="Ventas asociadas a clientes"
+          />
+
+        </div>
+
+        <div className="col-lg-3 col-md-6 mb-4">
+
+          <StatCard
+            title="Ticket medio"
+            value={formatCurrency(
+              clientAverageTicket
+            )}
+            subtitle="Promedio por venta"
+          />
+
+        </div>
+
+      </div>
+
+      {/* =========================
           GRÁFICO + IA
       ========================= */}
 
@@ -353,7 +458,7 @@ export default function Dashboard() {
       </div>
 
       {/* =========================
-          ÚLTIMAS VENTAS
+          ÚLTIMAS VENTAS + STOCK BAJO
       ========================= */}
 
       <div className="row">
@@ -365,10 +470,6 @@ export default function Dashboard() {
           />
 
         </div>
-
-        {/* =========================
-            STOCK BAJO
-        ========================= */}
 
         <div className="col-lg-4">
 
