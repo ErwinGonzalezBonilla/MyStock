@@ -1,45 +1,218 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import CompanyContext from "../context/CompanyContext";
 
+const API_URL = "http://127.0.0.1:5000/api/companies";
+
 export default function Company() {
-  const { company, setCompany } = useContext(CompanyContext);
+  const { company, setCompany } =
+    useContext(CompanyContext);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [message, setMessage] =
+    useState("");
+
+  const [error, setError] =
+    useState("");
+
+  // =========================
+  // CARGAR EMPRESA DESDE API
+  // =========================
+
+  useEffect(() => {
+    const loadCompany = async () => {
+      try {
+        setError("");
+
+        const response =
+          await fetch(API_URL);
+
+        if (!response.ok) {
+          throw new Error(
+            "No se pudieron cargar las empresas."
+          );
+        }
+
+        const companies =
+          await response.json();
+
+        if (companies.length > 0) {
+          const savedCompany =
+            companies[0];
+
+          setCompany((prev) => ({
+            ...prev,
+            id: savedCompany.id,
+            name:
+              savedCompany.name || "",
+            email:
+              savedCompany.email || "",
+            phone:
+              savedCompany.phone || "",
+            taxId:
+              savedCompany.taxId || "",
+          }));
+        }
+      } catch (err) {
+        console.error(
+          "Error cargando empresa:",
+          err
+        );
+
+        setError(
+          "No se pudo conectar con el servidor."
+        );
+      }
+    };
+
+    loadCompany();
+  }, [setCompany]);
+
+  // =========================
+  // CAMBIAR CAMPOS
+  // =========================
 
   const handleChange = (e) => {
     setCompany({
       ...company,
       [e.target.name]: e.target.value,
     });
+
+    setMessage("");
+    setError("");
   };
 
-  const handleLogo = (e) => {
-    const file = e.target.files[0];
+  // =========================
+  // LOGO
+  // =========================
 
-    if (!file) return;
+  const handleLogo = (e) => {
+    const file =
+      e.target.files[0];
+
+    if (!file) {
+      return;
+    }
 
     setCompany({
       ...company,
       logo: URL.createObjectURL(file),
     });
+
+    setMessage("");
+    setError("");
   };
 
-  const handleSubmit = (e) => {
+  // =========================
+  // GUARDAR EMPRESA
+  // =========================
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log(company);
+    setLoading(true);
+    setMessage("");
+    setError("");
 
-    alert("Empresa guardada correctamente.");
+    try {
+      const response =
+        await fetch(API_URL, {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            name: company.name,
+            taxId: company.taxId,
+            email: company.email,
+            phone: company.phone,
+          }),
+        });
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "No se pudo guardar la empresa."
+        );
+      }
+
+      setCompany((prev) => ({
+        ...prev,
+        id: data.company.id,
+        name:
+          data.company.name || "",
+        email:
+          data.company.email || "",
+        phone:
+          data.company.phone || "",
+        taxId:
+          data.company.taxId || "",
+      }));
+
+      setMessage(
+        "Empresa guardada correctamente."
+      );
+    } catch (err) {
+      console.error(
+        "Error guardando empresa:",
+        err
+      );
+
+      setError(
+        err.message ||
+          "No se pudo guardar la empresa."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="container-fluid p-4">
+
       <h2 className="fw-bold mb-4">
         Configuración de la Empresa
       </h2>
 
+      {/* MENSAJE DE ÉXITO */}
+
+      {message && (
+        <div
+          className="alert alert-success"
+          role="alert"
+        >
+          ✅ {message}
+        </div>
+      )}
+
+      {/* MENSAJE DE ERROR */}
+
+      {error && (
+        <div
+          className="alert alert-danger"
+          role="alert"
+        >
+          ⚠️ {error}
+        </div>
+      )}
+
       <div className="stat-card">
+
         <form onSubmit={handleSubmit}>
 
+          {/* =========================
+              LOGO
+          ========================= */}
+
           <div className="mb-4">
+
             <label className="form-label fw-bold">
               Logo de la empresa
             </label>
@@ -50,10 +223,12 @@ export default function Company() {
               accept="image/*"
               onChange={handleLogo}
             />
+
           </div>
 
           {company.logo && (
             <div className="mb-4 text-center">
+
               <img
                 src={company.logo}
                 alt="Logo empresa"
@@ -64,10 +239,16 @@ export default function Company() {
                   borderRadius: "10px",
                 }}
               />
+
             </div>
           )}
 
+          {/* =========================
+              NOMBRE
+          ========================= */}
+
           <div className="mb-3">
+
             <label className="form-label">
               Nombre de la empresa
             </label>
@@ -76,12 +257,39 @@ export default function Company() {
               type="text"
               name="name"
               className="form-control"
-              value={company.name}
+              value={company.name || ""}
               onChange={handleChange}
+              required
             />
+
           </div>
 
+          {/* =========================
+              NIF / CIF
+          ========================= */}
+
           <div className="mb-3">
+
+            <label className="form-label">
+              DNI / NIF / CIF
+            </label>
+
+            <input
+              type="text"
+              name="taxId"
+              className="form-control"
+              value={company.taxId || ""}
+              onChange={handleChange}
+            />
+
+          </div>
+
+          {/* =========================
+              CORREO
+          ========================= */}
+
+          <div className="mb-3">
+
             <label className="form-label">
               Correo
             </label>
@@ -90,12 +298,18 @@ export default function Company() {
               type="email"
               name="email"
               className="form-control"
-              value={company.email}
+              value={company.email || ""}
               onChange={handleChange}
             />
+
           </div>
 
+          {/* =========================
+              TELÉFONO
+          ========================= */}
+
           <div className="mb-3">
+
             <label className="form-label">
               Teléfono
             </label>
@@ -104,12 +318,18 @@ export default function Company() {
               type="text"
               name="phone"
               className="form-control"
-              value={company.phone}
+              value={company.phone || ""}
               onChange={handleChange}
             />
+
           </div>
 
+          {/* =========================
+              PAÍS
+          ========================= */}
+
           <div className="mb-3">
+
             <label className="form-label">
               País
             </label>
@@ -118,12 +338,18 @@ export default function Company() {
               type="text"
               name="country"
               className="form-control"
-              value={company.country}
+              value={company.country || ""}
               onChange={handleChange}
             />
+
           </div>
 
+          {/* =========================
+              MONEDA
+          ========================= */}
+
           <div className="mb-4">
+
             <label className="form-label">
               Moneda
             </label>
@@ -132,20 +358,30 @@ export default function Company() {
               type="text"
               name="currency"
               className="form-control"
-              value={company.currency}
+              value={company.currency || ""}
               onChange={handleChange}
             />
+
           </div>
+
+          {/* =========================
+              BOTÓN
+          ========================= */}
 
           <button
             type="submit"
             className="btn btn-primary"
+            disabled={loading}
           >
-            Guardar empresa
+            {loading
+              ? "Guardando..."
+              : "Guardar empresa"}
           </button>
 
         </form>
+
       </div>
+
     </div>
   );
 }
