@@ -17,7 +17,7 @@ export default function Company() {
     useState("");
 
   // =========================
-  // CARGAR EMPRESA DESDE API
+  // CARGAR EMPRESA
   // =========================
 
   useEffect(() => {
@@ -105,7 +105,7 @@ export default function Company() {
   };
 
   // =========================
-  // GUARDAR EMPRESA
+  // GUARDAR / ACTUALIZAR
   // =========================
 
   const handleSubmit = async (e) => {
@@ -116,9 +116,20 @@ export default function Company() {
     setError("");
 
     try {
+      const isEditing =
+        Boolean(company.id);
+
+      const url = isEditing
+        ? `${API_URL}/${company.id}`
+        : API_URL;
+
+      const method = isEditing
+        ? "PUT"
+        : "POST";
+
       const response =
-        await fetch(API_URL, {
-          method: "POST",
+        await fetch(url, {
+          method,
 
           headers: {
             "Content-Type":
@@ -143,21 +154,31 @@ export default function Company() {
         );
       }
 
+      const savedCompany =
+        data.company;
+
       setCompany((prev) => ({
         ...prev,
-        id: data.company.id,
+
+        id: savedCompany.id,
+
         name:
-          data.company.name || "",
+          savedCompany.name || "",
+
         email:
-          data.company.email || "",
+          savedCompany.email || "",
+
         phone:
-          data.company.phone || "",
+          savedCompany.phone || "",
+
         taxId:
-          data.company.taxId || "",
+          savedCompany.taxId || "",
       }));
 
       setMessage(
-        "Empresa guardada correctamente."
+        isEditing
+          ? "Empresa actualizada correctamente."
+          : "Empresa guardada correctamente."
       );
     } catch (err) {
       console.error(
@@ -181,18 +202,25 @@ export default function Company() {
         Configuración de la Empresa
       </h2>
 
-      {/* MENSAJE DE ÉXITO */}
+      {/* =========================
+          MENSAJE DE ÉXITO
+      ========================= */}
 
       {message && (
         <div
           className="alert alert-success"
           role="alert"
         >
-          ✅ {message}
+          {message.includes("actualizada")
+            ? "✏️"
+            : "✅"}{" "}
+          {message}
         </div>
       )}
 
-      {/* MENSAJE DE ERROR */}
+      {/* =========================
+          MENSAJE DE ERROR
+      ========================= */}
 
       {error && (
         <div
@@ -375,6 +403,8 @@ export default function Company() {
           >
             {loading
               ? "Guardando..."
+              : company.id
+              ? "Actualizar empresa"
               : "Guardar empresa"}
           </button>
 
