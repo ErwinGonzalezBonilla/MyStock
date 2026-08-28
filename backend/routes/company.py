@@ -204,3 +204,30 @@ def update_company(company_id):
             ),
         }
     }), 200
+
+    # =========================
+# ELIMINAR EMPRESA
+# =========================
+
+@company_bp.route(
+    "/<int:company_id>",
+    methods=["DELETE"]
+)
+def delete_company(company_id):
+
+    company = db.session.get(
+        Company,
+        company_id
+    )
+
+    if not company:
+        return jsonify({
+            "error": "Empresa no encontrada"
+        }), 404
+
+    db.session.delete(company)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Empresa eliminada correctamente"
+    }), 200

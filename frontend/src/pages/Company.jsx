@@ -214,6 +214,77 @@ export default function Company() {
     }
   };
 
+  // =========================
+  // ELIMINAR EMPRESA
+  // =========================
+
+  const handleDelete = async () => {
+    if (!company.id) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "¿Estás seguro de que quieres eliminar esta empresa?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const response =
+        await fetch(
+          `${API_URL}/${company.id}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "No se pudo eliminar la empresa."
+        );
+      }
+
+      // Limpiar empresa del estado
+      setCompany({
+        id: null,
+        name: "",
+        taxId: "",
+        email: "",
+        phone: "",
+        country: "",
+        currency: "",
+        logo: "",
+      });
+
+      setMessage(
+        "Empresa eliminada correctamente."
+      );
+
+    } catch (err) {
+      console.error(
+        "Error eliminando empresa:",
+        err
+      );
+
+      setError(
+        err.message ||
+          "No se pudo eliminar la empresa."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container-fluid p-4">
 
@@ -232,6 +303,8 @@ export default function Company() {
         >
           {message.includes("actualizada")
             ? "✏️"
+            : message.includes("eliminada")
+            ? "🗑️"
             : "✅"}{" "}
           {message}
         </div>
@@ -412,20 +485,35 @@ export default function Company() {
           </div>
 
           {/* =========================
-              BOTÓN
+              BOTONES
           ========================= */}
 
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={loading}
-          >
-            {loading
-              ? "Guardando..."
-              : company.id
-              ? "Actualizar empresa"
-              : "Guardar empresa"}
-          </button>
+          <div className="d-flex gap-2">
+
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={loading}
+            >
+              {loading
+                ? "Procesando..."
+                : company.id
+                ? "Actualizar empresa"
+                : "Guardar empresa"}
+            </button>
+
+            {company.id && (
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleDelete}
+                disabled={loading}
+              >
+                Eliminar empresa
+              </button>
+            )}
+
+          </div>
 
         </form>
 
