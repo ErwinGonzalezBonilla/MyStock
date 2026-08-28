@@ -30,6 +30,16 @@ class Company(db.Model):
         nullable=True
     )
 
+    country = db.Column(
+        db.String(100),
+        nullable=True
+    )
+
+    currency = db.Column(
+        db.String(10),
+        nullable=True
+    )
+
     created_at = db.Column(
         db.DateTime,
         nullable=False,

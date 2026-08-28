@@ -43,15 +43,26 @@ export default function Company() {
 
           setCompany((prev) => ({
             ...prev,
+
             id: savedCompany.id,
+
             name:
               savedCompany.name || "",
+
             email:
               savedCompany.email || "",
+
             phone:
               savedCompany.phone || "",
+
             taxId:
               savedCompany.taxId || "",
+
+            country:
+              savedCompany.country || "",
+
+            currency:
+              savedCompany.currency || "",
           }));
         }
       } catch (err) {
@@ -141,6 +152,8 @@ export default function Company() {
             taxId: company.taxId,
             email: company.email,
             phone: company.phone,
+            country: company.country,
+            currency: company.currency,
           }),
         });
 
@@ -173,6 +186,12 @@ export default function Company() {
 
         taxId:
           savedCompany.taxId || "",
+
+        country:
+          savedCompany.country || "",
+
+        currency:
+          savedCompany.currency || "",
       }));
 
       setMessage(
