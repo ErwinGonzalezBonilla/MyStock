@@ -4,6 +4,8 @@ import ProductForm from "../components/products/ProductForm";
 import ProductTable from "../components/products/ProductTable";
 import StockHistory from "../components/products/StockHistory";
 
+const API_URL = "http://127.0.0.1:5000/api/products";
+
 const EMPTY_PRODUCT = {
   id: "",
   sku: "",
@@ -13,19 +15,29 @@ const EMPTY_PRODUCT = {
   buyPrice: "",
   sellPrice: "",
   stock: "",
+  minStock: 0,
   image: "",
+  barcode: "",
 };
+
+// =========================
+// GENERAR SKU AUTOMÁTICO
+// =========================
 
 const generateSku = (products) => {
   let highestNumber = 0;
 
   products.forEach((item) => {
-    if (!item.sku) return;
+    if (!item.sku) {
+      return;
+    }
 
-    const match = item.sku.match(/^PET-(\d+)$/);
+    const match =
+      item.sku.match(/^PET-(\d+)$/);
 
     if (match) {
-      const number = Number(match[1]);
+      const number =
+        Number(match[1]);
 
       if (number > highestNumber) {
         highestNumber = number;
@@ -33,61 +45,103 @@ const generateSku = (products) => {
     }
   });
 
-  return `PET-${String(highestNumber + 1).padStart(6, "0")}`;
+  return `PET-${String(
+    highestNumber + 1
+  ).padStart(6, "0")}`;
 };
 
 export default function Products() {
-  const [product, setProduct] = useState(EMPTY_PRODUCT);
+  const [product, setProduct] =
+    useState(EMPTY_PRODUCT);
 
-  const [products, setProducts] = useState(() => {
-    const savedProducts =
-      localStorage.getItem("products");
+  const [products, setProducts] =
+    useState([]);
 
-    if (!savedProducts) {
-      return [];
-    }
+  const [movements, setMovements] =
+    useState(() => {
+      const savedMovements =
+        localStorage.getItem(
+          "stockMovements"
+        );
 
-    try {
-      return JSON.parse(savedProducts);
-    } catch (error) {
-      console.error(
-        "Error al cargar productos:",
-        error
-      );
+      if (!savedMovements) {
+        return [];
+      }
 
-      return [];
-    }
-  });
+      try {
+        return JSON.parse(
+          savedMovements
+        );
+      } catch (error) {
+        console.error(
+          "Error al cargar movimientos:",
+          error
+        );
 
-  const [movements, setMovements] = useState(() => {
-    const savedMovements =
-      localStorage.getItem("stockMovements");
+        return [];
+      }
+    });
 
-    if (!savedMovements) {
-      return [];
-    }
+  const [search, setSearch] =
+    useState("");
 
-    try {
-      return JSON.parse(savedMovements);
-    } catch (error) {
-      console.error(
-        "Error al cargar movimientos:",
-        error
-      );
+  const [editingId, setEditingId] =
+    useState(null);
 
-      return [];
-    }
-  });
+  const [loading, setLoading] =
+    useState(false);
 
-  const [search, setSearch] = useState("");
-  const [editingId, setEditingId] = useState(null);
+  const [error, setError] =
+    useState("");
+
+  const [message, setMessage] =
+    useState("");
+
+  // =========================
+  // CARGAR PRODUCTOS
+  // =========================
 
   useEffect(() => {
-    localStorage.setItem(
-      "products",
-      JSON.stringify(products)
-    );
-  }, [products]);
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response =
+          await fetch(API_URL);
+
+        if (!response.ok) {
+          throw new Error(
+            "No se pudieron cargar los productos."
+          );
+        }
+
+        const data =
+          await response.json();
+
+        setProducts(data);
+
+      } catch (err) {
+        console.error(
+          "Error cargando productos:",
+          err
+        );
+
+        setError(
+          "No se pudieron cargar los productos."
+        );
+
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
+  // =========================
+  // GUARDAR MOVIMIENTOS
+  // =========================
 
   useEffect(() => {
     localStorage.setItem(
@@ -96,113 +150,329 @@ export default function Products() {
     );
   }, [movements]);
 
+  // =========================
+  // CAMBIAR CAMPOS
+  // =========================
+
   const handleChange = (e) => {
     setProduct((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [e.target.name]:
+        e.target.value,
     }));
+
+    setMessage("");
+    setError("");
   };
 
-  const handleImage = (e) => {
-    const file = e.target.files[0];
+  // =========================
+  // IMAGEN
+  // =========================
 
-    if (!file) return;
+  const handleImage = (e) => {
+    const file =
+      e.target.files[0];
+
+    if (!file) {
+      return;
+    }
 
     setProduct((prev) => ({
       ...prev,
-      image: URL.createObjectURL(file),
+      image:
+        URL.createObjectURL(file),
     }));
+
+    setMessage("");
+    setError("");
   };
 
-  const handleSubmit = (e) => {
+  // =========================
+  // CREAR / ACTUALIZAR
+  // =========================
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (editingId) {
+    setLoading(true);
+    setMessage("");
+    setError("");
+
+    try {
+      const isEditing =
+        Boolean(editingId);
+
+      const url = isEditing
+        ? `${API_URL}/${editingId}`
+        : API_URL;
+
+      const method = isEditing
+        ? "PUT"
+        : "POST";
+
+      const sku = isEditing
+        ? product.sku
+        : generateSku(products);
+
+      const response =
+        await fetch(url, {
+          method,
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            name: product.name,
+            sku: sku,
+            barcode:
+              product.barcode,
+            category:
+              product.category,
+
+            buyPrice:
+              Number(
+                product.buyPrice
+              ) || 0,
+
+            sellPrice:
+              Number(
+                product.sellPrice
+              ) || 0,
+
+            stock:
+              Number(
+                product.stock
+              ) || 0,
+
+            minStock:
+              Number(
+                product.minStock
+              ) || 0,
+          }),
+        });
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "No se pudo guardar el producto."
+        );
+      }
+
+      const savedProduct =
+        data.product;
+
+      if (isEditing) {
+
+        setProducts((prev) =>
+          prev.map((item) =>
+            item.id === editingId
+              ? savedProduct
+              : item
+          )
+        );
+
+        setMessage(
+          "Producto actualizado correctamente."
+        );
+
+      } else {
+
+        setProducts((prev) => [
+          savedProduct,
+          ...prev,
+        ]);
+
+        setMessage(
+          "Producto creado correctamente."
+        );
+
+        // =========================
+        // MOVIMIENTO INICIAL
+        // =========================
+
+        if (
+          Number(
+            savedProduct.stock
+          ) > 0
+        ) {
+
+          const initialMovement = {
+            id:
+              crypto.randomUUID(),
+
+            productId:
+              savedProduct.id,
+
+            productName:
+              savedProduct.name,
+
+            sku:
+              savedProduct.sku,
+
+            type:
+              "entrada",
+
+            quantity:
+              Number(
+                savedProduct.stock
+              ),
+
+            resultingStock:
+              Number(
+                savedProduct.stock
+              ),
+
+            reason:
+              "Stock inicial",
+
+            date:
+              new Date().toISOString(),
+          };
+
+          setMovements(
+            (prev) => [
+              initialMovement,
+              ...prev,
+            ]
+          );
+        }
+      }
+
+      setProduct({
+        ...EMPTY_PRODUCT,
+      });
+
+      setEditingId(null);
+
+    } catch (err) {
+
+      console.error(
+        "Error guardando producto:",
+        err
+      );
+
+      setError(
+        err.message ||
+          "No se pudo guardar el producto."
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =========================
+  // ELIMINAR
+  // =========================
+
+  const handleDelete = async (id) => {
+
+    const confirmed =
+      window.confirm(
+        "¿Seguro que quieres eliminar este producto?"
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+
+      setError("");
+      setMessage("");
+
+      const response =
+        await fetch(
+          `${API_URL}/${id}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "No se pudo eliminar el producto."
+        );
+      }
+
       setProducts((prev) =>
-        prev.map((item) =>
-          item.id === editingId
-            ? {
-                ...product,
-                id: editingId,
-              }
-            : item
+        prev.filter(
+          (item) =>
+            item.id !== id
         )
       );
 
-      setEditingId(null);
-    } else {
-      const initialStock =
-        Number(product.stock) || 0;
+      setMovements((prev) =>
+        prev.filter(
+          (movement) =>
+            movement.productId !== id
+        )
+      );
 
-      const newProduct = {
-        ...product,
-        id: crypto.randomUUID(),
-        sku: generateSku(products),
-        stock: initialStock,
-        lastStockUpdate:
-          initialStock > 0
-            ? new Date().toISOString()
-            : "",
-      };
-
-      setProducts((prev) => [
-        ...prev,
-        newProduct,
-      ]);
-
-      if (initialStock > 0) {
-        const initialMovement = {
-          id: crypto.randomUUID(),
-          productId: newProduct.id,
-          productName: newProduct.name,
-          sku: newProduct.sku,
-          type: "entrada",
-          quantity: initialStock,
-          resultingStock: initialStock,
-          reason: "Stock inicial",
-          date: new Date().toISOString(),
-        };
-
-        setMovements((prev) => [
-          initialMovement,
-          ...prev,
-        ]);
+      if (editingId === id) {
+        setEditingId(null);
+        setProduct({
+          ...EMPTY_PRODUCT,
+        });
       }
-    }
 
-    setProduct(EMPTY_PRODUCT);
-  };
+      setMessage(
+        "Producto eliminado correctamente."
+      );
 
-  const handleDelete = (id) => {
-    setProducts((prev) =>
-      prev.filter((item) => item.id !== id)
-    );
+    } catch (err) {
 
-    setMovements((prev) =>
-      prev.filter(
-        (movement) =>
-          movement.productId !== id
-      )
-    );
+      console.error(
+        "Error eliminando producto:",
+        err
+      );
 
-    if (editingId === id) {
-      setEditingId(null);
-      setProduct(EMPTY_PRODUCT);
+      setError(
+        err.message ||
+          "No se pudo eliminar el producto."
+      );
     }
   };
+
+  // =========================
+  // EDITAR
+  // =========================
 
   const handleEdit = (id) => {
-    const selected = products.find(
-      (item) => item.id === id
-    );
 
-    if (!selected) return;
+    const selected =
+      products.find(
+        (item) =>
+          item.id === id
+      );
+
+    if (!selected) {
+      return;
+    }
 
     setProduct({
+      ...EMPTY_PRODUCT,
       ...selected,
     });
 
     setEditingId(id);
+
+    setMessage("");
+    setError("");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   // =========================
@@ -214,22 +484,31 @@ export default function Products() {
     quantity = 1,
     reason = "Entrada de stock"
   ) => {
-    const amount = Number(quantity);
 
-    if (!amount || amount <= 0) {
+    const amount =
+      Number(quantity);
+
+    if (
+      !amount ||
+      amount <= 0
+    ) {
       return;
     }
 
-    const selectedProduct = products.find(
-      (item) => item.id === id
-    );
+    const selectedProduct =
+      products.find(
+        (item) =>
+          item.id === id
+      );
 
     if (!selectedProduct) {
       return;
     }
 
     const currentStock =
-      Number(selectedProduct.stock) || 0;
+      Number(
+        selectedProduct.stock
+      ) || 0;
 
     const newStock =
       currentStock + amount;
@@ -237,29 +516,47 @@ export default function Products() {
     const now =
       new Date().toISOString();
 
-    const movement = {
-      id: crypto.randomUUID(),
-      productId: selectedProduct.id,
-      productName: selectedProduct.name,
-      sku: selectedProduct.sku,
-      type: "entrada",
-      quantity: amount,
-      resultingStock: newStock,
-      reason: reason,
-      date: now,
-    };
-
     setProducts((prev) =>
       prev.map((item) =>
         item.id === id
           ? {
               ...item,
               stock: newStock,
-              lastStockUpdate: now,
+              lastStockUpdate:
+                now,
             }
           : item
       )
     );
+
+    const movement = {
+      id:
+        crypto.randomUUID(),
+
+      productId:
+        selectedProduct.id,
+
+      productName:
+        selectedProduct.name,
+
+      sku:
+        selectedProduct.sku,
+
+      type:
+        "entrada",
+
+      quantity:
+        amount,
+
+      resultingStock:
+        newStock,
+
+      reason:
+        reason,
+
+      date:
+        now,
+    };
 
     setMovements((prev) => [
       movement,
@@ -276,24 +573,35 @@ export default function Products() {
     quantity = 1,
     reason = "Salida de stock"
   ) => {
-    const amount = Number(quantity);
 
-    if (!amount || amount <= 0) {
+    const amount =
+      Number(quantity);
+
+    if (
+      !amount ||
+      amount <= 0
+    ) {
       return;
     }
 
-    const selectedProduct = products.find(
-      (item) => item.id === id
-    );
+    const selectedProduct =
+      products.find(
+        (item) =>
+          item.id === id
+      );
 
     if (!selectedProduct) {
       return;
     }
 
     const currentStock =
-      Number(selectedProduct.stock) || 0;
+      Number(
+        selectedProduct.stock
+      ) || 0;
 
-    if (amount > currentStock) {
+    if (
+      amount > currentStock
+    ) {
       return;
     }
 
@@ -303,29 +611,47 @@ export default function Products() {
     const now =
       new Date().toISOString();
 
-    const movement = {
-      id: crypto.randomUUID(),
-      productId: selectedProduct.id,
-      productName: selectedProduct.name,
-      sku: selectedProduct.sku,
-      type: "salida",
-      quantity: amount,
-      resultingStock: newStock,
-      reason: reason,
-      date: now,
-    };
-
     setProducts((prev) =>
       prev.map((item) =>
         item.id === id
           ? {
               ...item,
               stock: newStock,
-              lastStockUpdate: now,
+              lastStockUpdate:
+                now,
             }
           : item
       )
     );
+
+    const movement = {
+      id:
+        crypto.randomUUID(),
+
+      productId:
+        selectedProduct.id,
+
+      productName:
+        selectedProduct.name,
+
+      sku:
+        selectedProduct.sku,
+
+      type:
+        "salida",
+
+      quantity:
+        amount,
+
+      resultingStock:
+        newStock,
+
+      reason:
+        reason,
+
+      date:
+        now,
+    };
 
     setMovements((prev) => [
       movement,
@@ -337,10 +663,13 @@ export default function Products() {
   // BÚSQUEDA
   // =========================
 
-  const filteredProducts = products.filter(
-    (item) => {
+  const filteredProducts =
+    products.filter((item) => {
+
       const searchTerm =
-        search.toLowerCase().trim();
+        search
+          .toLowerCase()
+          .trim();
 
       if (!searchTerm) {
         return true;
@@ -350,18 +679,19 @@ export default function Products() {
         item.name
           ?.toLowerCase()
           .includes(searchTerm) ||
+
         item.sku
           ?.toLowerCase()
           .includes(searchTerm) ||
+
         item.category
           ?.toLowerCase()
           .includes(searchTerm)
       );
-    }
-  );
+    });
 
   // =========================
-  // RESUMEN INVENTARIO
+  // RESUMEN
   // =========================
 
   const totalProducts =
@@ -370,11 +700,16 @@ export default function Products() {
   const inventoryValue =
     products.reduce(
       (total, item) => {
+
         const buyPrice =
-          Number(item.buyPrice) || 0;
+          Number(
+            item.buyPrice
+          ) || 0;
 
         const stock =
-          Number(item.stock) || 0;
+          Number(
+            item.stock
+          ) || 0;
 
         return (
           total +
@@ -387,8 +722,12 @@ export default function Products() {
   const lowStockProducts =
     products.filter(
       (item) =>
-        Number(item.stock) > 0 &&
-        Number(item.stock) <= 10
+        Number(item.stock) >
+          0 &&
+        Number(item.stock) <=
+          Number(
+            item.minStock || 10
+          )
     ).length;
 
   const outOfStockProducts =
@@ -404,11 +743,26 @@ export default function Products() {
         Productos
       </h2>
 
+      {/* MENSAJES */}
+
+      {message && (
+        <div className="alert alert-success">
+          ✅ {message}
+        </div>
+      )}
+
+      {error && (
+        <div className="alert alert-danger">
+          ⚠️ {error}
+        </div>
+      )}
+
       {/* RESUMEN */}
 
       <div className="row g-3 mb-4">
 
         <div className="col-md-3">
+
           <div className="stat-card h-100">
 
             <div className="text-muted">
@@ -420,9 +774,11 @@ export default function Products() {
             </h3>
 
           </div>
+
         </div>
 
         <div className="col-md-3">
+
           <div className="stat-card h-100">
 
             <div className="text-muted">
@@ -430,13 +786,18 @@ export default function Products() {
             </div>
 
             <h3 className="fw-bold mt-2 mb-0">
-              € {inventoryValue.toFixed(2)}
+              €{" "}
+              {inventoryValue.toFixed(
+                2
+              )}
             </h3>
 
           </div>
+
         </div>
 
         <div className="col-md-3">
+
           <div className="stat-card h-100">
 
             <div className="text-muted">
@@ -448,9 +809,11 @@ export default function Products() {
             </h3>
 
           </div>
+
         </div>
 
         <div className="col-md-3">
+
           <div className="stat-card h-100">
 
             <div className="text-muted">
@@ -462,6 +825,7 @@ export default function Products() {
             </h3>
 
           </div>
+
         </div>
 
       </div>
@@ -470,15 +834,27 @@ export default function Products() {
 
       <ProductForm
         product={product}
-        handleChange={handleChange}
-        handleSubmit={handleSubmit}
-        handleImage={handleImage}
-        editingIndex={editingId}
+        handleChange={
+          handleChange
+        }
+        handleSubmit={
+          handleSubmit
+        }
+        handleImage={
+          handleImage
+        }
+        editingIndex={
+          editingId
+        }
       />
 
-      {/* BUSCADOR */}
+      {/* BÚSQUEDA */}
 
-      <div className="mb-4">
+      <div className="stat-card mb-4">
+
+        <label className="form-label fw-semibold">
+          Buscar producto
+        </label>
 
         <input
           type="text"
@@ -486,18 +862,34 @@ export default function Products() {
           placeholder="🔍 Buscar por nombre, SKU o categoría..."
           value={search}
           onChange={(e) =>
-            setSearch(e.target.value)
+            setSearch(
+              e.target.value
+            )
           }
         />
 
       </div>
 
+      {/* CARGANDO */}
+
+      {loading && (
+        <div className="alert alert-info">
+          Cargando...
+        </div>
+      )}
+
       {/* TABLA */}
 
       <ProductTable
-        products={filteredProducts}
-        handleDelete={handleDelete}
-        handleEdit={handleEdit}
+        products={
+          filteredProducts
+        }
+        handleDelete={
+          handleDelete
+        }
+        handleEdit={
+          handleEdit
+        }
         handleIncreaseStock={
           handleIncreaseStock
         }
@@ -509,7 +901,9 @@ export default function Products() {
       {/* HISTORIAL */}
 
       <StockHistory
-        movements={movements}
+        movements={
+          movements
+        }
       />
 
     </div>
