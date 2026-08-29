@@ -1,26 +1,618 @@
-.stat-card{
-    background: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-    padding: 24px;
-    transition: .25s;
+/* =========================================================
+   MYSTOCK - LAYOUT
+   ========================================================= */
+
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.mystock-sidebar {
+  background: var(--surface-color);
+  border-right: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  flex-shrink: 0;
 }
 
-.stat-card:hover{
-    transform: translateY(-3px);
+.mystock-sidebar-inner {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
 }
 
-.stat-card-title{
-    color: var(--text-secondary);
-    margin-bottom:12px;
+
+/* =========================================================
+   LOGO
+   ========================================================= */
+
+.mystock-logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 8px 24px;
 }
 
-.stat-card-value{
-    font-size:32px;
-    font-weight:700;
+.mystock-logo {
+  width: 180px;
+  height: auto;
+  display: block;
 }
 
-.stat-card-subtitle{
-    color: var(--success-color);
+
+/* =========================================================
+   MENÚ
+   ========================================================= */
+
+.mystock-menu-section {
+  margin-top: 8px;
+}
+
+.mystock-menu-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  padding: 0 12px;
+  margin-bottom: 10px;
+}
+
+.mystock-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+
+/* =========================================================
+   LINKS
+   ========================================================= */
+
+.mystock-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  min-height: 44px;
+
+  padding: 10px 12px;
+
+  border-radius: var(--radius-md);
+
+  color: var(--text-color);
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.mystock-nav-link:hover {
+  background: #F1F5F9;
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.mystock-nav-link-active {
+  background: var(--primary-color);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.mystock-nav-link-active:hover {
+  background: var(--primary-hover);
+  color: #FFFFFF;
+}
+
+
+/* =========================================================
+   ICONOS
+   ========================================================= */
+
+.mystock-nav-icon {
+  width: 22px;
+  min-width: 22px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mystock-nav-link-active .mystock-nav-icon {
+  color: #FFFFFF;
+}
+
+
+/* =========================================================
+   MENÚ INFERIOR
+   ========================================================= */
+
+.mystock-sidebar-bottom {
+  margin-top: auto;
+
+  padding-top: 16px;
+
+  border-top: 1px solid var(--border-color);
+
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+
+/* =========================================================
+   VERSIÓN
+   ========================================================= */
+
+.mystock-version {
+  text-align: center;
+
+  margin-top: 16px;
+
+  font-size: 11px;
+
+  color: var(--text-secondary);
+}
+
+
+/* =========================================================
+   STAT CARDS
+   ========================================================= */
+
+.stat-card {
+  background: var(--surface-color);
+
+  border: 1px solid var(--border-color);
+
+  border-radius: var(--radius-md);
+
+  box-shadow: var(--shadow-sm);
+
+  padding: 24px;
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.07);
+}
+
+.stat-card-title {
+  color: var(--text-secondary);
+
+  margin-bottom: 12px;
+}
+
+.stat-card-value {
+  font-size: 32px;
+
+  font-weight: 700;
+
+  color: var(--text-color);
+}
+
+.stat-card-subtitle {
+  color: var(--success-color);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 992px) {
+
+  .mystock-sidebar {
+    width: 220px !important;
+  }
+
+  .mystock-logo {
+    width: 155px;
+  }
+
+  .mystock-nav-link {
+    font-size: 13px;
+  }
+
+}
+
+
+@media (max-width: 768px) {
+
+  .mystock-sidebar {
+    width: 80px !important;
+  }
+
+  .mystock-sidebar-inner {
+    padding: 20px 10px;
+  }
+
+  .mystock-logo {
+    width: 55px;
+  }
+
+  .mystock-menu-title,
+  .mystock-nav-link span:not(.mystock-nav-icon),
+  .mystock-version {
+    display: none;
+  }
+
+  .mystock-nav-link {
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .mystock-nav-icon {
+    width: 28px;
+    min-width: 28px;
+  }
+
+  .mystock-sidebar-bottom {
+    padding-top: 12px;
+  }
+
+}
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+
+.mystock-dashboard {
+  padding: 36px 40px;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.dashboard-header {
+  margin-bottom: 32px;
+}
+
+.dashboard-title {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.dashboard-subtitle {
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+
+/* =========================================================
+   KPI CARDS
+   ========================================================= */
+
+.dashboard-kpi-card {
+  height: 100%;
+  padding: 22px;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.dashboard-kpi-card:hover {
+  transform: translateY(-3px);
+
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.07);
+}
+
+.dashboard-kpi-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.dashboard-kpi-icon {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: rgba(13, 110, 253, 0.10);
+  color: var(--primary-color);
+}
+
+.dashboard-kpi-icon-warning {
+  background: rgba(226, 178, 3, 0.12);
+  color: var(--warning-color);
+}
+
+.dashboard-kpi-label {
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.dashboard-kpi-value {
+  color: var(--text-color);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.dashboard-kpi-description {
+  margin-top: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   SECTION HEADER
+   ========================================================= */
+
+.dashboard-section-header {
+  margin: 34px 0 18px;
+}
+
+.dashboard-section-header h2 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.dashboard-section-header p {
+  margin: 5px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   PROFIT CARDS
+   ========================================================= */
+
+.dashboard-profit-card {
+  height: 100%;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+
+  padding: 22px;
+
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-profit-icon {
+  width: 42px;
+  height: 42px;
+
+  min-width: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: rgba(0, 128, 96, 0.10);
+  color: var(--success-color);
+}
+
+.dashboard-profit-label {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.dashboard-profit-value {
+  margin-top: 5px;
+
+  color: var(--text-color);
+
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.dashboard-profit-description {
+  margin-top: 5px;
+
+  color: var(--text-secondary);
+
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   PANELS
+   ========================================================= */
+
+.dashboard-panel {
+  height: 100%;
+
+  background: var(--surface-color);
+
+  border: 1px solid var(--border-color);
+
+  border-radius: var(--radius-md);
+
+  box-shadow: var(--shadow-sm);
+
+  padding: 24px;
+}
+
+.dashboard-panel-header {
+  margin-bottom: 20px;
+}
+
+.dashboard-panel-header h2 {
+  margin: 0;
+
+  color: var(--text-color);
+
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.dashboard-panel-header p {
+  margin: 5px 0 0;
+
+  color: var(--text-secondary);
+
+  font-size: 13px;
+}
+
+.dashboard-chart-container {
+  min-height: 260px;
+}
+
+
+/* =========================================================
+   MY STOCK AI
+   ========================================================= */
+
+.dashboard-ai-card {
+  height: 100%;
+
+  padding: 24px;
+
+  border-radius: var(--radius-md);
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f4f7ff
+    );
+
+  border: 1px solid var(--border-color);
+
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-ai-header {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+
+  margin-bottom: 24px;
+}
+
+.dashboard-ai-icon {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: rgba(13, 110, 253, 0.10);
+
+  color: var(--primary-color);
+}
+
+.dashboard-ai-header h2 {
+  margin: 0;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  color: var(--text-color);
+}
+
+.dashboard-ai-header span {
+  display: block;
+
+  margin-top: 3px;
+
+  color: var(--text-secondary);
+
+  font-size: 12px;
+}
+
+.dashboard-ai-content {
+  color: var(--text-secondary);
+
+  font-size: 14px;
+
+  line-height: 1.6;
+}
+
+.dashboard-ai-content p {
+  margin-bottom: 12px;
+}
+
+.dashboard-ai-list {
+  margin-top: 20px;
+
+  padding-top: 16px;
+
+  border-top: 1px solid var(--border-color);
+}
+
+.dashboard-ai-list div {
+  display: flex;
+  gap: 8px;
+
+  margin-bottom: 8px;
+
+  color: var(--text-color);
+
+  font-size: 13px;
+}
+
+.dashboard-ai-list span {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+  .mystock-dashboard {
+    padding: 24px 18px;
+  }
+
+  .dashboard-title {
+    font-size: 30px;
+  }
+
+  .dashboard-kpi-value {
+    font-size: 26px;
+  }
+
 }

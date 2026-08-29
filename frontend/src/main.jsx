@@ -3,7 +3,11 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import "bootstrap/dist/css/bootstrap.min.css";
+
+import "./assets/styles/variables.css";
+import "./assets/styles/typography.css";
 import "./assets/styles/globals.css";
+import "./assets/styles/layout.css";
 
 import App from "./App";
 

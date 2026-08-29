@@ -1,6 +1,16 @@
 import { useState } from "react";
 
-import StatCard from "../components/common/StatCard";
+import {
+  DollarSign,
+  Package,
+  Warehouse,
+  AlertTriangle,
+  TrendingUp,
+  Percent,
+  Sparkles,
+} from "lucide-react";
+
+
 import SalesChart from "../components/common/SalesChart";
 import RecentSales from "../components/common/RecentSales";
 import LowStockProducts from "../components/common/LowStockProducts";
@@ -39,26 +49,6 @@ export default function Dashboard() {
     } catch (error) {
       console.error(
         "Error al cargar ventas:",
-        error
-      );
-
-      return [];
-    }
-  });
-
-  const [clients] = useState(() => {
-    const savedClients =
-      localStorage.getItem("clients");
-
-    if (!savedClients) {
-      return [];
-    }
-
-    try {
-      return JSON.parse(savedClients);
-    } catch (error) {
-      console.error(
-        "Error al cargar clientes:",
         error
       );
 
@@ -125,7 +115,7 @@ export default function Dashboard() {
     }).length;
 
   // =========================
-  // COSTE DEL INVENTARIO
+  // COSTE INVENTARIO
   // =========================
 
   const inventoryCost =
@@ -188,39 +178,6 @@ export default function Dashboard() {
       : 0;
 
   // =========================
-  // CLIENTES
-  // =========================
-
-  const totalClients =
-    clients.length;
-
-  const clientSales =
-    sales.filter(
-      (sale) => sale.clientId
-    );
-
-  const clientsWithPurchases =
-    new Set(
-      clientSales.map(
-        (sale) => sale.clientId
-      )
-    ).size;
-
-  const clientSalesRevenue =
-    clientSales.reduce(
-      (total, sale) =>
-        total +
-        (Number(sale.total) || 0),
-      0
-    );
-
-  const clientAverageTicket =
-    clientSales.length > 0
-      ? clientSalesRevenue /
-        clientSales.length
-      : 0;
-
-  // =========================
   // FORMATO MONEDA
   // =========================
 
@@ -235,221 +192,388 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="container-fluid p-4">
+    <div className="container-fluid mystock-dashboard">
 
-      <h2 className="mb-4 fw-bold">
-        Dashboard
-      </h2>
+      {/* =========================
+          CABECERA
+      ========================= */}
+
+      <div className="dashboard-header">
+
+        <div>
+          <h1 className="dashboard-title">
+            Dashboard
+          </h1>
+
+          <p className="dashboard-subtitle">
+            Aquí tienes el resumen de tu negocio.
+          </p>
+        </div>
+
+      </div>
+
 
       {/* =========================
           KPIs PRINCIPALES
       ========================= */}
 
-      <div className="row">
+      <div className="row g-4 mb-4">
 
-        <div className="col-lg-3 col-md-6 mb-4">
+        {/* VENTAS */}
 
-          <StatCard
-            title="Ventas Hoy"
-            value={formatCurrency(
-              todayRevenue
-            )}
-            subtitle={`${todaySales.length} ${
-              todaySales.length === 1
-                ? "venta"
-                : "ventas"
-            } registradas`}
-          />
+        <div className="col-xl-3 col-md-6">
 
-        </div>
+          <div className="dashboard-kpi-card">
 
-        <div className="col-lg-3 col-md-6 mb-4">
+            <div className="dashboard-kpi-top">
 
-          <StatCard
-            title="Productos"
-            value={totalProducts}
-            subtitle="Productos registrados"
-          />
+              <div className="dashboard-kpi-icon">
+                <DollarSign size={21} />
+              </div>
 
-        </div>
+              <span className="dashboard-kpi-label">
+                VENTAS HOY
+              </span>
 
-        <div className="col-lg-3 col-md-6 mb-4">
+            </div>
 
-          <StatCard
-            title="Coste Inventario"
-            value={formatCurrency(
-              inventoryCost
-            )}
-            subtitle="Valor según precio de compra"
-          />
+            <div className="dashboard-kpi-value">
+              {formatCurrency(
+                todayRevenue
+              )}
+            </div>
+
+            <div className="dashboard-kpi-description">
+              {todaySales.length}{" "}
+              {todaySales.length === 1
+                ? "venta registrada"
+                : "ventas registradas"}
+            </div>
+
+          </div>
 
         </div>
 
-        <div className="col-lg-3 col-md-6 mb-4">
 
-          <StatCard
-            title="Stock Bajo"
-            value={lowStockProducts}
-            subtitle={
-              lowStockProducts === 1
+        {/* PRODUCTOS */}
+
+        <div className="col-xl-3 col-md-6">
+
+          <div className="dashboard-kpi-card">
+
+            <div className="dashboard-kpi-top">
+
+              <div className="dashboard-kpi-icon">
+                <Package size={21} />
+              </div>
+
+              <span className="dashboard-kpi-label">
+                PRODUCTOS
+              </span>
+
+            </div>
+
+            <div className="dashboard-kpi-value">
+              {totalProducts}
+            </div>
+
+            <div className="dashboard-kpi-description">
+              Productos registrados
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* INVENTARIO */}
+
+        <div className="col-xl-3 col-md-6">
+
+          <div className="dashboard-kpi-card">
+
+            <div className="dashboard-kpi-top">
+
+              <div className="dashboard-kpi-icon">
+                <Warehouse size={21} />
+              </div>
+
+              <span className="dashboard-kpi-label">
+                INVENTARIO
+              </span>
+
+            </div>
+
+            <div className="dashboard-kpi-value">
+              {formatCurrency(
+                inventoryCost
+              )}
+            </div>
+
+            <div className="dashboard-kpi-description">
+              Valor al precio de compra
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* STOCK BAJO */}
+
+        <div className="col-xl-3 col-md-6">
+
+          <div className="dashboard-kpi-card">
+
+            <div className="dashboard-kpi-top">
+
+              <div className="dashboard-kpi-icon dashboard-kpi-icon-warning">
+                <AlertTriangle size={21} />
+              </div>
+
+              <span className="dashboard-kpi-label">
+                STOCK BAJO
+              </span>
+
+            </div>
+
+            <div className="dashboard-kpi-value">
+              {lowStockProducts}
+            </div>
+
+            <div className="dashboard-kpi-description">
+              {lowStockProducts === 1
                 ? "Producto requiere reposición"
-                : "Productos requieren reposición"
-            }
-          />
+                : "Productos requieren reposición"}
+            </div>
+
+          </div>
 
         </div>
 
       </div>
+
 
       {/* =========================
           RENTABILIDAD
       ========================= */}
 
-      <div className="row">
+      <div className="dashboard-section-header">
 
-        <div className="col-lg-4 col-md-6 mb-4">
+        <div>
+          <h2>
+            Rentabilidad del inventario
+          </h2>
 
-          <StatCard
-            title="Valor Potencial de Venta"
-            value={formatCurrency(
-              inventorySalesValue
-            )}
-            subtitle="Si vendieras todo el stock"
-          />
+          <p>
+            Una estimación del valor de tu stock actual.
+          </p>
+        </div>
+
+      </div>
+
+
+      <div className="row g-4 mb-4">
+
+        {/* VALOR VENTA */}
+
+        <div className="col-lg-4">
+
+          <div className="dashboard-profit-card">
+
+            <div className="dashboard-profit-icon">
+              <TrendingUp size={21} />
+            </div>
+
+            <div>
+
+              <div className="dashboard-profit-label">
+                Valor potencial de venta
+              </div>
+
+              <div className="dashboard-profit-value">
+                {formatCurrency(
+                  inventorySalesValue
+                )}
+              </div>
+
+              <div className="dashboard-profit-description">
+                Si vendieras todo el stock
+              </div>
+
+            </div>
+
+          </div>
 
         </div>
 
-        <div className="col-lg-4 col-md-6 mb-4">
 
-          <StatCard
-            title="Beneficio Potencial"
-            value={formatCurrency(
-              potentialProfit
-            )}
-            subtitle="Venta total menos coste"
-          />
+        {/* BENEFICIO */}
+
+        <div className="col-lg-4">
+
+          <div className="dashboard-profit-card">
+
+            <div className="dashboard-profit-icon">
+              <DollarSign size={21} />
+            </div>
+
+            <div>
+
+              <div className="dashboard-profit-label">
+                Beneficio potencial
+              </div>
+
+              <div className="dashboard-profit-value">
+                {formatCurrency(
+                  potentialProfit
+                )}
+              </div>
+
+              <div className="dashboard-profit-description">
+                Venta total menos coste
+              </div>
+
+            </div>
+
+          </div>
 
         </div>
 
-        <div className="col-lg-4 col-md-12 mb-4">
 
-          <StatCard
-            title="Margen Potencial"
-            value={`${potentialMargin}%`}
-            subtitle="Margen sobre el valor de venta"
-          />
+        {/* MARGEN */}
+
+        <div className="col-lg-4">
+
+          <div className="dashboard-profit-card">
+
+            <div className="dashboard-profit-icon">
+              <Percent size={21} />
+            </div>
+
+            <div>
+
+              <div className="dashboard-profit-label">
+                Margen potencial
+              </div>
+
+              <div className="dashboard-profit-value">
+                {potentialMargin}%
+              </div>
+
+              <div className="dashboard-profit-description">
+                Margen sobre el valor de venta
+              </div>
+
+            </div>
+
+          </div>
 
         </div>
 
       </div>
 
-      {/* =========================
-          CLIENTES
-      ========================= */}
-
-      <div className="row">
-
-        <div className="col-lg-3 col-md-6 mb-4">
-
-          <StatCard
-            title="Clientes"
-            value={totalClients}
-            subtitle="Clientes registrados"
-          />
-
-        </div>
-
-        <div className="col-lg-3 col-md-6 mb-4">
-
-          <StatCard
-            title="Clientes con compras"
-            value={clientsWithPurchases}
-            subtitle="Clientes que han comprado"
-          />
-
-        </div>
-
-        <div className="col-lg-3 col-md-6 mb-4">
-
-          <StatCard
-            title="Ventas a clientes"
-            value={formatCurrency(
-              clientSalesRevenue
-            )}
-            subtitle="Ventas asociadas a clientes"
-          />
-
-        </div>
-
-        <div className="col-lg-3 col-md-6 mb-4">
-
-          <StatCard
-            title="Ticket medio"
-            value={formatCurrency(
-              clientAverageTicket
-            )}
-            subtitle="Promedio por venta"
-          />
-
-        </div>
-
-      </div>
 
       {/* =========================
           GRÁFICO + IA
       ========================= */}
 
-      <div className="row">
+      <div className="row g-4 mb-4">
 
-        <div className="col-lg-8">
+        {/* GRÁFICO */}
 
-          <div
-            className="stat-card mb-4"
-            style={{
-              minHeight: "350px",
-            }}
-          >
+        <div className="col-xl-8">
 
-            <h4 className="mb-4">
-              Ventas últimos 30 días
-            </h4>
+          <div className="dashboard-panel">
 
-            <SalesChart />
+            <div className="dashboard-panel-header">
+
+              <div>
+
+                <h2>
+                  Ventas últimos 30 días
+                </h2>
+
+                <p>
+                  Evolución de las ventas de tu negocio.
+                </p>
+
+              </div>
+
+            </div>
+
+            <div className="dashboard-chart-container">
+              <SalesChart />
+            </div>
 
           </div>
 
         </div>
 
-        <div className="col-lg-4">
 
-          <div
-            className="stat-card mb-4"
-            style={{
-              minHeight: "350px",
-            }}
-          >
+        {/* IA */}
 
-            <h4 className="mb-4">
-              🤖 MyStock AI
-            </h4>
+        <div className="col-xl-4">
 
-            <p>
-              Bienvenido a MyStock.
-            </p>
+          <div className="dashboard-ai-card">
 
-            <p>
-              Todavía no tienes suficientes
-              datos para generar
-              recomendaciones.
-            </p>
+            <div className="dashboard-ai-header">
 
-            <p>
-              Cuando registres productos,
-              compras y ventas, comenzaré
-              a analizar tu negocio para
-              ayudarte a tomar mejores
-              decisiones.
-            </p>
+              <div className="dashboard-ai-icon">
+                <Sparkles size={22} />
+              </div>
+
+              <div>
+
+                <h2>
+                  MyStock AI
+                </h2>
+
+                <span>
+                  Asistente inteligente
+                </span>
+
+              </div>
+
+            </div>
+
+            <div className="dashboard-ai-content">
+
+              <p>
+                Bienvenido a MyStock.
+              </p>
+
+              <p>
+                Todavía no tienes suficientes
+                datos para generar
+                recomendaciones.
+              </p>
+
+              <div className="dashboard-ai-list">
+
+                <div>
+                  <span>•</span>
+                  Analizar productos
+                </div>
+
+                <div>
+                  <span>•</span>
+                  Detectar productos a reponer
+                </div>
+
+                <div>
+                  <span>•</span>
+                  Analizar ventas
+                </div>
+
+                <div>
+                  <span>•</span>
+                  Mejorar la rentabilidad
+                </div>
+
+              </div>
+
+            </div>
 
           </div>
 
@@ -457,25 +581,35 @@ export default function Dashboard() {
 
       </div>
 
+
       {/* =========================
-          ÚLTIMAS VENTAS + STOCK BAJO
+          ÚLTIMAS VENTAS + STOCK
       ========================= */}
 
-      <div className="row">
+      <div className="row g-4">
 
-        <div className="col-lg-8">
+        <div className="col-xl-8">
 
-          <RecentSales
-            sales={sales}
-          />
+          <div className="dashboard-panel">
+
+            <RecentSales
+              sales={sales}
+            />
+
+          </div>
 
         </div>
 
-        <div className="col-lg-4">
 
-          <LowStockProducts
-            products={products}
-          />
+        <div className="col-xl-4">
+
+          <div className="dashboard-panel">
+
+            <LowStockProducts
+              products={products}
+            />
+
+          </div>
 
         </div>
 

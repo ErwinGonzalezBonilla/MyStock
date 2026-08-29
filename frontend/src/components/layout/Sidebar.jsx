@@ -1,110 +1,191 @@
 import logo from "../../assets/images/mystock-logo.png";
 import { NavLink } from "react-router-dom";
 
+import {
+  LayoutDashboard,
+  Building2,
+  Package,
+  Boxes,
+  ShoppingCart,
+  ShoppingBag,
+  Users,
+  Truck,
+  BarChart3,
+  Sparkles,
+  Settings,
+} from "lucide-react";
+
 const menuItems = [
   {
     name: "Dashboard",
     path: "/",
+    icon: LayoutDashboard,
   },
   {
     name: "Empresa",
     path: "/company",
+    icon: Building2,
   },
   {
     name: "Productos",
     path: "/products",
+    icon: Package,
   },
   {
     name: "Inventario",
     path: "/inventory",
+    icon: Boxes,
   },
   {
     name: "Ventas",
     path: "/sales",
+    icon: ShoppingCart,
   },
   {
     name: "Compras",
     path: "/purchases",
+    icon: ShoppingBag,
   },
   {
     name: "Clientes",
     path: "/clients",
+    icon: Users,
   },
   {
     name: "Proveedores",
     path: "/suppliers",
+    icon: Truck,
   },
   {
     name: "Reportes",
     path: "/reports",
+    icon: BarChart3,
   },
+];
+
+const bottomMenuItems = [
   {
-    name: "IA Assistant",
+    name: "MyStock AI",
     path: "/ai",
+    icon: Sparkles,
   },
   {
     name: "Configuración",
     path: "/settings",
+    icon: Settings,
   },
 ];
 
 export default function Sidebar() {
   return (
     <aside
-      className="bg-white border-end"
+      className="mystock-sidebar"
       style={{
         width: "260px",
         minHeight: "100vh",
       }}
     >
-      <div className="p-4">
+      <div className="mystock-sidebar-inner">
 
-        {/* LOGO */}
+        {/* =========================
+            LOGO
+        ========================= */}
 
-        <div className="d-flex justify-content-center mb-3">
-
+        <div className="mystock-logo-container">
           <img
             src={logo}
             alt="MyStock Logo"
-            style={{
-              width: "180px",
-              height: "auto",
-            }}
+            className="mystock-logo"
           />
-
         </div>
 
-        <hr className="my-3" />
+        {/* =========================
+            MENÚ PRINCIPAL
+        ========================= */}
 
-        {/* MENÚ */}
+        <div className="mystock-menu-section">
 
-        <ul className="nav flex-column">
+          <div className="mystock-menu-title">
+            PRINCIPAL
+          </div>
 
-          {menuItems.map((item) => (
+          <nav className="mystock-nav">
 
-            <li
-              key={item.path}
-              className="nav-item mb-2"
-            >
+            {menuItems.map((item) => {
+              const Icon = item.icon;
 
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.path === "/"}
+                  className={({ isActive }) =>
+                    `mystock-nav-link ${
+                      isActive
+                        ? "mystock-nav-link-active"
+                        : ""
+                    }`
+                  }
+                >
+                  <Icon
+                    className="mystock-nav-icon"
+                    size={19}
+                    strokeWidth={2}
+                  />
+
+                  <span>
+                    {item.name}
+                  </span>
+                </NavLink>
+              );
+            })}
+
+          </nav>
+        </div>
+
+        {/* =========================
+            MENÚ INFERIOR
+        ========================= */}
+
+        <div className="mystock-sidebar-bottom">
+
+          {bottomMenuItems.map((item) => {
+            const Icon = item.icon;
+
+            return (
               <NavLink
+                key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `btn w-100 text-start ${
+                  `mystock-nav-link ${
                     isActive
-                      ? "btn-primary"
-                      : "btn-light"
+                      ? "mystock-nav-link-active"
+                      : ""
                   }`
                 }
               >
-                {item.name}
+                <Icon
+                  className="mystock-nav-icon"
+                  size={19}
+                  strokeWidth={2}
+                />
+
+                <span>
+                  {item.name}
+                </span>
               </NavLink>
+            );
+          })}
 
-            </li>
+        </div>
 
-          ))}
+        {/* =========================
+            VERSIÓN
+        ========================= */}
 
-        </ul>
+        <div className="mystock-version">
+          MyStock · v1.0
+        </div>
 
       </div>
     </aside>
