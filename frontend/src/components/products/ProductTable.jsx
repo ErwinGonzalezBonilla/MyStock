@@ -3,6 +3,7 @@ import StockMovementModal from "./StockMovementModal";
 
 export default function ProductTable({
   products,
+  movements,
   handleDelete,
   handleEdit,
   handleIncreaseStock,
@@ -26,6 +27,17 @@ export default function ProductTable({
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const getLastMovement = (productId) => {
+    if (!movements || movements.length === 0) {
+      return null;
+    }
+
+    return movements.find(
+      (movement) =>
+        Number(movement.productId) === Number(productId)
+    );
   };
 
   const openMovementModal = (product, type) => {
@@ -82,6 +94,7 @@ export default function ProductTable({
             <tr>
               <th>Imagen</th>
               <th>SKU</th>
+              <th>Código de barras</th>
               <th>Producto</th>
               <th>Categoría</th>
               <th>Stock</th>
@@ -100,7 +113,7 @@ export default function ProductTable({
 
               <tr>
                 <td
-                  colSpan="11"
+                  colSpan="12"
                   className="text-center text-muted"
                 >
                   No hay productos registrados.
@@ -112,10 +125,10 @@ export default function ProductTable({
               products.map((item) => {
 
                 const buy =
-                  Number(item.buyPrice);
+                  Number(item.buyPrice) || 0;
 
                 const sell =
-                  Number(item.sellPrice);
+                  Number(item.sellPrice) || 0;
 
                 const stock =
                   Number(item.stock) || 0;
@@ -146,6 +159,9 @@ export default function ProductTable({
                         className:
                           "bg-success",
                       };
+
+                const lastMovement =
+                  getLastMovement(item.id);
 
                 return (
 
@@ -197,6 +213,34 @@ export default function ProductTable({
 
                     </td>
 
+                    {/* CÓDIGO DE BARRAS */}
+
+                    <td>
+
+                      {item.barcode ? (
+
+                        <span
+                          className="badge bg-light text-dark border"
+                          style={{
+                            fontFamily:
+                              "monospace",
+                            fontSize:
+                              "0.85rem",
+                          }}
+                        >
+                          {item.barcode}
+                        </span>
+
+                      ) : (
+
+                        <span className="text-muted">
+                          Sin código
+                        </span>
+
+                      )}
+
+                    </td>
+
                     {/* PRODUCTO */}
 
                     <td className="fw-semibold">
@@ -206,7 +250,7 @@ export default function ProductTable({
                     {/* CATEGORÍA */}
 
                     <td>
-                      {item.category}
+                      {item.category || "-"}
                     </td>
 
                     {/* STOCK */}
@@ -269,13 +313,13 @@ export default function ProductTable({
                     {/* COMPRA */}
 
                     <td>
-                      € {item.buyPrice}
+                      € {buy.toFixed(2)}
                     </td>
 
                     {/* VENTA */}
 
                     <td>
-                      € {item.sellPrice}
+                      € {sell.toFixed(2)}
                     </td>
 
                     {/* MARGEN */}
@@ -301,9 +345,13 @@ export default function ProductTable({
                     <td>
 
                       <small className="text-muted">
-                        {formatLastUpdate(
-                          item.lastStockUpdate
-                        )}
+
+                        {lastMovement
+                          ? formatLastUpdate(
+                              lastMovement.date
+                            )
+                          : "Sin movimientos"}
+
                       </small>
 
                     </td>

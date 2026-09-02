@@ -199,6 +199,10 @@ export default function Products() {
         ? product.sku
         : generateSku(products);
 
+      const barcode = product.barcode
+        ? product.barcode.trim()
+        : "";
+
       const response = await fetch(url, {
         method,
 
@@ -209,7 +213,7 @@ export default function Products() {
         body: JSON.stringify({
           name: product.name,
           sku: sku,
-          barcode: product.barcode,
+          barcode: barcode || null,
           category: product.category,
 
           buyPrice:
@@ -590,6 +594,9 @@ export default function Products() {
         item.sku
           ?.toLowerCase()
           .includes(searchTerm) ||
+        item.barcode
+          ?.toLowerCase()
+          .includes(searchTerm) ||
         item.category
           ?.toLowerCase()
           .includes(searchTerm)
@@ -741,7 +748,7 @@ export default function Products() {
         <input
           type="text"
           className="form-control"
-          placeholder="🔍 Buscar por nombre, SKU o categoría..."
+          placeholder="🔍 Buscar por nombre, SKU o código de barras..."
           value={search}
           onChange={(e) =>
             setSearch(e.target.value)
@@ -762,6 +769,7 @@ export default function Products() {
 
       <ProductTable
         products={filteredProducts}
+        movements={movements}
         handleDelete={handleDelete}
         handleEdit={handleEdit}
         handleIncreaseStock={
