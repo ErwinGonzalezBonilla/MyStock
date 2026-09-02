@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from extensions import db
-from models import Product
+from models import Product, StockMovement
 
 
 product_bp = Blueprint(
@@ -9,6 +9,35 @@ product_bp = Blueprint(
     __name__,
     url_prefix="/api/products"
 )
+
+
+# =========================
+# SERIALIZAR PRODUCTO
+# =========================
+
+def serialize_product(product):
+
+    return {
+        "id": product.id,
+        "name": product.name,
+        "sku": product.sku,
+        "barcode": product.barcode,
+        "category": product.category,
+        "buyPrice": product.buy_price,
+        "sellPrice": product.sell_price,
+        "stock": product.stock,
+        "minStock": product.min_stock,
+        "createdAt": (
+            product.created_at.isoformat()
+            if product.created_at
+            else None
+        ),
+        "updatedAt": (
+            product.updated_at.isoformat()
+            if product.updated_at
+            else None
+        ),
+    }
 
 
 # =========================
@@ -23,27 +52,7 @@ def get_products():
     ).all()
 
     return jsonify([
-        {
-            "id": product.id,
-            "name": product.name,
-            "sku": product.sku,
-            "barcode": product.barcode,
-            "category": product.category,
-            "buyPrice": product.buy_price,
-            "sellPrice": product.sell_price,
-            "stock": product.stock,
-            "minStock": product.min_stock,
-            "createdAt": (
-                product.created_at.isoformat()
-                if product.created_at
-                else None
-            ),
-            "updatedAt": (
-                product.updated_at.isoformat()
-                if product.updated_at
-                else None
-            ),
-        }
+        serialize_product(product)
         for product in products
     ]), 200
 
@@ -99,51 +108,87 @@ def create_product():
                 "error": "Ya existe un producto con ese código de barras"
             }), 409
 
+    try:
+
+        initial_stock = int(
+            data.get("stock", 0)
+        )
+
+        if initial_stock < 0:
+            return jsonify({
+                "error": "El stock no puede ser negativo"
+            }), 400
+
+        buy_price = float(
+            data.get("buyPrice", 0)
+        )
+
+        sell_price = float(
+            data.get("sellPrice", 0)
+        )
+
+        min_stock = int(
+            data.get("minStock", 0)
+        )
+
+    except (TypeError, ValueError):
+
+        return jsonify({
+            "error": "Los valores numéricos del producto no son válidos"
+        }), 400
+
+    if min_stock < 0:
+        return jsonify({
+            "error": "El stock mínimo no puede ser negativo"
+        }), 400
+
+    # =========================
+    # CREAR PRODUCTO
+    # =========================
+
     product = Product(
         name=name,
         sku=sku,
         barcode=barcode,
         category=data.get("category"),
-        buy_price=float(
-            data.get("buyPrice", 0)
-        ),
-        sell_price=float(
-            data.get("sellPrice", 0)
-        ),
-        stock=int(
-            data.get("stock", 0)
-        ),
-        min_stock=int(
-            data.get("minStock", 0)
-        ),
+        buy_price=buy_price,
+        sell_price=sell_price,
+
+        # El producto nace con su stock inicial.
+        stock=initial_stock,
+
+        min_stock=min_stock,
     )
 
     db.session.add(product)
+
+    # Necesitamos que SQLAlchemy genere el ID
+    # antes de crear el movimiento.
+    db.session.flush()
+
+    # =========================
+    # MOVIMIENTO INICIAL
+    # =========================
+
+    if initial_stock > 0:
+
+        initial_movement = StockMovement(
+            product_id=product.id,
+            type="entrada",
+            quantity=initial_stock,
+            reason="Stock inicial",
+            resulting_stock=initial_stock,
+        )
+
+        db.session.add(
+            initial_movement
+        )
+
     db.session.commit()
 
     return jsonify({
         "message": "Producto creado correctamente",
-        "product": {
-            "id": product.id,
-            "name": product.name,
-            "sku": product.sku,
-            "barcode": product.barcode,
-            "category": product.category,
-            "buyPrice": product.buy_price,
-            "sellPrice": product.sell_price,
-            "stock": product.stock,
-            "minStock": product.min_stock,
-            "createdAt": (
-                product.created_at.isoformat()
-                if product.created_at
-                else None
-            ),
-            "updatedAt": (
-                product.updated_at.isoformat()
-                if product.updated_at
-                else None
-            ),
-        }
+        "product": serialize_product(product)
     }), 201
 
 
@@ -223,67 +268,71 @@ def update_product(product_id):
                 "error": "Ya existe otro producto con ese código de barras"
             }), 409
 
+    try:
+
+        new_stock = int(
+            data.get(
+                "stock",
+                product.stock
+            )
+        )
+
+        buy_price = float(
+            data.get(
+                "buyPrice",
+                product.buy_price
+            )
+        )
+
+        sell_price = float(
+            data.get(
+                "sellPrice",
+                product.sell_price
+            )
+        )
+
+        min_stock = int(
+            data.get(
+                "minStock",
+                product.min_stock
+            )
+        )
+
+    except (TypeError, ValueError):
+
+        return jsonify({
+            "error": "Los valores numéricos del producto no son válidos"
+        }), 400
+
+    if new_stock < 0:
+        return jsonify({
+            "error": "El stock no puede ser negativo"
+        }), 400
+
+    if min_stock < 0:
+        return jsonify({
+            "error": "El stock mínimo no puede ser negativo"
+        }), 400
+
     product.name = name
     product.sku = sku
     product.barcode = barcode
+
     product.category = data.get(
         "category",
         product.category
     )
 
-    product.buy_price = float(
-        data.get(
-            "buyPrice",
-            product.buy_price
-        )
-    )
-
-    product.sell_price = float(
-        data.get(
-            "sellPrice",
-            product.sell_price
-        )
-    )
-
-    product.stock = int(
-        data.get(
-            "stock",
-            product.stock
-        )
-    )
-
-    product.min_stock = int(
-        data.get(
-            "minStock",
-            product.min_stock
-        )
-    )
+    product.buy_price = buy_price
+    product.sell_price = sell_price
+    product.stock = new_stock
+    product.min_stock = min_stock
 
     db.session.commit()
 
     return jsonify({
         "message": "Producto actualizado correctamente",
-        "product": {
-            "id": product.id,
-            "name": product.name,
-            "sku": product.sku,
-            "barcode": product.barcode,
-            "category": product.category,
-            "buyPrice": product.buy_price,
-            "sellPrice": product.sell_price,
-            "stock": product.stock,
-            "minStock": product.min_stock,
-            "createdAt": (
-                product.created_at.isoformat()
-                if product.created_at
-                else None
-            ),
-            "updatedAt": (
-                product.updated_at.isoformat()
-                if product.updated_at
-                else None
-            ),
-        }
+        "product": serialize_product(product)
     }), 200
 
 

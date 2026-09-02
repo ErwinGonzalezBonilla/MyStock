@@ -259,65 +259,8 @@ export default function Products() {
           "Producto creado correctamente."
         );
 
-        // =========================
-        // MOVIMIENTO INICIAL
-        // =========================
-
-        if (
-          Number(savedProduct.stock) > 0
-        ) {
-          try {
-            const movementResponse =
-              await fetch(
-                STOCK_MOVEMENTS_API_URL,
-                {
-                  method: "POST",
-
-                  headers: {
-                    "Content-Type":
-                      "application/json",
-                  },
-
-                  body: JSON.stringify({
-                    productId:
-                      savedProduct.id,
-
-                    type: "entrada",
-
-                    quantity:
-                      Number(
-                        savedProduct.stock
-                      ),
-
-                    reason:
-                      "Stock inicial",
-                  }),
-                }
-              );
-
-            const movementData =
-              await movementResponse.json();
-
-            if (
-              !movementResponse.ok
-            ) {
-              console.error(
-                "Error registrando stock inicial:",
-                movementData
-              );
-            } else {
-              setMovements((prev) => [
-                movementData.movement,
-                ...prev,
-              ]);
-            }
-          } catch (movementError) {
-            console.error(
-              "Error registrando movimiento inicial:",
-              movementError
-            );
-          }
-        }
+        // El movimiento de stock inicial
+        // ya se crea en el backend.
       }
 
       setProduct({
