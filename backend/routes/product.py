@@ -56,6 +56,36 @@ def get_products():
         for product in products
     ]), 200
 
+# =========================
+# BUSCAR PRODUCTO POR SKU O CÓDIGO DE BARRAS
+# =========================
+
+@product_bp.route("/lookup", methods=["GET"])
+def lookup_product():
+
+    code = request.args.get("code", "").strip()
+
+    if not code:
+        return jsonify({
+            "error": "El SKU o código de barras es obligatorio"
+        }), 400
+
+    product = Product.query.filter(
+        db.or_(
+            db.func.lower(Product.sku) == code.lower(),
+            Product.barcode == code
+        )
+    ).first()
+
+    if not product:
+        return jsonify({
+            "error": "Producto no encontrado"
+        }), 404
+
+    return jsonify({
+        "product": serialize_product(product)
+    }), 200    
+
 
 # =========================
 # CREAR PRODUCTO
