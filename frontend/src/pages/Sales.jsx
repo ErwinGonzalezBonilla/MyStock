@@ -1,28 +1,14 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import SaleForm from "../components/sales/SaleForm";
 import SaleTable from "../components/sales/SaleTable";
 
+const API_URL = "http://127.0.0.1:5000";
+
 export default function Sales() {
-  const [products, setProducts] = useState(() => {
-    const savedProducts =
-      localStorage.getItem("products");
+  const scannerRef = useRef(null);
 
-    if (!savedProducts) {
-      return [];
-    }
-
-    try {
-      return JSON.parse(savedProducts);
-    } catch (error) {
-      console.error(
-        "Error al cargar productos:",
-        error
-      );
-
-      return [];
-    }
-  });
+  const [products, setProducts] = useState([]);
 
   const [clients] = useState(() => {
     const savedClients =
@@ -44,7 +30,7 @@ export default function Sales() {
     }
   });
 
-  const [sales, setSales] = useState(() => {
+  const [sales] = useState(() => {
     const savedSales =
       localStorage.getItem("sales");
 
@@ -70,16 +56,80 @@ export default function Sales() {
     quantity: 1,
   });
 
+  const [scannerCode, setScannerCode] =
+    useState("");
+
+  const [scannedProduct, setScannedProduct] =
+    useState(null);
+
+  const [loadingProducts, setLoadingProducts] =
+    useState(true);
+
+  const [lookupLoading, setLookupLoading] =
+    useState(false);
+
+  const [error, setError] = useState("");
+
+  const [success, setSuccess] = useState("");
+
   // =========================
-  // GUARDAR VENTAS
+  // CARGAR PRODUCTOS DESDE API
   // =========================
 
   useEffect(() => {
-    localStorage.setItem(
-      "sales",
-      JSON.stringify(sales)
-    );
-  }, [sales]);
+    let cancelled = false;
+
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch(
+          `${API_URL}/api/products`
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            "No se pudieron cargar los productos."
+          );
+        }
+
+        const data = await response.json();
+
+        if (!cancelled) {
+          setProducts(data);
+          setLoadingProducts(false);
+        }
+      } catch (error) {
+        console.error(error);
+
+        if (!cancelled) {
+          setError(
+            "No se pudieron cargar los productos desde el servidor."
+          );
+
+          setLoadingProducts(false);
+        }
+      }
+    };
+
+    fetchProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // =========================
+  // ENFOCAR SCANNER
+  // =========================
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scannerRef.current?.focus();
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []);
 
   // =========================
   // CAMBIOS DEL FORMULARIO
@@ -93,199 +143,213 @@ export default function Sales() {
   };
 
   // =========================
+  // BUSCAR PRODUCTO
+  // =========================
+
+  const lookupProduct = async (code) => {
+    const cleanCode = code.trim();
+
+    if (!cleanCode) {
+      return;
+    }
+
+    setLookupLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/products/lookup?code=${encodeURIComponent(
+          cleanCode
+        )}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setScannedProduct(null);
+
+        setError(
+          data.error ||
+            "Producto no encontrado."
+        );
+
+        return;
+      }
+
+      const product = data.product;
+
+      if (Number(product.stock) <= 0) {
+        setScannedProduct(null);
+
+        setError(
+          "El producto no tiene stock disponible."
+        );
+
+        return;
+      }
+
+      setScannedProduct(product);
+
+      setSale((prev) => ({
+        ...prev,
+        productId: String(product.id),
+        quantity: 1,
+      }));
+
+      setSuccess(
+        `Producto encontrado: ${product.name}`
+      );
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "No se pudo conectar con el servidor."
+      );
+    } finally {
+      setLookupLoading(false);
+
+      setScannerCode("");
+
+      setTimeout(() => {
+        scannerRef.current?.focus();
+      }, 50);
+    }
+  };
+
+  // =========================
+  // SCANNER / ENTER
+  // =========================
+
+  const handleScannerKeyDown = (e) => {
+    if (e.key !== "Enter") {
+      return;
+    }
+
+    e.preventDefault();
+
+    lookupProduct(scannerCode);
+  };
+
+  // =========================
+  // SELECCIONAR PRODUCTO
+  // =========================
+
+  const handleProductSelect = (e) => {
+    const productId = e.target.value;
+
+    setSale((prev) => ({
+      ...prev,
+      productId,
+      quantity: 1,
+    }));
+
+    const product = products.find(
+      (item) =>
+        String(item.id) === String(productId)
+    );
+
+    setScannedProduct(product || null);
+
+    setError("");
+    setSuccess("");
+  };
+
+  // =========================
   // REGISTRAR VENTA
   // =========================
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const selectedProduct = products.find(
-      (product) =>
-        product.id === sale.productId
+    setError(
+      "El registro de ventas con descuento de stock se conectará al backend en el siguiente paso."
     );
-
-    if (!selectedProduct) {
-      return;
-    }
-
-    const selectedClient = clients.find(
-      (client) =>
-        client.id === sale.clientId
-    );
-
-    const quantity =
-      Number(sale.quantity);
-
-    const currentStock =
-      Number(selectedProduct.stock) || 0;
-
-    if (
-      quantity <= 0 ||
-      quantity > currentStock
-    ) {
-      return;
-    }
-
-    const unitPrice =
-      Number(
-        selectedProduct.sellPrice
-      ) || 0;
-
-    const total =
-      unitPrice * quantity;
-
-    const newStock =
-      currentStock - quantity;
-
-    const now =
-      new Date().toISOString();
-
-    // =========================
-    // CREAR VENTA
-    // =========================
-
-    const newSale = {
-      id: crypto.randomUUID(),
-
-      clientId:
-        selectedClient?.id || "",
-
-      clientName:
-        selectedClient?.name || "Venta sin cliente",
-
-      productId:
-        selectedProduct.id,
-
-      productName:
-        selectedProduct.name,
-
-      sku:
-        selectedProduct.sku,
-
-      quantity,
-
-      unitPrice,
-
-      total,
-
-      date: now,
-    };
-
-    // =========================
-    // CREAR MOVIMIENTO
-    // =========================
-
-    const newMovement = {
-      id: crypto.randomUUID(),
-
-      productId:
-        selectedProduct.id,
-
-      productName:
-        selectedProduct.name,
-
-      sku:
-        selectedProduct.sku,
-
-      type: "salida",
-
-      quantity,
-
-      resultingStock:
-        newStock,
-
-      reason: "Venta",
-
-      date: now,
-    };
-
-    // =========================
-    // ACTUALIZAR PRODUCTOS
-    // =========================
-
-    const updatedProducts =
-      products.map((item) =>
-        item.id === selectedProduct.id
-          ? {
-              ...item,
-
-              stock: newStock,
-
-              lastStockUpdate: now,
-            }
-          : item
-      );
-
-    setProducts(updatedProducts);
-
-    localStorage.setItem(
-      "products",
-      JSON.stringify(updatedProducts)
-    );
-
-    // =========================
-    // ACTUALIZAR VENTAS
-    // =========================
-
-    setSales((prev) => [
-      newSale,
-      ...prev,
-    ]);
-
-    // =========================
-    // ACTUALIZAR HISTORIAL
-    // =========================
-
-    const savedMovements =
-      localStorage.getItem(
-        "stockMovements"
-      );
-
-    let currentMovements = [];
-
-    if (savedMovements) {
-      try {
-        currentMovements =
-          JSON.parse(savedMovements);
-      } catch (error) {
-        console.error(
-          "Error al cargar movimientos:",
-          error
-        );
-
-        currentMovements = [];
-      }
-    }
-
-    const updatedMovements = [
-      newMovement,
-      ...currentMovements,
-    ];
-
-    localStorage.setItem(
-      "stockMovements",
-      JSON.stringify(
-        updatedMovements
-      )
-    );
-
-    // =========================
-    // LIMPIAR FORMULARIO
-    // =========================
-
-    setSale({
-      clientId: "",
-      productId: "",
-      quantity: 1,
-    });
   };
 
   return (
     <div className="container-fluid p-4">
 
-      <h2 className="fw-bold mb-4">
-        Ventas
-      </h2>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+          <h2 className="fw-bold mb-1">
+            Ventas
+          </h2>
+
+          <p className="text-muted mb-0">
+            Escanea un producto o búscalo por SKU.
+          </p>
+        </div>
+
+      </div>
+
+      {/* =========================
+          SCANNER
+      ========================= */}
+
+      <div className="stat-card mb-4">
+
+        <h4 className="mb-3">
+          Buscar producto
+        </h4>
+
+        <div className="input-group input-group-lg">
+
+          <span className="input-group-text">
+            🔎
+          </span>
+
+          <input
+            ref={scannerRef}
+            type="text"
+            className="form-control"
+            value={scannerCode}
+            onChange={(e) =>
+              setScannerCode(e.target.value)
+            }
+            onKeyDown={handleScannerKeyDown}
+            placeholder="Escanea o introduce SKU / código de barras..."
+            autoComplete="off"
+            disabled={lookupLoading}
+          />
+
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() =>
+              lookupProduct(scannerCode)
+            }
+            disabled={
+              lookupLoading ||
+              !scannerCode.trim()
+            }
+          >
+            {lookupLoading
+              ? "Buscando..."
+              : "Buscar"}
+          </button>
+
+        </div>
+
+        <small className="text-muted d-block mt-2">
+          Un lector USB o Bluetooth puede utilizar este
+          campo como teclado y enviar Enter automáticamente.
+        </small>
+
+        {error && (
+          <div className="alert alert-danger mt-3 mb-0">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="alert alert-success mt-3 mb-0">
+            {success}
+          </div>
+        )}
+
+      </div>
 
       <SaleForm
         products={products}
@@ -293,6 +357,9 @@ export default function Sales() {
         sale={sale}
         handleChange={handleChange}
         handleSubmit={handleSubmit}
+        selectedProduct={scannedProduct}
+        onProductSelect={handleProductSelect}
+        loadingProducts={loadingProducts}
       />
 
       <SaleTable
