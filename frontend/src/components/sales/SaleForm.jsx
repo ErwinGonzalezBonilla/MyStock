@@ -2,32 +2,16 @@ export default function SaleForm({
   products,
   clients,
   sale,
+  cart,
+  cartTotal,
+  cartItemsCount,
   handleChange,
   handleSubmit,
+  onProductSelect,
+  updateCartQuantity,
+  removeFromCart,
+  loadingProducts,
 }) {
-  const selectedProduct = products.find(
-    (product) =>
-      product.id === sale.productId
-  );
-
-  const selectedClient = clients.find(
-    (client) =>
-      client.id === sale.clientId
-  );
-
-  const price = selectedProduct
-    ? Number(selectedProduct.sellPrice) || 0
-    : 0;
-
-  const quantity =
-    Number(sale.quantity) || 0;
-
-  const total = price * quantity;
-
-  const availableStock = selectedProduct
-    ? Number(selectedProduct.stock) || 0
-    : 0;
-
   return (
     <div className="stat-card mb-4">
 
@@ -37,9 +21,11 @@ export default function SaleForm({
 
       <form onSubmit={handleSubmit}>
 
-        {/* CLIENTE */}
+        {/* =========================
+            CLIENTE
+        ========================= */}
 
-        <div className="mb-3">
+        <div className="mb-4">
 
           <label
             htmlFor="clientId"
@@ -77,86 +63,37 @@ export default function SaleForm({
           </select>
 
           <small className="text-muted">
-            Puedes registrar una venta sin
-            asociarla a un cliente.
+            Puedes registrar la venta sin asociarla
+            a un cliente.
           </small>
 
         </div>
 
-        {/* INFORMACIÓN DEL CLIENTE */}
+        {/* =========================
+            PRODUCTO MANUAL
+        ========================= */}
 
-        {selectedClient && (
-
-          <div className="alert alert-light border mb-3">
-
-            <div className="row">
-
-              <div className="col-md-4">
-
-                <small className="text-muted">
-                  Cliente
-                </small>
-
-                <div className="fw-semibold">
-                  {selectedClient.name}
-                </div>
-
-              </div>
-
-              <div className="col-md-4">
-
-                <small className="text-muted">
-                  DNI / NIF
-                </small>
-
-                <div className="fw-semibold">
-                  {selectedClient.taxId ||
-                    "—"}
-                </div>
-
-              </div>
-
-              <div className="col-md-4">
-
-                <small className="text-muted">
-                  Teléfono
-                </small>
-
-                <div className="fw-semibold">
-                  {selectedClient.phone ||
-                    "—"}
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        )}
-
-        {/* PRODUCTO */}
-
-        <div className="mb-3">
+        <div className="mb-4">
 
           <label
             htmlFor="productId"
             className="form-label fw-semibold"
           >
-            Producto
+            Añadir producto manualmente
           </label>
 
           <select
             id="productId"
-            name="productId"
             className="form-select"
-            value={sale.productId}
-            onChange={handleChange}
-            required
+            value=""
+            onChange={onProductSelect}
+            disabled={loadingProducts}
           >
 
             <option value="">
-              Selecciona un producto...
+              {loadingProducts
+                ? "Cargando productos..."
+                : "Selecciona un producto..."}
             </option>
 
             {products.map((product) => (
@@ -169,9 +106,8 @@ export default function SaleForm({
                 }
               >
                 {product.name} —{" "}
-                {product.sku ||
-                  "Sin SKU"} — Stock:{" "}
-                {product.stock}
+                {product.sku || "Sin SKU"} —{" "}
+                Stock: {product.stock}
               </option>
 
             ))}
@@ -180,106 +116,179 @@ export default function SaleForm({
 
         </div>
 
-        {/* INFORMACIÓN DEL PRODUCTO */}
+        {/* =========================
+            CARRITO
+        ========================= */}
 
-        {selectedProduct && (
+        <div className="border rounded p-3 mb-4">
 
-          <div className="alert alert-light border mb-3">
+          <div className="d-flex justify-content-between align-items-center mb-3">
 
-            <div className="row">
+            <div>
+              <h5 className="mb-1">
+                Carrito
+              </h5>
 
-              <div className="col-md-4">
-
-                <small className="text-muted">
-                  SKU
-                </small>
-
-                <div className="fw-semibold">
-                  {selectedProduct.sku ||
-                    "Sin SKU"}
-                </div>
-
-              </div>
-
-              <div className="col-md-4">
-
-                <small className="text-muted">
-                  Precio de venta
-                </small>
-
-                <div className="fw-semibold">
-                  € {price.toFixed(2)}
-                </div>
-
-              </div>
-
-              <div className="col-md-4">
-
-                <small className="text-muted">
-                  Stock disponible
-                </small>
-
-                <div className="fw-semibold">
-                  {availableStock}
-                </div>
-
-              </div>
-
+              <small className="text-muted">
+                {cartItemsCount}{" "}
+                {cartItemsCount === 1
+                  ? "producto"
+                  : "productos"}
+              </small>
             </div>
+
+            <span className="badge bg-dark">
+              {cart.length}{" "}
+              {cart.length === 1
+                ? "línea"
+                : "líneas"}
+            </span>
 
           </div>
 
-        )}
+          {cart.length === 0 ? (
 
-        {/* CANTIDAD */}
+            <div className="text-center text-muted py-4">
 
-        <div className="mb-3">
-
-          <label
-            htmlFor="quantity"
-            className="form-label fw-semibold"
-          >
-            Cantidad
-          </label>
-
-          <input
-            id="quantity"
-            name="quantity"
-            type="number"
-            min="1"
-            max={
-              availableStock ||
-              undefined
-            }
-            className="form-control"
-            value={sale.quantity}
-            onChange={handleChange}
-            required
-          />
-
-          {selectedProduct &&
-            quantity > availableStock && (
-
-              <div className="text-danger small mt-1">
-                No hay suficiente stock.
+              <div className="fs-1 mb-2">
+                🛒
               </div>
 
-            )}
+              <p className="mb-1">
+                El carrito está vacío.
+              </p>
+
+              <small>
+                Escanea un producto para añadirlo.
+              </small>
+
+            </div>
+
+          ) : (
+
+            <div className="table-responsive">
+
+              <table className="table align-middle mb-0">
+
+                <thead className="table-light">
+
+                  <tr>
+                    <th>Producto</th>
+                    <th>SKU</th>
+                    <th>Precio</th>
+                    <th style={{ width: "140px" }}>
+                      Cantidad
+                    </th>
+                    <th>Subtotal</th>
+                    <th></th>
+                  </tr>
+
+                </thead>
+
+                <tbody>
+
+                  {cart.map((item) => (
+
+                    <tr
+                      key={item.productId}
+                    >
+
+                      <td>
+                        <div className="fw-semibold">
+                          {item.name}
+                        </div>
+
+                        {item.barcode && (
+                          <small className="text-muted">
+                            {item.barcode}
+                          </small>
+                        )}
+                      </td>
+
+                      <td>
+                        <span className="badge bg-dark">
+                          {item.sku ||
+                            "Sin SKU"}
+                        </span>
+                      </td>
+
+                      <td>
+                        €{" "}
+                        {item.unitPrice.toFixed(
+                          2
+                        )}
+                      </td>
+
+                      <td>
+
+                        <input
+                          type="number"
+                          min="1"
+                          max={item.stock}
+                          className="form-control"
+                          value={item.quantity}
+                          onChange={(e) =>
+                            updateCartQuantity(
+                              item.productId,
+                              e.target.value
+                            )
+                          }
+                        />
+
+                      </td>
+
+                      <td className="fw-bold">
+                        €{" "}
+                        {item.subtotal.toFixed(
+                          2
+                        )}
+                      </td>
+
+                      <td>
+
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-danger"
+                          onClick={() =>
+                            removeFromCart(
+                              item.productId
+                            )
+                          }
+                          title="Eliminar"
+                        >
+                          ×
+                        </button>
+
+                      </td>
+
+                    </tr>
+
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          )}
 
         </div>
 
-        {/* TOTAL */}
+        {/* =========================
+            TOTAL
+        ========================= */}
 
         <div className="border rounded p-3 mb-4">
 
           <div className="d-flex justify-content-between">
 
             <span className="text-muted">
-              Precio unitario
+              Líneas
             </span>
 
             <strong>
-              € {price.toFixed(2)}
+              {cart.length}
             </strong>
 
           </div>
@@ -287,41 +296,41 @@ export default function SaleForm({
           <div className="d-flex justify-content-between mt-2">
 
             <span className="text-muted">
-              Cantidad
+              Productos
             </span>
 
             <strong>
-              {quantity}
+              {cartItemsCount}
             </strong>
 
           </div>
 
           <hr />
 
-          <div className="d-flex justify-content-between">
+          <div className="d-flex justify-content-between align-items-center">
 
             <span className="fw-bold">
-              Total
+              TOTAL
             </span>
 
-            <span className="fs-4 fw-bold">
-              € {total.toFixed(2)}
+            <span className="fs-3 fw-bold">
+              € {cartTotal.toFixed(2)}
             </span>
 
           </div>
 
         </div>
 
+        {/* =========================
+            FINALIZAR
+        ========================= */}
+
         <button
           type="submit"
-          className="btn btn-primary"
-          disabled={
-            !selectedProduct ||
-            quantity <= 0 ||
-            quantity > availableStock
-          }
+          className="btn btn-primary btn-lg"
+          disabled={cart.length === 0}
         >
-          Registrar venta
+          Finalizar venta
         </button>
 
       </form>

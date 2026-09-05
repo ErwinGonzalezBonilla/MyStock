@@ -52,15 +52,13 @@ export default function Sales() {
 
   const [sale, setSale] = useState({
     clientId: "",
-    productId: "",
     quantity: 1,
   });
 
+  const [cart, setCart] = useState([]);
+
   const [scannerCode, setScannerCode] =
     useState("");
-
-  const [scannedProduct, setScannedProduct] =
-    useState(null);
 
   const [loadingProducts, setLoadingProducts] =
     useState(true);
@@ -132,7 +130,7 @@ export default function Sales() {
   }, []);
 
   // =========================
-  // CAMBIOS DEL FORMULARIO
+  // CAMBIOS DEL CLIENTE
   // =========================
 
   const handleChange = (e) => {
@@ -167,8 +165,6 @@ export default function Sales() {
       const data = await response.json();
 
       if (!response.ok) {
-        setScannedProduct(null);
-
         setError(
           data.error ||
             "Producto no encontrado."
@@ -180,8 +176,6 @@ export default function Sales() {
       const product = data.product;
 
       if (Number(product.stock) <= 0) {
-        setScannedProduct(null);
-
         setError(
           "El producto no tiene stock disponible."
         );
@@ -189,16 +183,10 @@ export default function Sales() {
         return;
       }
 
-      setScannedProduct(product);
-
-      setSale((prev) => ({
-        ...prev,
-        productId: String(product.id),
-        quantity: 1,
-      }));
+      addToCart(product);
 
       setSuccess(
-        `Producto encontrado: ${product.name}`
+        `${product.name} añadido al carrito.`
       );
     } catch (error) {
       console.error(error);
@@ -208,7 +196,6 @@ export default function Sales() {
       );
     } finally {
       setLookupLoading(false);
-
       setScannerCode("");
 
       setTimeout(() => {
@@ -218,42 +205,183 @@ export default function Sales() {
   };
 
   // =========================
-  // SCANNER / ENTER
+  // AÑADIR AL CARRITO
   // =========================
 
-  const handleScannerKeyDown = (e) => {
-    if (e.key !== "Enter") {
-      return;
-    }
+  const addToCart = (product) => {
+    setCart((currentCart) => {
+      const existingItem =
+        currentCart.find(
+          (item) =>
+            Number(item.productId) ===
+            Number(product.id)
+        );
 
-    e.preventDefault();
+      if (existingItem) {
+        const newQuantity =
+          existingItem.quantity + 1;
 
-    lookupProduct(scannerCode);
+        if (
+          newQuantity >
+          Number(product.stock)
+        ) {
+          setError(
+            `No hay suficiente stock de ${product.name}.`
+          );
+
+          return currentCart;
+        }
+
+        return currentCart.map((item) =>
+          Number(item.productId) ===
+          Number(product.id)
+            ? {
+                ...item,
+                quantity: newQuantity,
+                subtotal:
+                  newQuantity *
+                  Number(product.sellPrice || 0),
+              }
+            : item
+        );
+      }
+
+      return [
+        ...currentCart,
+        {
+          productId: product.id,
+          name: product.name,
+          sku: product.sku,
+          barcode: product.barcode,
+          unitPrice:
+            Number(product.sellPrice) || 0,
+          quantity: 1,
+          stock: Number(product.stock) || 0,
+          subtotal:
+            Number(product.sellPrice) || 0,
+        },
+      ];
+    });
   };
 
   // =========================
-  // SELECCIONAR PRODUCTO
+  // AÑADIR PRODUCTO MANUALMENTE
   // =========================
 
   const handleProductSelect = (e) => {
     const productId = e.target.value;
 
-    setSale((prev) => ({
-      ...prev,
-      productId,
-      quantity: 1,
-    }));
+    if (!productId) {
+      return;
+    }
 
     const product = products.find(
       (item) =>
-        String(item.id) === String(productId)
+        String(item.id) ===
+        String(productId)
     );
 
-    setScannedProduct(product || null);
+    if (!product) {
+      return;
+    }
+
+    if (Number(product.stock) <= 0) {
+      setError(
+        "El producto no tiene stock disponible."
+      );
+
+      return;
+    }
+
+    addToCart(product);
+
+    setSuccess(
+      `${product.name} añadido al carrito.`
+    );
+
+    setError("");
+
+    setTimeout(() => {
+      scannerRef.current?.focus();
+    }, 50);
+  };
+
+  // =========================
+  // CAMBIAR CANTIDAD
+  // =========================
+
+  const updateCartQuantity = (
+    productId,
+    quantity
+  ) => {
+    const newQuantity = Number(quantity);
+
+    if (
+      !Number.isInteger(newQuantity) ||
+      newQuantity < 1
+    ) {
+      return;
+    }
+
+    setCart((currentCart) =>
+      currentCart.map((item) => {
+        if (
+          Number(item.productId) !==
+          Number(productId)
+        ) {
+          return item;
+        }
+
+        if (newQuantity > item.stock) {
+          setError(
+            `No hay suficiente stock de ${item.name}.`
+          );
+
+          return item;
+        }
+
+        return {
+          ...item,
+          quantity: newQuantity,
+          subtotal:
+            newQuantity * item.unitPrice,
+        };
+      })
+    );
+  };
+
+  // =========================
+  // ELIMINAR DEL CARRITO
+  // =========================
+
+  const removeFromCart = (productId) => {
+    setCart((currentCart) =>
+      currentCart.filter(
+        (item) =>
+          Number(item.productId) !==
+          Number(productId)
+      )
+    );
 
     setError("");
     setSuccess("");
   };
+
+  // =========================
+  // TOTAL DEL CARRITO
+  // =========================
+
+  const cartTotal = cart.reduce(
+    (total, item) =>
+      total + Number(item.subtotal || 0),
+    0
+  );
+
+  const cartItemsCount = cart.reduce(
+    (total, item) =>
+      total + Number(item.quantity || 0),
+    0
+  );
 
   // =========================
   // REGISTRAR VENTA
@@ -262,8 +390,16 @@ export default function Sales() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    if (cart.length === 0) {
+      setError(
+        "Añade al menos un producto al carrito."
+      );
+
+      return;
+    }
+
     setError(
-      "El registro de ventas con descuento de stock se conectará al backend en el siguiente paso."
+      "El registro de ventas y descuento de stock se conectará al backend en el siguiente paso."
     );
   };
 
@@ -278,7 +414,7 @@ export default function Sales() {
           </h2>
 
           <p className="text-muted mb-0">
-            Escanea un producto o búscalo por SKU.
+            Escanea productos para crear una venta.
           </p>
         </div>
 
@@ -308,7 +444,13 @@ export default function Sales() {
             onChange={(e) =>
               setScannerCode(e.target.value)
             }
-            onKeyDown={handleScannerKeyDown}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+
+                lookupProduct(scannerCode);
+              }
+            }}
             placeholder="Escanea o introduce SKU / código de barras..."
             autoComplete="off"
             disabled={lookupLoading}
@@ -333,8 +475,9 @@ export default function Sales() {
         </div>
 
         <small className="text-muted d-block mt-2">
-          Un lector USB o Bluetooth puede utilizar este
-          campo como teclado y enviar Enter automáticamente.
+          Escanea un código y pulsa Enter. Si el
+          producto ya está en el carrito, aumentará
+          automáticamente su cantidad.
         </small>
 
         {error && (
@@ -355,10 +498,14 @@ export default function Sales() {
         products={products}
         clients={clients}
         sale={sale}
+        cart={cart}
+        cartTotal={cartTotal}
+        cartItemsCount={cartItemsCount}
         handleChange={handleChange}
         handleSubmit={handleSubmit}
-        selectedProduct={scannedProduct}
         onProductSelect={handleProductSelect}
+        updateCartQuantity={updateCartQuantity}
+        removeFromCart={removeFromCart}
         loadingProducts={loadingProducts}
       />
 
