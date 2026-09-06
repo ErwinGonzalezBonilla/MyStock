@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import ClientForm from "../components/clients/ClientForm";
 import ClientDetailsModal from "../components/clients/ClientDetailsModal";
 import StatCard from "../components/common/StatCard";
+
+const API_URL = "http://127.0.0.1:5000";
 
 const EMPTY_CLIENT = {
   id: "",
@@ -16,147 +18,164 @@ const EMPTY_CLIENT = {
 };
 
 export default function Clients() {
-  const [client, setClient] =
-    useState(EMPTY_CLIENT);
+  const [clients, setClients] = useState([]);
+  const [sales] = useState([]);
 
-  const [clients, setClients] =
-    useState(() => {
-      const savedClients =
-        localStorage.getItem("clients");
+  const [client, setClient] = useState(EMPTY_CLIENT);
 
-      if (!savedClients) {
-        return [];
-      }
+  const [editingId, setEditingId] = useState(null);
 
+  const [selectedClient, setSelectedClient] = useState(null);
+
+  const [search, setSearch] = useState("");
+
+  const [message, setMessage] = useState("");
+
+  const [loading, setLoading] = useState(true);
+
+  const [saving, setSaving] = useState(false);
+
+  // =========================
+  // CARGAR CLIENTES
+  // =========================
+
+  useEffect(() => {
+    const loadClients = async () => {
       try {
-        return JSON.parse(savedClients);
-      } catch (error) {
-        console.error(
-          "Error al cargar clientes:",
-          error
+        setLoading(true);
+
+        const response = await fetch(
+          `${API_URL}/api/clients`
         );
 
-        return [];
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ||
+              "No se pudieron cargar los clientes."
+          );
+        }
+
+        setClients(data);
+      } catch (error) {
+        console.error(error);
+
+        setMessage(
+          error.message ||
+            "Error al cargar los clientes."
+        );
+      } finally {
+        setLoading(false);
       }
-    });
+    };
+
+    loadClients();
+  }, []);
 
   // =========================
-  // VENTAS
-  // =========================
-
-  const [sales] = useState(() => {
-    const savedSales =
-      localStorage.getItem("sales");
-
-    if (!savedSales) {
-      return [];
-    }
-
-    try {
-      return JSON.parse(savedSales);
-    } catch (error) {
-      console.error(
-        "Error al cargar ventas:",
-        error
-      );
-
-      return [];
-    }
-  });
-
-  const [message, setMessage] =
-    useState("");
-
-  const [search, setSearch] =
-    useState("");
-
-  const [editingId, setEditingId] =
-    useState(null);
-
-  const [selectedClient, setSelectedClient] =
-    useState(null);
-
-  // =========================
-  // FORMULARIO
+  // CAMBIAR CAMPOS
   // =========================
 
   const handleChange = (e) => {
-    setClient((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    const { name, value } = e.target;
 
-    setMessage("");
+    setClient((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   };
 
   // =========================
-  // GUARDAR / EDITAR
+  // GUARDAR / ACTUALIZAR
   // =========================
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // EDITAR CLIENTE
-
-    if (editingId) {
-      const updatedClients =
-        clients.map((item) =>
-          item.id === editingId
-            ? {
-                ...client,
-                id: editingId,
-                createdAt:
-                  item.createdAt,
-                updatedAt:
-                  new Date().toISOString(),
-              }
-            : item
-        );
-
-      localStorage.setItem(
-        "clients",
-        JSON.stringify(updatedClients)
-      );
-
-      setClients(updatedClients);
-
-      setClient(EMPTY_CLIENT);
-
-      setEditingId(null);
-
+    if (!client.name.trim()) {
       setMessage(
-        "Cliente actualizado correctamente."
+        "El nombre del cliente es obligatorio."
       );
-
       return;
     }
 
-    // CREAR CLIENTE
+    try {
+      setSaving(true);
+      setMessage("");
 
-    const newClient = {
-      ...client,
-      id: crypto.randomUUID(),
-      createdAt:
-        new Date().toISOString(),
-    };
+      const isEditing = Boolean(editingId);
 
-    const updatedClients = [
-      ...clients,
-      newClient,
-    ];
+      const url = isEditing
+        ? `${API_URL}/api/clients/${editingId}`
+        : `${API_URL}/api/clients`;
 
-    localStorage.setItem(
-      "clients",
-      JSON.stringify(updatedClients)
-    );
+      const method = isEditing
+        ? "PUT"
+        : "POST";
 
-    setClients(updatedClients);
+      const payload = {
+        name: client.name.trim(),
+        taxId: client.taxId.trim(),
+        phone: client.phone.trim(),
+        email: client.email.trim(),
+        address: client.address.trim(),
+        city: client.city.trim(),
+        postalCode: client.postalCode.trim(),
+      };
 
-    setClient(EMPTY_CLIENT);
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    setMessage(
-      "Cliente guardado correctamente."
-    );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "No se pudo guardar el cliente."
+        );
+      }
+
+      if (isEditing) {
+        setClients((previous) =>
+          previous.map((item) =>
+            item.id === editingId
+              ? data.client
+              : item
+          )
+        );
+
+        setMessage(
+          "Cliente actualizado correctamente."
+        );
+      } else {
+        setClients((previous) => [
+          ...previous,
+          data.client,
+        ]);
+
+        setMessage(
+          "Cliente guardado correctamente."
+        );
+      }
+
+      setClient(EMPTY_CLIENT);
+      setEditingId(null);
+    } catch (error) {
+      console.error(error);
+
+      setMessage(
+        error.message ||
+          "Error al guardar el cliente."
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   // =========================
@@ -173,7 +192,17 @@ export default function Clients() {
       return;
     }
 
-    setClient(clientToEdit);
+    setClient({
+      id: clientToEdit.id,
+      name: clientToEdit.name || "",
+      taxId: clientToEdit.taxId || "",
+      phone: clientToEdit.phone || "",
+      email: clientToEdit.email || "",
+      address: clientToEdit.address || "",
+      city: clientToEdit.city || "",
+      postalCode:
+        clientToEdit.postalCode || "",
+    });
 
     setEditingId(id);
 
@@ -201,7 +230,7 @@ export default function Clients() {
   // ELIMINAR
   // =========================
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const clientToDelete =
       clients.find(
         (item) => item.id === id
@@ -219,26 +248,51 @@ export default function Clients() {
       return;
     }
 
-    const updatedClients =
-      clients.filter(
-        (item) => item.id !== id
+    try {
+      setMessage("");
+
+      const response = await fetch(
+        `${API_URL}/api/clients/${id}`,
+        {
+          method: "DELETE",
+        }
       );
 
-    localStorage.setItem(
-      "clients",
-      JSON.stringify(updatedClients)
-    );
+      const data = await response.json();
 
-    setClients(updatedClients);
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "No se pudo eliminar el cliente."
+        );
+      }
 
-    if (editingId === id) {
-      setClient(EMPTY_CLIENT);
-      setEditingId(null);
+      setClients((previous) =>
+        previous.filter(
+          (item) => item.id !== id
+        )
+      );
+
+      if (editingId === id) {
+        setClient(EMPTY_CLIENT);
+        setEditingId(null);
+      }
+
+      if (selectedClient?.id === id) {
+        setSelectedClient(null);
+      }
+
+      setMessage(
+        "Cliente eliminado correctamente."
+      );
+    } catch (error) {
+      console.error(error);
+
+      setMessage(
+        error.message ||
+          "Error al eliminar el cliente."
+      );
     }
-
-    setMessage(
-      "Cliente eliminado correctamente."
-    );
   };
 
   // =========================
@@ -380,15 +434,20 @@ export default function Clients() {
         handleSubmit={handleSubmit}
       />
 
+      {saving && (
+        <div className="text-muted mb-3">
+          Guardando cliente...
+        </div>
+      )}
+
       {editingId && (
         <div className="mb-4">
 
           <button
             type="button"
             className="btn btn-outline-secondary"
-            onClick={
-              handleCancelEdit
-            }
+            onClick={handleCancelEdit}
+            disabled={saving}
           >
             Cancelar edición
           </button>
@@ -486,12 +545,10 @@ export default function Clients() {
             <input
               type="text"
               className="form-control"
-              placeholder="🔍 Nombre, DNI/NIF o email..."
+              placeholder="🔎 Nombre, DNI/NIF o email..."
               value={search}
               onChange={(e) =>
-                setSearch(
-                  e.target.value
-                )
+                setSearch(e.target.value)
               }
             />
 
@@ -502,9 +559,7 @@ export default function Clients() {
             <button
               type="button"
               className="btn btn-outline-secondary w-100"
-              onClick={
-                clearSearch
-              }
+              onClick={clearSearch}
               disabled={!search}
             >
               🔄 Limpiar búsqueda
@@ -518,7 +573,22 @@ export default function Clients() {
             CONTENIDO
         ========================= */}
 
-        {clients.length === 0 ? (
+        {loading ? (
+
+          <div className="text-center text-muted py-4">
+
+            <div
+              className="spinner-border mb-3"
+              role="status"
+            />
+
+            <p className="mb-0">
+              Cargando clientes...
+            </p>
+
+          </div>
+
+        ) : clients.length === 0 ? (
 
           <div className="text-center text-muted py-4">
 
@@ -537,7 +607,7 @@ export default function Clients() {
           <div className="text-center text-muted py-4">
 
             <div className="fs-1 mb-2">
-              🔍
+              🔎
             </div>
 
             <p className="mb-2">
@@ -547,9 +617,7 @@ export default function Clients() {
             <button
               type="button"
               className="btn btn-outline-primary btn-sm"
-              onClick={
-                clearSearch
-              }
+              onClick={clearSearch}
             >
               Limpiar búsqueda
             </button>
@@ -595,9 +663,7 @@ export default function Clients() {
                 {filteredClients.map(
                   (item) => (
 
-                    <tr
-                      key={item.id}
-                    >
+                    <tr key={item.id}>
 
                       <td>
 
@@ -616,18 +682,15 @@ export default function Clients() {
                       </td>
 
                       <td>
-                        {item.taxId ||
-                          "—"}
+                        {item.taxId || "—"}
                       </td>
 
                       <td>
-                        {item.phone ||
-                          "—"}
+                        {item.phone || "—"}
                       </td>
 
                       <td>
-                        {item.email ||
-                          "—"}
+                        {item.email || "—"}
                       </td>
 
                       <td>
@@ -699,9 +762,7 @@ export default function Clients() {
       <ClientDetailsModal
         client={selectedClient}
         sales={sales}
-        onClose={
-          handleCloseDetails
-        }
+        onClose={handleCloseDetails}
       />
 
     </div>
