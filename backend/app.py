@@ -3,11 +3,18 @@ from flask_cors import CORS
 
 from config import Config
 from extensions import db
-from models import Company, Product, StockMovement
+from models import (
+    Company,
+    Product,
+    StockMovement,
+    Sale,
+    SaleItem,
+)
 from routes.health import health_bp
 from routes.company import company_bp
 from routes.stock_movement import stock_movement_bp
 from routes.product import product_bp
+from routes.sale import sale_bp
 
 
 def create_app():
@@ -23,6 +30,7 @@ def create_app():
     app.register_blueprint(company_bp)
     app.register_blueprint(stock_movement_bp)
     app.register_blueprint(product_bp)
+    app.register_blueprint(sale_bp)
 
     with app.app_context():
         db.create_all()

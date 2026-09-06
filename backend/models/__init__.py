@@ -1,9 +1,5 @@
-from .company import Company
-from .product import Product
-from .stock_movement import StockMovement
-
-__all__ = [
-    "Company",
-    "Product",
-    "StockMovement",
-]
+from models.company import Company
+from models.product import Product
+from models.stock_movement import StockMovement
+from models.sale import Sale
+from models.sale_item import SaleItem

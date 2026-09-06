@@ -9,10 +9,8 @@ export default function Sales() {
   const scannerRef = useRef(null);
 
   const [products, setProducts] = useState([]);
-
   const [clients] = useState(() => {
-    const savedClients =
-      localStorage.getItem("clients");
+    const savedClients = localStorage.getItem("clients");
 
     if (!savedClients) {
       return [];
@@ -21,34 +19,12 @@ export default function Sales() {
     try {
       return JSON.parse(savedClients);
     } catch (error) {
-      console.error(
-        "Error al cargar clientes:",
-        error
-      );
-
+      console.error("Error al cargar clientes:", error);
       return [];
     }
   });
 
-  const [sales] = useState(() => {
-    const savedSales =
-      localStorage.getItem("sales");
-
-    if (!savedSales) {
-      return [];
-    }
-
-    try {
-      return JSON.parse(savedSales);
-    } catch (error) {
-      console.error(
-        "Error al cargar ventas:",
-        error
-      );
-
-      return [];
-    }
-  });
+  const [sales, setSales] = useState([]);
 
   const [sale, setSale] = useState({
     clientId: "",
@@ -56,51 +32,54 @@ export default function Sales() {
   });
 
   const [cart, setCart] = useState([]);
-
-  const [scannerCode, setScannerCode] =
-    useState("");
-
-  const [loadingProducts, setLoadingProducts] =
-    useState(true);
-
-  const [lookupLoading, setLookupLoading] =
-    useState(false);
-
+  const [scannerCode, setScannerCode] = useState("");
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [savingSale, setSavingSale] = useState(false);
   const [error, setError] = useState("");
-
   const [success, setSuccess] = useState("");
 
   // =========================
-  // CARGAR PRODUCTOS DESDE API
+  // CARGA INICIAL
   // =========================
 
   useEffect(() => {
     let cancelled = false;
 
-    const fetchProducts = async () => {
+    const loadInitialData = async () => {
       try {
-        const response = await fetch(
-          `${API_URL}/api/products`
-        );
+        const [productsResponse, salesResponse] =
+          await Promise.all([
+            fetch(`${API_URL}/api/products`),
+            fetch(`${API_URL}/api/sales`),
+          ]);
 
-        if (!response.ok) {
+        if (!productsResponse.ok) {
           throw new Error(
             "No se pudieron cargar los productos."
           );
         }
 
-        const data = await response.json();
+        const productsData = await productsResponse.json();
 
         if (!cancelled) {
-          setProducts(data);
+          setProducts(productsData);
           setLoadingProducts(false);
+        }
+
+        if (salesResponse.ok) {
+          const salesData = await salesResponse.json();
+
+          if (!cancelled) {
+            setSales(salesData);
+          }
         }
       } catch (error) {
         console.error(error);
 
         if (!cancelled) {
           setError(
-            "No se pudieron cargar los productos desde el servidor."
+            "No se pudieron cargar los datos desde el servidor."
           );
 
           setLoadingProducts(false);
@@ -108,7 +87,7 @@ export default function Sales() {
       }
     };
 
-    fetchProducts();
+    loadInitialData();
 
     return () => {
       cancelled = true;
@@ -166,8 +145,7 @@ export default function Sales() {
 
       if (!response.ok) {
         setError(
-          data.error ||
-            "Producto no encontrado."
+          data.error || "Producto no encontrado."
         );
 
         return;
@@ -210,21 +188,16 @@ export default function Sales() {
 
   const addToCart = (product) => {
     setCart((currentCart) => {
-      const existingItem =
-        currentCart.find(
-          (item) =>
-            Number(item.productId) ===
-            Number(product.id)
-        );
+      const existingItem = currentCart.find(
+        (item) =>
+          Number(item.productId) === Number(product.id)
+      );
 
       if (existingItem) {
         const newQuantity =
           existingItem.quantity + 1;
 
-        if (
-          newQuantity >
-          Number(product.stock)
-        ) {
+        if (newQuantity > Number(product.stock)) {
           setError(
             `No hay suficiente stock de ${product.name}.`
           );
@@ -233,8 +206,7 @@ export default function Sales() {
         }
 
         return currentCart.map((item) =>
-          Number(item.productId) ===
-          Number(product.id)
+          Number(item.productId) === Number(product.id)
             ? {
                 ...item,
                 quantity: newQuantity,
@@ -277,8 +249,7 @@ export default function Sales() {
 
     const product = products.find(
       (item) =>
-        String(item.id) ===
-        String(productId)
+        String(item.id) === String(productId)
     );
 
     if (!product) {
@@ -387,7 +358,7 @@ export default function Sales() {
   // REGISTRAR VENTA
   // =========================
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (cart.length === 0) {
@@ -398,16 +369,115 @@ export default function Sales() {
       return;
     }
 
-    setError(
-      "El registro de ventas y descuento de stock se conectará al backend en el siguiente paso."
-    );
+    if (savingSale) {
+      return;
+    }
+
+    setSavingSale(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const payload = {
+        clientId: sale.clientId
+          ? Number(sale.clientId)
+          : null,
+        clientName: null,
+        items: cart.map((item) => ({
+          productId: Number(item.productId),
+          quantity: Number(item.quantity),
+        })),
+      };
+
+      const response = await fetch(
+        `${API_URL}/api/sales`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "No se pudo registrar la venta."
+        );
+      }
+
+      // =========================
+      // ACTUALIZAR PRODUCTOS
+      // =========================
+
+      const productsResponse = await fetch(
+        `${API_URL}/api/products`
+      );
+
+      if (productsResponse.ok) {
+        const productsData =
+          await productsResponse.json();
+
+        setProducts(productsData);
+      }
+
+      // =========================
+      // ACTUALIZAR HISTORIAL
+      // =========================
+
+      const salesResponse = await fetch(
+        `${API_URL}/api/sales`
+      );
+
+      if (salesResponse.ok) {
+        const salesData =
+          await salesResponse.json();
+
+        setSales(salesData);
+      }
+
+      // =========================
+      // LIMPIAR VENTA
+      // =========================
+
+      setCart([]);
+
+      setSale({
+        clientId: "",
+        quantity: 1,
+      });
+
+      setSuccess(
+        `Venta #${data.sale.id} registrada correctamente por € ${Number(
+          data.sale.total
+        ).toFixed(2)}.`
+      );
+
+      setTimeout(() => {
+        scannerRef.current?.focus();
+      }, 100);
+    } catch (error) {
+      console.error(
+        "Error al registrar venta:",
+        error
+      );
+
+      setError(
+        error.message ||
+          "No se pudo registrar la venta."
+      );
+    } finally {
+      setSavingSale(false);
+    }
   };
 
   return (
     <div className="container-fluid p-4">
 
       <div className="d-flex justify-content-between align-items-center mb-4">
-
         <div>
           <h2 className="fw-bold mb-1">
             Ventas
@@ -417,7 +487,6 @@ export default function Sales() {
             Escanea productos para crear una venta.
           </p>
         </div>
-
       </div>
 
       {/* =========================
@@ -453,7 +522,10 @@ export default function Sales() {
             }}
             placeholder="Escanea o introduce SKU / código de barras..."
             autoComplete="off"
-            disabled={lookupLoading}
+            disabled={
+              lookupLoading ||
+              savingSale
+            }
           />
 
           <button
@@ -464,6 +536,7 @@ export default function Sales() {
             }
             disabled={
               lookupLoading ||
+              savingSale ||
               !scannerCode.trim()
             }
           >
@@ -506,7 +579,10 @@ export default function Sales() {
         onProductSelect={handleProductSelect}
         updateCartQuantity={updateCartQuantity}
         removeFromCart={removeFromCart}
-        loadingProducts={loadingProducts}
+        loadingProducts={
+          loadingProducts ||
+          savingSale
+        }
       />
 
       <SaleTable
