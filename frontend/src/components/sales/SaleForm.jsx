@@ -1,10 +1,10 @@
 export default function SaleForm({
-  products,
-  clients,
+  products = [],
+  clients = [],
   sale,
-  cart,
-  cartTotal,
-  cartItemsCount,
+  cart = [],
+  cartTotal = 0,
+  cartItemsCount = 0,
   handleChange,
   handleSubmit,
   onProductSelect,
@@ -12,6 +12,11 @@ export default function SaleForm({
   removeFromCart,
   loadingProducts,
 }) {
+  const selectedClient = clients.find(
+    (client) =>
+      Number(client.id) === Number(sale?.clientId)
+  );
+
   return (
     <div className="stat-card mb-4">
 
@@ -38,7 +43,7 @@ export default function SaleForm({
             id="clientId"
             name="clientId"
             className="form-select"
-            value={sale.clientId}
+            value={sale?.clientId || ""}
             onChange={handleChange}
           >
 
@@ -68,6 +73,100 @@ export default function SaleForm({
           </small>
 
         </div>
+
+        {/* =========================
+            INFORMACIÓN DEL CLIENTE
+        ========================= */}
+
+        {selectedClient && (
+
+          <div className="alert alert-light border mb-4">
+
+            <h6 className="fw-bold mb-3">
+              Cliente seleccionado
+            </h6>
+
+            <div className="row">
+
+              <div className="col-md-3 mb-2">
+                <small className="text-muted d-block">
+                  Nombre
+                </small>
+
+                <span className="fw-semibold">
+                  {selectedClient.name}
+                </span>
+              </div>
+
+              <div className="col-md-3 mb-2">
+                <small className="text-muted d-block">
+                  DNI / NIF
+                </small>
+
+                <span className="fw-semibold">
+                  {selectedClient.taxId || "—"}
+                </span>
+              </div>
+
+              <div className="col-md-3 mb-2">
+                <small className="text-muted d-block">
+                  Teléfono
+                </small>
+
+                <span className="fw-semibold">
+                  {selectedClient.phone || "—"}
+                </span>
+              </div>
+
+              <div className="col-md-3 mb-2">
+                <small className="text-muted d-block">
+                  Email
+                </small>
+
+                <span className="fw-semibold">
+                  {selectedClient.email || "—"}
+                </span>
+              </div>
+
+            </div>
+
+            <div className="row mt-2">
+
+              <div className="col-md-6 mb-2">
+                <small className="text-muted d-block">
+                  Dirección
+                </small>
+
+                <span className="fw-semibold">
+                  {selectedClient.address || "—"}
+                </span>
+              </div>
+
+              <div className="col-md-3 mb-2">
+                <small className="text-muted d-block">
+                  Ciudad
+                </small>
+
+                <span className="fw-semibold">
+                  {selectedClient.city || "—"}
+                </span>
+              </div>
+
+              <div className="col-md-3 mb-2">
+                <small className="text-muted d-block">
+                  Código postal
+                </small>
+
+                <span className="fw-semibold">
+                  {selectedClient.postalCode || "—"}
+                </span>
+              </div>
+
+            </div>
+
+          </div>
+
+        )}
 
         {/* =========================
             PRODUCTO MANUAL
@@ -125,6 +224,7 @@ export default function SaleForm({
           <div className="d-flex justify-content-between align-items-center mb-3">
 
             <div>
+
               <h5 className="mb-1">
                 Carrito
               </h5>
@@ -135,6 +235,7 @@ export default function SaleForm({
                   ? "producto"
                   : "productos"}
               </small>
+
             </div>
 
             <span className="badge bg-dark">
@@ -148,20 +249,8 @@ export default function SaleForm({
 
           {cart.length === 0 ? (
 
-            <div className="text-center text-muted py-4">
-
-              <div className="fs-1 mb-2">
-                🛒
-              </div>
-
-              <p className="mb-1">
-                El carrito está vacío.
-              </p>
-
-              <small>
-                Escanea un producto para añadirlo.
-              </small>
-
+            <div className="text-center py-4 text-muted">
+              No hay productos en el carrito.
             </div>
 
           ) : (
@@ -170,13 +259,13 @@ export default function SaleForm({
 
               <table className="table align-middle mb-0">
 
-                <thead className="table-light">
+                <thead>
 
                   <tr>
                     <th>Producto</th>
                     <th>SKU</th>
                     <th>Precio</th>
-                    <th style={{ width: "140px" }}>
+                    <th style={{ width: "120px" }}>
                       Cantidad
                     </th>
                     <th>Subtotal</th>
@@ -189,34 +278,31 @@ export default function SaleForm({
 
                   {cart.map((item) => (
 
-                    <tr
-                      key={item.productId}
-                    >
+                    <tr key={item.productId}>
 
                       <td>
+
                         <div className="fw-semibold">
                           {item.name}
                         </div>
 
                         {item.barcode && (
                           <small className="text-muted">
-                            {item.barcode}
+                            Código: {item.barcode}
                           </small>
                         )}
+
                       </td>
 
                       <td>
-                        <span className="badge bg-dark">
-                          {item.sku ||
-                            "Sin SKU"}
-                        </span>
+                        {item.sku || "—"}
                       </td>
 
                       <td>
                         €{" "}
-                        {item.unitPrice.toFixed(
-                          2
-                        )}
+                        {Number(
+                          item.unitPrice
+                        ).toFixed(2)}
                       </td>
 
                       <td>
@@ -237,26 +323,25 @@ export default function SaleForm({
 
                       </td>
 
-                      <td className="fw-bold">
+                      <td className="fw-semibold">
                         €{" "}
-                        {item.subtotal.toFixed(
-                          2
-                        )}
+                        {Number(
+                          item.subtotal
+                        ).toFixed(2)}
                       </td>
 
                       <td>
 
                         <button
                           type="button"
-                          className="btn btn-sm btn-outline-danger"
+                          className="btn btn-outline-danger btn-sm"
                           onClick={() =>
                             removeFromCart(
                               item.productId
                             )
                           }
-                          title="Eliminar"
                         >
-                          ×
+                          Eliminar
                         </button>
 
                       </td>
@@ -314,7 +399,7 @@ export default function SaleForm({
             </span>
 
             <span className="fs-3 fw-bold">
-              € {cartTotal.toFixed(2)}
+              € {Number(cartTotal).toFixed(2)}
             </span>
 
           </div>
@@ -328,7 +413,10 @@ export default function SaleForm({
         <button
           type="submit"
           className="btn btn-primary btn-lg"
-          disabled={cart.length === 0}
+          disabled={
+            cart.length === 0 ||
+            loadingProducts
+          }
         >
           Finalizar venta
         </button>

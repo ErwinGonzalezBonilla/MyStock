@@ -7,6 +7,10 @@ export default function ClientDetailsModal({
     return null;
   }
 
+  // =========================
+  // FORMATEAR FECHA
+  // =========================
+
   const formatDate = (date) => {
     if (!date) {
       return "Sin fecha";
@@ -28,10 +32,17 @@ export default function ClientDetailsModal({
   // VENTAS DEL CLIENTE
   // =========================
 
-  const clientSales = sales.filter(
-    (sale) =>
-      sale.clientId === client.id
-  );
+  const clientSales = sales
+    .filter(
+      (sale) =>
+        Number(sale.clientId) ===
+        Number(client.id)
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.date) -
+        new Date(a.date)
+    );
 
   // =========================
   // TOTAL COMPRADO
@@ -53,7 +64,12 @@ export default function ClientDetailsModal({
     clientSales.reduce(
       (total, sale) =>
         total +
-        (Number(sale.quantity) || 0),
+        (sale.items || []).reduce(
+          (itemTotal, item) =>
+            itemTotal +
+            (Number(item.quantity) || 0),
+          0
+        ),
       0
     );
 
@@ -71,29 +87,50 @@ export default function ClientDetailsModal({
   // ÚLTIMA COMPRA
   // =========================
 
-  const sortedSales = [
-    ...clientSales,
-  ].sort(
-    (a, b) =>
-      new Date(b.date) -
-      new Date(a.date)
-  );
-
   const lastPurchase =
-    sortedSales.length > 0
-      ? sortedSales[0]
+    clientSales.length > 0
+      ? clientSales[0]
       : null;
+
+  // =========================
+  // HISTORIAL DE PRODUCTOS
+  // =========================
+
+  const purchaseHistory =
+    clientSales.flatMap((sale) =>
+      (sale.items || []).map(
+        (item) => ({
+          saleId: sale.id,
+          date: sale.date,
+          productName:
+            item.productName ||
+            "Producto",
+          sku: item.sku,
+          barcode: item.barcode,
+          quantity:
+            Number(item.quantity) || 0,
+          unitPrice:
+            Number(item.unitPrice) || 0,
+          subtotal:
+            Number(item.subtotal) || 0,
+        })
+      )
+    );
 
   return (
     <>
-      {/* BACKDROP */}
+      {/* =========================
+          BACKDROP
+      ========================= */}
 
       <div
         className="modal-backdrop fade show"
         style={{ zIndex: 1040 }}
       />
 
-      {/* MODAL */}
+      {/* =========================
+          MODAL
+      ========================= */}
 
       <div
         className="modal d-block"
@@ -130,14 +167,14 @@ export default function ClientDetailsModal({
             <div className="modal-body">
 
               {/* =========================
-                  INFORMACIÓN CLIENTE
+                  INFORMACIÓN DEL CLIENTE
               ========================= */}
 
               <div className="mb-4">
 
-                <h6 className="fw-bold mb-3">
+                <h5 className="fw-bold mb-4">
                   Información del cliente
-                </h6>
+                </h5>
 
                 <div className="mb-3">
 
@@ -145,7 +182,7 @@ export default function ClientDetailsModal({
                     Nombre / Razón social
                   </small>
 
-                  <div className="fw-bold fs-5">
+                  <div className="fs-4 fw-bold">
                     {client.name}
                   </div>
 
@@ -160,8 +197,7 @@ export default function ClientDetailsModal({
                     </small>
 
                     <div>
-                      {client.taxId ||
-                        "—"}
+                      {client.taxId || "—"}
                     </div>
 
                   </div>
@@ -173,64 +209,55 @@ export default function ClientDetailsModal({
                     </small>
 
                     <div>
-                      {client.phone ||
-                        "—"}
+                      {client.phone || "—"}
                     </div>
 
                   </div>
 
-                </div>
+                  <div className="col-md-6 mb-3">
 
-                <div className="mb-3">
+                    <small className="text-muted">
+                      Email
+                    </small>
 
-                  <small className="text-muted">
-                    Email
-                  </small>
+                    <div>
+                      {client.email || "—"}
+                    </div>
 
-                  <div>
-                    {client.email ||
-                      "—"}
                   </div>
 
-                </div>
+                  <div className="col-md-6 mb-3">
 
-                <div className="mb-3">
+                    <small className="text-muted">
+                      Dirección
+                    </small>
 
-                  <small className="text-muted">
-                    Dirección
-                  </small>
+                    <div>
+                      {client.address || "—"}
+                    </div>
 
-                  <div>
-                    {client.address ||
-                      "—"}
                   </div>
 
-                </div>
-
-                <div className="row">
-
-                  <div className="col-md-8 mb-3">
+                  <div className="col-md-6 mb-3">
 
                     <small className="text-muted">
                       Ciudad
                     </small>
 
                     <div>
-                      {client.city ||
-                        "—"}
+                      {client.city || "—"}
                     </div>
 
                   </div>
 
-                  <div className="col-md-4 mb-3">
+                  <div className="col-md-6 mb-3">
 
                     <small className="text-muted">
                       Código postal
                     </small>
 
                     <div>
-                      {client.postalCode ||
-                        "—"}
+                      {client.postalCode || "—"}
                     </div>
 
                   </div>
@@ -239,37 +266,15 @@ export default function ClientDetailsModal({
 
                 <hr />
 
+                <small className="text-muted">
+                  Cliente registrado
+                </small>
+
                 <div>
-
-                  <small className="text-muted">
-                    Cliente registrado
-                  </small>
-
-                  <div>
-                    {formatDate(
-                      client.createdAt
-                    )}
-                  </div>
-
+                  {formatDate(
+                    client.createdAt
+                  )}
                 </div>
-
-                {client.updatedAt && (
-
-                  <div className="mt-2">
-
-                    <small className="text-muted">
-                      Última actualización
-                    </small>
-
-                    <div>
-                      {formatDate(
-                        client.updatedAt
-                      )}
-                    </div>
-
-                  </div>
-
-                )}
 
               </div>
 
@@ -279,15 +284,13 @@ export default function ClientDetailsModal({
 
               <div className="mb-4">
 
-                <h6 className="fw-bold mb-3">
-                  Resumen económico
-                </h6>
+                <h5 className="fw-bold mb-3">
+                  Resumen de compras
+                </h5>
 
                 <div className="row">
 
-                  {/* COMPRAS */}
-
-                  <div className="col-md-4 mb-3">
+                  <div className="col-md-3 mb-3">
 
                     <div className="border rounded p-3 h-100">
 
@@ -299,17 +302,11 @@ export default function ClientDetailsModal({
                         {clientSales.length}
                       </div>
 
-                      <small className="text-muted">
-                        ventas registradas
-                      </small>
-
                     </div>
 
                   </div>
 
-                  {/* ARTÍCULOS */}
-
-                  <div className="col-md-4 mb-3">
+                  <div className="col-md-3 mb-3">
 
                     <div className="border rounded p-3 h-100">
 
@@ -321,99 +318,43 @@ export default function ClientDetailsModal({
                         {totalItems}
                       </div>
 
-                      <small className="text-muted">
-                        unidades compradas
-                      </small>
-
                     </div>
 
                   </div>
 
-                  {/* TOTAL */}
-
-                  <div className="col-md-4 mb-3">
+                  <div className="col-md-3 mb-3">
 
                     <div className="border rounded p-3 h-100">
 
                       <small className="text-muted">
-                        Total gastado
+                        Total comprado
                       </small>
 
-                      <div className="fs-4 fw-bold">
+                      <div className="fs-5 fw-bold">
                         €{" "}
                         {totalPurchases.toFixed(
                           2
                         )}
                       </div>
 
-                      <small className="text-muted">
-                        gasto acumulado
-                      </small>
-
                     </div>
 
                   </div>
 
-                </div>
+                  <div className="col-md-3 mb-3">
 
-                {/* SEGUNDA FILA */}
-
-                <div className="row">
-
-                  {/* TICKET MEDIO */}
-
-                  <div className="col-md-6 mb-3">
-
-                    <div className="border rounded p-3">
+                    <div className="border rounded p-3 h-100">
 
                       <small className="text-muted">
                         Ticket medio
                       </small>
 
-                      <div className="fs-4 fw-bold">
+                      <div className="fs-5 fw-bold">
                         €{" "}
                         {averageTicket.toFixed(
                           2
                         )}
                       </div>
-
-                      <small className="text-muted">
-                        promedio por compra
-                      </small>
-
-                    </div>
-
-                  </div>
-
-                  {/* ÚLTIMA COMPRA */}
-
-                  <div className="col-md-6 mb-3">
-
-                    <div className="border rounded p-3">
-
-                      <small className="text-muted">
-                        Última compra
-                      </small>
-
-                      <div className="fw-bold mt-1">
-
-                        {lastPurchase
-                          ? formatDate(
-                              lastPurchase.date
-                            )
-                          : "Sin compras"}
-
-                      </div>
-
-                      {lastPurchase && (
-
-                        <small className="text-muted">
-
-                          {lastPurchase.productName}
-
-                        </small>
-
-                      )}
 
                     </div>
 
@@ -424,20 +365,80 @@ export default function ClientDetailsModal({
               </div>
 
               {/* =========================
+                  ÚLTIMA COMPRA
+              ========================= */}
+
+              {lastPurchase && (
+
+                <div className="alert alert-light border mb-4">
+
+                  <div className="fw-bold mb-1">
+                    Última compra
+                  </div>
+
+                  <div className="text-muted">
+                    {formatDate(
+                      lastPurchase.date
+                    )}
+                  </div>
+
+                  <div className="mt-2">
+
+                    <span className="fw-semibold">
+                      Venta #
+                      {lastPurchase.id}
+                    </span>
+
+                    {" · "}
+
+                    <span>
+                      €
+                      {" "}
+                      {Number(
+                        lastPurchase.total
+                      ).toFixed(2)}
+                    </span>
+
+                  </div>
+
+                </div>
+
+              )}
+
+              {/* =========================
                   HISTORIAL
               ========================= */}
 
               <div>
 
-                <h6 className="fw-bold mb-3">
-                  Historial de compras
-                </h6>
+                <div className="d-flex justify-content-between align-items-center mb-3">
 
-                {clientSales.length === 0 ? (
+                  <div>
+
+                    <h5 className="fw-bold mb-1">
+                      Historial de compras
+                    </h5>
+
+                    <small className="text-muted">
+                      Productos comprados por este cliente
+                    </small>
+
+                  </div>
+
+                  <span className="badge bg-dark">
+                    {purchaseHistory.length}{" "}
+                    {purchaseHistory.length === 1
+                      ? "línea"
+                      : "líneas"}
+                  </span>
+
+                </div>
+
+                {purchaseHistory.length === 0 ? (
 
                   <div className="text-center text-muted border rounded p-4">
 
-                    <div className="fs-2 mb-2">
+                    <div className="fs-1 mb-2">
                       🛒
                     </div>
 
@@ -451,7 +452,7 @@ export default function ClientDetailsModal({
 
                   <div className="table-responsive">
 
-                    <table className="table table-sm table-hover align-middle">
+                    <table className="table table-hover align-middle">
 
                       <thead className="table-light">
 
@@ -459,6 +460,10 @@ export default function ClientDetailsModal({
 
                           <th>
                             Fecha
+                          </th>
+
+                          <th>
+                            Venta
                           </th>
 
                           <th>
@@ -474,7 +479,7 @@ export default function ClientDetailsModal({
                           </th>
 
                           <th>
-                            Total
+                            Subtotal
                           </th>
 
                         </tr>
@@ -483,47 +488,53 @@ export default function ClientDetailsModal({
 
                       <tbody>
 
-                        {clientSales.map(
-                          (sale) => (
+                        {purchaseHistory.map(
+                          (item, index) => (
 
                             <tr
-                              key={sale.id}
+                              key={`${item.saleId}-${item.productName}-${index}`}
                             >
 
                               <td>
-
                                 <small>
                                   {formatDate(
-                                    sale.date
+                                    item.date
                                   )}
                                 </small>
-
-                              </td>
-
-                              <td className="fw-semibold">
-                                {sale.productName}
                               </td>
 
                               <td>
-                                {sale.quantity}
+                                #{item.saleId}
+                              </td>
+
+                              <td>
+
+                                <div className="fw-semibold">
+                                  {item.productName}
+                                </div>
+
+                                {item.sku && (
+                                  <small className="text-muted">
+                                    SKU: {item.sku}
+                                  </small>
+                                )}
+
+                              </td>
+
+                              <td>
+                                {item.quantity}
                               </td>
 
                               <td>
                                 €{" "}
-                                {Number(
-                                  sale.unitPrice ||
-                                    0
-                                ).toFixed(
+                                {item.unitPrice.toFixed(
                                   2
                                 )}
                               </td>
 
                               <td className="fw-bold">
                                 €{" "}
-                                {Number(
-                                  sale.total ||
-                                    0
-                                ).toFixed(
+                                {item.subtotal.toFixed(
                                   2
                                 )}
                               </td>

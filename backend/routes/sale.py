@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from extensions import db
-from models import Product, Sale, SaleItem, StockMovement
+from models import Product, Sale, SaleItem, StockMovement, Client
 
 
 sale_bp = Blueprint(
@@ -57,13 +57,8 @@ def serialize_sale(sale):
     }
 
 
-# =========================
-# OBTENER VENTAS
-# =========================
-
 @sale_bp.route("", methods=["GET"])
 def get_sales():
-
     sales = Sale.query.order_by(
         Sale.created_at.desc()
     ).all()
@@ -74,13 +69,8 @@ def get_sales():
     ]), 200
 
 
-# =========================
-# CREAR VENTA
-# =========================
-
 @sale_bp.route("", methods=["POST"])
 def create_sale():
-
     data = request.get_json()
 
     if not data:
@@ -98,6 +88,10 @@ def create_sale():
             )
         }), 400
 
+    # -----------------------------------------
+    # VALIDAR CLIENTE
+    # -----------------------------------------
+
     client_id = data.get("clientId")
 
     try:
@@ -110,23 +104,35 @@ def create_sale():
             "error": "El cliente no es válido"
         }), 400
 
-    client_name = data.get("clientName")
+    client = None
 
-    if client_name:
-        client_name = str(
-            client_name
-        ).strip()
+    if client_id is not None:
+        client = db.session.get(
+            Client,
+            client_id
+        )
+
+        if not client:
+            return jsonify({
+                "error": "El cliente seleccionado no existe"
+            }), 404
+
+    # El nombre siempre sale de la base de datos.
+    # No confiamos en clientName enviado desde frontend.
+    client_name = (
+        client.name
+        if client
+        else None
+    )
+
+    # -----------------------------------------
+    # VALIDAR PRODUCTOS
+    # -----------------------------------------
 
     try:
-
         validated_items = []
 
-        # =========================
-        # VALIDAR PRODUCTOS
-        # =========================
-
         for item in items:
-
             product_id = item.get(
                 "productId"
             )
@@ -145,7 +151,6 @@ def create_sale():
                 )
 
             except (TypeError, ValueError):
-
                 return jsonify({
                     "error": (
                         "Producto o cantidad "
@@ -199,18 +204,18 @@ def create_sale():
                 "subtotal": subtotal,
             })
 
-        # =========================
+        # -----------------------------------------
         # CALCULAR TOTAL
-        # =========================
+        # -----------------------------------------
 
         total = sum(
             item["subtotal"]
             for item in validated_items
         )
 
-        # =========================
+        # -----------------------------------------
         # CREAR VENTA
-        # =========================
+        # -----------------------------------------
 
         sale = Sale(
             client_id=client_id,
@@ -222,13 +227,11 @@ def create_sale():
 
         db.session.flush()
 
-        # =========================
-        # CREAR LÍNEAS
-        # Y DESCONTAR STOCK
-        # =========================
+        # -----------------------------------------
+        # CREAR ITEMS + DESCONTAR STOCK
+        # -----------------------------------------
 
         for item in validated_items:
-
             product = item["product"]
             quantity = item["quantity"]
 
@@ -262,9 +265,9 @@ def create_sale():
                 movement
             )
 
-        # =========================
-        # GUARDAR TRANSACCIÓN
-        # =========================
+        # -----------------------------------------
+        # GUARDAR TODO
+        # -----------------------------------------
 
         db.session.commit()
 
@@ -276,7 +279,6 @@ def create_sale():
         }), 201
 
     except Exception as error:
-
         db.session.rollback()
 
         print(

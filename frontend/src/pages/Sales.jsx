@@ -9,21 +9,7 @@ export default function Sales() {
   const scannerRef = useRef(null);
 
   const [products, setProducts] = useState([]);
-  const [clients] = useState(() => {
-    const savedClients = localStorage.getItem("clients");
-
-    if (!savedClients) {
-      return [];
-    }
-
-    try {
-      return JSON.parse(savedClients);
-    } catch (error) {
-      console.error("Error al cargar clientes:", error);
-      return [];
-    }
-  });
-
+  const [clients, setClients] = useState([]);
   const [sales, setSales] = useState([]);
 
   const [sale, setSale] = useState({
@@ -48,11 +34,15 @@ export default function Sales() {
 
     const loadInitialData = async () => {
       try {
-        const [productsResponse, salesResponse] =
-          await Promise.all([
-            fetch(`${API_URL}/api/products`),
-            fetch(`${API_URL}/api/sales`),
-          ]);
+        const [
+          productsResponse,
+          salesResponse,
+          clientsResponse,
+        ] = await Promise.all([
+          fetch(`${API_URL}/api/products`),
+          fetch(`${API_URL}/api/sales`),
+          fetch(`${API_URL}/api/clients`),
+        ]);
 
         if (!productsResponse.ok) {
           throw new Error(
@@ -60,7 +50,8 @@ export default function Sales() {
           );
         }
 
-        const productsData = await productsResponse.json();
+        const productsData =
+          await productsResponse.json();
 
         if (!cancelled) {
           setProducts(productsData);
@@ -68,10 +59,24 @@ export default function Sales() {
         }
 
         if (salesResponse.ok) {
-          const salesData = await salesResponse.json();
+          const salesData =
+            await salesResponse.json();
 
           if (!cancelled) {
             setSales(salesData);
+          }
+        }
+
+        if (clientsResponse.ok) {
+          const clientsData =
+            await clientsResponse.json();
+
+          if (!cancelled) {
+            setClients(
+              Array.isArray(clientsData)
+                ? clientsData
+                : clientsData.value || []
+            );
           }
         }
       } catch (error) {
@@ -382,7 +387,6 @@ export default function Sales() {
         clientId: sale.clientId
           ? Number(sale.clientId)
           : null,
-        clientName: null,
         items: cart.map((item) => ({
           productId: Number(item.productId),
           quantity: Number(item.quantity),
@@ -409,10 +413,6 @@ export default function Sales() {
         );
       }
 
-      // =========================
-      // ACTUALIZAR PRODUCTOS
-      // =========================
-
       const productsResponse = await fetch(
         `${API_URL}/api/products`
       );
@@ -423,10 +423,6 @@ export default function Sales() {
 
         setProducts(productsData);
       }
-
-      // =========================
-      // ACTUALIZAR HISTORIAL
-      // =========================
 
       const salesResponse = await fetch(
         `${API_URL}/api/sales`
@@ -439,9 +435,20 @@ export default function Sales() {
         setSales(salesData);
       }
 
-      // =========================
-      // LIMPIAR VENTA
-      // =========================
+      const clientsResponse = await fetch(
+        `${API_URL}/api/clients`
+      );
+
+      if (clientsResponse.ok) {
+        const clientsData =
+          await clientsResponse.json();
+
+        setClients(
+          Array.isArray(clientsData)
+            ? clientsData
+            : clientsData.value || []
+        );
+      }
 
       setCart([]);
 
@@ -488,10 +495,6 @@ export default function Sales() {
           </p>
         </div>
       </div>
-
-      {/* =========================
-          SCANNER
-      ========================= */}
 
       <div className="stat-card mb-4">
 

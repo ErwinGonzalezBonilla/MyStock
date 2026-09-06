@@ -19,7 +19,7 @@ const EMPTY_CLIENT = {
 
 export default function Clients() {
   const [clients, setClients] = useState([]);
-  const [sales] = useState([]);
+  const [sales, setSales] = useState([]);
 
   const [client, setClient] = useState(EMPTY_CLIENT);
 
@@ -36,41 +36,73 @@ export default function Clients() {
   const [saving, setSaving] = useState(false);
 
   // =========================
-  // CARGAR CLIENTES
+  // CARGAR CLIENTES Y VENTAS
   // =========================
 
   useEffect(() => {
-    const loadClients = async () => {
+    let cancelled = false;
+
+    const loadData = async () => {
       try {
         setLoading(true);
 
-        const response = await fetch(
-          `${API_URL}/api/clients`
-        );
+        const [clientsResponse, salesResponse] =
+          await Promise.all([
+            fetch(`${API_URL}/api/clients`),
+            fetch(`${API_URL}/api/sales`),
+          ]);
 
-        const data = await response.json();
+        const clientsData =
+          await clientsResponse.json();
 
-        if (!response.ok) {
+        if (!clientsResponse.ok) {
           throw new Error(
-            data.error ||
+            clientsData.error ||
               "No se pudieron cargar los clientes."
           );
         }
 
-        setClients(data);
+        if (!cancelled) {
+          setClients(
+            Array.isArray(clientsData)
+              ? clientsData
+              : clientsData.value || []
+          );
+        }
+
+        if (salesResponse.ok) {
+          const salesData =
+            await salesResponse.json();
+
+          if (!cancelled) {
+            setSales(
+              Array.isArray(salesData)
+                ? salesData
+                : salesData.value || []
+            );
+          }
+        }
       } catch (error) {
         console.error(error);
 
-        setMessage(
-          error.message ||
-            "Error al cargar los clientes."
-        );
+        if (!cancelled) {
+          setMessage(
+            error.message ||
+              "Error al cargar los datos."
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
-    loadClients();
+    loadData();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // =========================
@@ -205,7 +237,6 @@ export default function Clients() {
     });
 
     setEditingId(id);
-
     setMessage("");
 
     window.scrollTo({
@@ -220,9 +251,7 @@ export default function Clients() {
 
   const handleCancelEdit = () => {
     setClient(EMPTY_CLIENT);
-
     setEditingId(null);
-
     setMessage("");
   };
 
@@ -355,14 +384,12 @@ export default function Clients() {
 
   const clientsWithEmail =
     clients.filter(
-      (item) =>
-        item.email?.trim()
+      (item) => item.email?.trim()
     ).length;
 
   const clientsWithPhone =
     clients.filter(
-      (item) =>
-        item.phone?.trim()
+      (item) => item.phone?.trim()
     ).length;
 
   const newClientsThisMonth =
@@ -399,25 +426,17 @@ export default function Clients() {
       {message && (
         <div
           className={`alert ${
-            message.includes(
-              "actualizado"
-            )
+            message.includes("actualizado")
               ? "alert-primary"
-              : message.includes(
-                  "eliminado"
-                )
+              : message.includes("eliminado")
               ? "alert-danger"
               : "alert-success"
           }`}
           role="alert"
         >
-          {message.includes(
-            "actualizado"
-          )
+          {message.includes("actualizado")
             ? "✏️"
-            : message.includes(
-                "eliminado"
-              )
+            : message.includes("eliminado")
             ? "🗑️"
             : "✅"}{" "}
           {message}
@@ -442,7 +461,6 @@ export default function Clients() {
 
       {editingId && (
         <div className="mb-4">
-
           <button
             type="button"
             className="btn btn-outline-secondary"
@@ -451,7 +469,6 @@ export default function Clients() {
           >
             Cancelar edición
           </button>
-
         </div>
       )}
 
@@ -462,43 +479,35 @@ export default function Clients() {
       <div className="row mb-4">
 
         <div className="col-lg-3 col-md-6 mb-3">
-
           <StatCard
             title="Total clientes"
             value={totalClients}
             subtitle="Clientes registrados"
           />
-
         </div>
 
         <div className="col-lg-3 col-md-6 mb-3">
-
           <StatCard
             title="Con email"
             value={clientsWithEmail}
             subtitle="Clientes con correo"
           />
-
         </div>
 
         <div className="col-lg-3 col-md-6 mb-3">
-
           <StatCard
             title="Con teléfono"
             value={clientsWithPhone}
             subtitle="Clientes con teléfono"
           />
-
         </div>
 
         <div className="col-lg-3 col-md-6 mb-3">
-
           <StatCard
             title="Nuevos este mes"
             value={newClientsThisMonth}
             subtitle="Registrados este mes"
           />
-
         </div>
 
       </div>
@@ -512,7 +521,6 @@ export default function Clients() {
         <div className="d-flex justify-content-between align-items-center mb-4">
 
           <div>
-
             <h4 className="mb-1">
               Lista de clientes
             </h4>
@@ -520,7 +528,6 @@ export default function Clients() {
             <small className="text-muted">
               Clientes registrados en MyStock
             </small>
-
           </div>
 
           <span className="badge bg-dark">
@@ -569,9 +576,7 @@ export default function Clients() {
 
         </div>
 
-        {/* =========================
-            CONTENIDO
-        ========================= */}
+        {/* CONTENIDO */}
 
         {loading ? (
 
@@ -633,27 +638,11 @@ export default function Clients() {
               <thead className="table-light">
 
                 <tr>
-
-                  <th>
-                    Cliente
-                  </th>
-
-                  <th>
-                    DNI / NIF
-                  </th>
-
-                  <th>
-                    Teléfono
-                  </th>
-
-                  <th>
-                    Email
-                  </th>
-
-                  <th>
-                    Acciones
-                  </th>
-
+                  <th>Cliente</th>
+                  <th>DNI / NIF</th>
+                  <th>Teléfono</th>
+                  <th>Email</th>
+                  <th>Acciones</th>
                 </tr>
 
               </thead>
