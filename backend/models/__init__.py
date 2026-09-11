@@ -5,3 +5,5 @@ from .sale import Sale
 from .sale_item import SaleItem
 from .client import Client
 from .supplier import Supplier
+from .purchase import Purchase
+from .purchase_item import PurchaseItem
