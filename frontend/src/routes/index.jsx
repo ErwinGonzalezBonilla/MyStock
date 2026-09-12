@@ -6,6 +6,7 @@ import Products from "../pages/Products";
 import Sales from "../pages/Sales";
 import Clients from "../pages/Clients";
 import Suppliers from "../pages/Suppliers";
+import Purchases from "../pages/Purchases";
 
 export default function AppRouter() {
   return (
@@ -38,6 +39,11 @@ export default function AppRouter() {
       <Route
         path="/suppliers"
         element={<Suppliers />}
+      />
+
+      <Route
+        path="/purchases"
+        element={<Purchases />}
       />
     </Routes>
   );
