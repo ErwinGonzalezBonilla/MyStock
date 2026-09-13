@@ -1,5 +1,4 @@
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import {
   DollarSign,
   Package,
@@ -8,57 +7,75 @@ import {
   TrendingUp,
   Percent,
   Sparkles,
+  RefreshCw,
 } from "lucide-react";
-
 
 import SalesChart from "../components/common/SalesChart";
 import RecentSales from "../components/common/RecentSales";
 import LowStockProducts from "../components/common/LowStockProducts";
 
+const API_URL = "http://127.0.0.1:5000";
+
 export default function Dashboard() {
-  const [products] = useState(() => {
-    const savedProducts =
-      localStorage.getItem("products");
+  const [products, setProducts] = useState([]);
+  const [sales, setSales] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-    if (!savedProducts) {
-      return [];
-    }
-
+  const loadDashboardData = async () => {
     try {
-      return JSON.parse(savedProducts);
-    } catch (error) {
-      console.error(
-        "Error al cargar productos:",
-        error
+      setError("");
+
+      const [productsResponse, salesResponse] =
+        await Promise.all([
+          fetch(`${API_URL}/api/products`),
+          fetch(`${API_URL}/api/sales`),
+        ]);
+
+      if (!productsResponse.ok || !salesResponse.ok) {
+        throw new Error(
+          "No se pudieron cargar los datos"
+        );
+      }
+
+      const productsData =
+        await productsResponse.json();
+
+      const salesData =
+        await salesResponse.json();
+
+      setProducts(
+        Array.isArray(productsData)
+          ? productsData
+          : productsData.value || []
       );
 
-      return [];
-    }
-  });
-
-  const [sales] = useState(() => {
-    const savedSales =
-      localStorage.getItem("sales");
-
-    if (!savedSales) {
-      return [];
-    }
-
-    try {
-      return JSON.parse(savedSales);
-    } catch (error) {
+      setSales(
+        Array.isArray(salesData)
+          ? salesData
+          : salesData.value || []
+      );
+    } catch (err) {
       console.error(
-        "Error al cargar ventas:",
-        error
+        "Error al cargar Dashboard:",
+        err
       );
 
-      return [];
+      setError(
+        "No se pudieron cargar los datos del negocio."
+      );
+    } finally {
+      setLoading(false);
     }
-  });
+  };
 
-  // =========================
-  // FECHA ACTUAL
-  // =========================
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadDashboardData();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const today = new Date();
 
@@ -70,74 +87,50 @@ export default function Dashboard() {
     const saleDate = new Date(date);
 
     return (
-      saleDate.getDate() ===
-        today.getDate() &&
-      saleDate.getMonth() ===
-        today.getMonth() &&
-      saleDate.getFullYear() ===
-        today.getFullYear()
+      saleDate.getDate() === today.getDate() &&
+      saleDate.getMonth() === today.getMonth() &&
+      saleDate.getFullYear() === today.getFullYear()
     );
   };
 
-  // =========================
-  // VENTAS DE HOY
-  // =========================
-
-  const todaySales = sales.filter(
-    (sale) => isToday(sale.date)
+  const todaySales = sales.filter((sale) =>
+    isToday(sale.date)
   );
 
-  const todayRevenue =
-    todaySales.reduce(
-      (total, sale) =>
-        total +
-        (Number(sale.total) || 0),
-      0
-    );
+  const todayRevenue = todaySales.reduce(
+    (total, sale) =>
+      total + (Number(sale.total) || 0),
+    0
+  );
 
-  // =========================
-  // PRODUCTOS
-  // =========================
+  const totalProducts = products.length;
 
-  const totalProducts =
-    products.length;
-
-  // =========================
-  // STOCK BAJO
-  // =========================
-
-  const lowStockProducts =
-    products.filter((product) => {
+  const lowStockCount = products.filter(
+    (product) => {
       const stock =
         Number(product.stock) || 0;
 
-      return stock > 0 && stock <= 10;
-    }).length;
+      const minimum =
+        Number(product.minStock) ||
+        Number(product.minimumStock) ||
+        10;
 
-  // =========================
-  // COSTE INVENTARIO
-  // =========================
+      return stock >= 0 && stock <= minimum;
+    }
+  ).length;
 
-  const inventoryCost =
-    products.reduce(
-      (total, product) => {
-        const stock =
-          Number(product.stock) || 0;
+  const inventoryCost = products.reduce(
+    (total, product) => {
+      const stock =
+        Number(product.stock) || 0;
 
-        const buyPrice =
-          Number(product.buyPrice) || 0;
+      const buyPrice =
+        Number(product.buyPrice) || 0;
 
-        return (
-          total +
-          stock * buyPrice
-        );
-      },
-      0
-    );
-
-  // =========================
-  // VALOR POTENCIAL DE VENTA
-  // =========================
+      return total + stock * buyPrice;
+    },
+    0
+  );
 
   const inventorySalesValue =
     products.reduce(
@@ -148,25 +141,14 @@ export default function Dashboard() {
         const sellPrice =
           Number(product.sellPrice) || 0;
 
-        return (
-          total +
-          stock * sellPrice
-        );
+        return total + stock * sellPrice;
       },
       0
     );
 
-  // =========================
-  // BENEFICIO POTENCIAL
-  // =========================
-
   const potentialProfit =
     inventorySalesValue -
     inventoryCost;
-
-  // =========================
-  // MARGEN POTENCIAL
-  // =========================
 
   const potentialMargin =
     inventorySalesValue > 0
@@ -177,26 +159,35 @@ export default function Dashboard() {
         ).toFixed(1)
       : 0;
 
-  // =========================
-  // FORMATO MONEDA
-  // =========================
-
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat(
-      "es-ES",
-      {
-        style: "currency",
-        currency: "EUR",
-      }
-    ).format(value);
+    return new Intl.NumberFormat("es-ES", {
+      style: "currency",
+      currency: "EUR",
+    }).format(Number(value) || 0);
   };
+
+  if (loading) {
+    return (
+      <div className="container-fluid mystock-dashboard py-4">
+        <div className="dashboard-header">
+          <div>
+            <h1 className="dashboard-title">
+              Dashboard
+            </h1>
+
+            <p className="dashboard-subtitle">
+              Cargando los datos de tu negocio...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container-fluid mystock-dashboard">
 
-      {/* =========================
-          CABECERA
-      ========================= */}
+      {/* CABECERA */}
 
       <div className="dashboard-header">
 
@@ -210,16 +201,36 @@ export default function Dashboard() {
           </p>
         </div>
 
+        <button
+          type="button"
+          className="btn btn-outline-secondary"
+          onClick={loadDashboardData}
+        >
+          <RefreshCw
+            size={17}
+            className="me-2"
+          />
+          Actualizar
+        </button>
+
       </div>
 
+      {/* ERROR */}
 
-      {/* =========================
-          KPIs PRINCIPALES
-      ========================= */}
+      {error && (
+        <div
+          className="alert alert-danger"
+          role="alert"
+        >
+          {error}
+        </div>
+      )}
+
+      {/* KPIs PRINCIPALES */}
 
       <div className="row g-4 mb-4">
 
-        {/* VENTAS */}
+        {/* VENTAS HOY */}
 
         <div className="col-xl-3 col-md-6">
 
@@ -238,9 +249,7 @@ export default function Dashboard() {
             </div>
 
             <div className="dashboard-kpi-value">
-              {formatCurrency(
-                todayRevenue
-              )}
+              {formatCurrency(todayRevenue)}
             </div>
 
             <div className="dashboard-kpi-description">
@@ -253,7 +262,6 @@ export default function Dashboard() {
           </div>
 
         </div>
-
 
         {/* PRODUCTOS */}
 
@@ -285,7 +293,6 @@ export default function Dashboard() {
 
         </div>
 
-
         {/* INVENTARIO */}
 
         <div className="col-xl-3 col-md-6">
@@ -305,9 +312,7 @@ export default function Dashboard() {
             </div>
 
             <div className="dashboard-kpi-value">
-              {formatCurrency(
-                inventoryCost
-              )}
+              {formatCurrency(inventoryCost)}
             </div>
 
             <div className="dashboard-kpi-description">
@@ -317,7 +322,6 @@ export default function Dashboard() {
           </div>
 
         </div>
-
 
         {/* STOCK BAJO */}
 
@@ -338,11 +342,11 @@ export default function Dashboard() {
             </div>
 
             <div className="dashboard-kpi-value">
-              {lowStockProducts}
+              {lowStockCount}
             </div>
 
             <div className="dashboard-kpi-description">
-              {lowStockProducts === 1
+              {lowStockCount === 1
                 ? "Producto requiere reposición"
                 : "Productos requieren reposición"}
             </div>
@@ -353,10 +357,7 @@ export default function Dashboard() {
 
       </div>
 
-
-      {/* =========================
-          RENTABILIDAD
-      ========================= */}
+      {/* RENTABILIDAD */}
 
       <div className="dashboard-section-header">
 
@@ -372,10 +373,9 @@ export default function Dashboard() {
 
       </div>
 
-
       <div className="row g-4 mb-4">
 
-        {/* VALOR VENTA */}
+        {/* VALOR POTENCIAL */}
 
         <div className="col-lg-4">
 
@@ -406,7 +406,6 @@ export default function Dashboard() {
           </div>
 
         </div>
-
 
         {/* BENEFICIO */}
 
@@ -440,7 +439,6 @@ export default function Dashboard() {
 
         </div>
 
-
         {/* MARGEN */}
 
         <div className="col-lg-4">
@@ -473,10 +471,7 @@ export default function Dashboard() {
 
       </div>
 
-
-      {/* =========================
-          GRÁFICO + IA
-      ========================= */}
+      {/* GRÁFICO + IA */}
 
       <div className="row g-4 mb-4">
 
@@ -503,13 +498,16 @@ export default function Dashboard() {
             </div>
 
             <div className="dashboard-chart-container">
-              <SalesChart />
+
+              <SalesChart
+                sales={sales}
+              />
+
             </div>
 
           </div>
 
         </div>
-
 
         {/* IA */}
 
@@ -544,9 +542,8 @@ export default function Dashboard() {
               </p>
 
               <p>
-                Todavía no tienes suficientes
-                datos para generar
-                recomendaciones.
+                Estamos preparando el análisis
+                inteligente de tu negocio.
               </p>
 
               <div className="dashboard-ai-list">
@@ -581,12 +578,11 @@ export default function Dashboard() {
 
       </div>
 
-
-      {/* =========================
-          ÚLTIMAS VENTAS + STOCK
-      ========================= */}
+      {/* ÚLTIMAS VENTAS + STOCK */}
 
       <div className="row g-4">
+
+        {/* ÚLTIMAS VENTAS */}
 
         <div className="col-xl-8">
 
@@ -600,6 +596,7 @@ export default function Dashboard() {
 
         </div>
 
+        {/* STOCK BAJO */}
 
         <div className="col-xl-4">
 
