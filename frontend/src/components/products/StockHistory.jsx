@@ -1,6 +1,14 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import {
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Search,
+  RotateCcw,
+  Package,
+  TrendingUp,
+} from "lucide-react";
 
-export default function StockHistory({ movements }) {
+export default function StockHistory({ movements = [] }) {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("todos");
   const [productFilter, setProductFilter] = useState("todos");
@@ -19,49 +27,89 @@ export default function StockHistory({ movements }) {
     });
   };
 
-  const uniqueProducts = [
-    ...new Map(
-      movements.map((movement) => [
-        movement.productId,
-        {
-          id: movement.productId,
-          name: movement.productName,
-        },
-      ])
-    ).values(),
-  ];
+  const uniqueProducts = useMemo(() => {
+    return [
+      ...new Map(
+        movements.map((movement) => [
+          movement.productId,
+          {
+            id: movement.productId,
+            name: movement.productName,
+          },
+        ])
+      ).values(),
+    ];
+  }, [movements]);
 
-  const filteredMovements = movements.filter((movement) => {
-    const searchTerm = search
-      .toLowerCase()
-      .trim();
+  const filteredMovements = useMemo(() => {
+    const searchTerm = search.toLowerCase().trim();
 
-    const matchesSearch =
-      !searchTerm ||
-      movement.productName
-        ?.toLowerCase()
-        .includes(searchTerm) ||
-      movement.sku
-        ?.toLowerCase()
-        .includes(searchTerm) ||
-      movement.reason
-        ?.toLowerCase()
-        .includes(searchTerm);
+    return [...movements]
+      .filter((movement) => {
+        const matchesSearch =
+          !searchTerm ||
+          movement.productName
+            ?.toLowerCase()
+            .includes(searchTerm) ||
+          movement.sku
+            ?.toLowerCase()
+            .includes(searchTerm) ||
+          movement.barcode
+            ?.toLowerCase()
+            .includes(searchTerm) ||
+          movement.reason
+            ?.toLowerCase()
+            .includes(searchTerm);
 
-    const matchesType =
-      typeFilter === "todos" ||
-      movement.type === typeFilter;
+        const matchesType =
+          typeFilter === "todos" ||
+          movement.type === typeFilter;
 
-    const matchesProduct =
-      productFilter === "todos" ||
-      movement.productId === productFilter;
+        const matchesProduct =
+          productFilter === "todos" ||
+          String(movement.productId) ===
+            String(productFilter);
 
-    return (
-      matchesSearch &&
-      matchesType &&
-      matchesProduct
+        return (
+          matchesSearch &&
+          matchesType &&
+          matchesProduct
+        );
+      })
+      .sort((a, b) => {
+        return (
+          new Date(b.date || 0) -
+          new Date(a.date || 0)
+        );
+      });
+  }, [
+    movements,
+    search,
+    typeFilter,
+    productFilter,
+  ]);
+
+  const totalEntries = filteredMovements
+    .filter(
+      (movement) => movement.type === "entrada"
+    )
+    .reduce(
+      (total, movement) =>
+        total + Number(movement.quantity || 0),
+      0
     );
-  });
+
+  const totalExits = filteredMovements
+    .filter(
+      (movement) => movement.type === "salida"
+    )
+    .reduce(
+      (total, movement) =>
+        total + Number(movement.quantity || 0),
+      0
+    );
+
+  const netBalance = totalEntries - totalExits;
 
   const clearFilters = () => {
     setSearch("");
@@ -76,11 +124,9 @@ export default function StockHistory({ movements }) {
 
   return (
     <div className="stat-card mt-4">
-
       {/* CABECERA */}
 
       <div className="d-flex justify-content-between align-items-center mb-4">
-
         <div>
           <h4 className="mb-1">
             Historial de movimientos
@@ -94,37 +140,106 @@ export default function StockHistory({ movements }) {
         <span className="badge bg-dark">
           {filteredMovements.length} movimientos
         </span>
+      </div>
 
+      {/* RESUMEN */}
+
+      <div className="row g-3 mb-4">
+        <div className="col-md-4">
+          <div className="border rounded p-3 h-100">
+            <div className="d-flex align-items-center mb-2">
+              <ArrowDownToLine
+                size={18}
+                className="me-2 text-success"
+              />
+
+              <span className="text-muted small">
+                Unidades entradas
+              </span>
+            </div>
+
+            <div className="fs-4 fw-bold text-success">
+              +{totalEntries}
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md-4">
+          <div className="border rounded p-3 h-100">
+            <div className="d-flex align-items-center mb-2">
+              <ArrowUpFromLine
+                size={18}
+                className="me-2 text-danger"
+              />
+
+              <span className="text-muted small">
+                Unidades salidas
+              </span>
+            </div>
+
+            <div className="fs-4 fw-bold text-danger">
+              -{totalExits}
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md-4">
+          <div className="border rounded p-3 h-100">
+            <div className="d-flex align-items-center mb-2">
+              <TrendingUp
+                size={18}
+                className="me-2"
+              />
+
+              <span className="text-muted small">
+                Balance neto
+              </span>
+            </div>
+
+            <div
+              className={`fs-4 fw-bold ${
+                netBalance >= 0
+                  ? "text-success"
+                  : "text-danger"
+              }`}
+            >
+              {netBalance > 0 ? "+" : ""}
+              {netBalance}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* FILTROS */}
 
       <div className="row g-3 mb-4">
-
         {/* BUSCAR */}
 
         <div className="col-md-5">
-
           <label className="form-label fw-semibold">
             Buscar
           </label>
 
-          <input
-            type="text"
-            className="form-control"
-            placeholder="🔍 Producto, SKU o motivo..."
-            value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
-          />
+          <div className="input-group">
+            <span className="input-group-text">
+              <Search size={17} />
+            </span>
 
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Producto, SKU, código de barras o motivo..."
+              value={search}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+            />
+          </div>
         </div>
 
         {/* PRODUCTO */}
 
         <div className="col-md-3">
-
           <label className="form-label fw-semibold">
             Producto
           </label>
@@ -136,30 +251,24 @@ export default function StockHistory({ movements }) {
               setProductFilter(e.target.value)
             }
           >
-
             <option value="todos">
               Todos los productos
             </option>
 
             {uniqueProducts.map((product) => (
-
               <option
                 key={product.id}
                 value={product.id}
               >
                 {product.name}
               </option>
-
             ))}
-
           </select>
-
         </div>
 
         {/* TIPO */}
 
         <div className="col-md-2">
-
           <label className="form-label fw-semibold">
             Movimiento
           </label>
@@ -171,7 +280,6 @@ export default function StockHistory({ movements }) {
               setTypeFilter(e.target.value)
             }
           >
-
             <option value="todos">
               Todos
             </option>
@@ -183,54 +291,40 @@ export default function StockHistory({ movements }) {
             <option value="salida">
               Salidas
             </option>
-
           </select>
-
         </div>
 
         {/* LIMPIAR */}
 
         <div className="col-md-2 d-flex align-items-end">
-
           <button
             type="button"
             className="btn btn-outline-secondary w-100"
             onClick={clearFilters}
             disabled={!filtersActive}
           >
-            🔄 Limpiar
+            <RotateCcw size={16} className="me-2" />
+            Limpiar
           </button>
-
         </div>
-
       </div>
 
       {/* RESULTADOS */}
 
       {movements.length === 0 ? (
-
-        <div className="text-center text-muted py-4">
-
-          <div className="fs-1 mb-2">
-            📦
-          </div>
+        <div className="text-center text-muted py-5">
+          <Package size={42} className="mb-3" />
 
           <p className="mb-0">
             Todavía no hay movimientos registrados.
           </p>
-
         </div>
-
       ) : filteredMovements.length === 0 ? (
-
-        <div className="text-center text-muted py-4">
-
-          <div className="fs-1 mb-2">
-            🔍
-          </div>
+        <div className="text-center text-muted py-5">
+          <Search size={42} className="mb-3" />
 
           <p className="mb-2">
-            No encontramos movimientos.
+            No encontramos movimientos con estos filtros.
           </p>
 
           <button
@@ -240,46 +334,26 @@ export default function StockHistory({ movements }) {
           >
             Limpiar filtros
           </button>
-
         </div>
-
       ) : (
-
         <div className="table-responsive">
-
           <table className="table table-hover align-middle">
-
             <thead className="table-light">
-
               <tr>
-
                 <th>Fecha</th>
-
                 <th>Producto</th>
-
                 <th>SKU</th>
-
                 <th>Tipo</th>
-
                 <th>Cantidad</th>
-
                 <th>Motivo</th>
-
                 <th>Stock resultante</th>
-
               </tr>
-
             </thead>
 
             <tbody>
-
               {filteredMovements.map(
                 (movement) => (
-
                   <tr key={movement.id}>
-
-                    {/* FECHA */}
-
                     <td>
                       <small>
                         {formatDate(
@@ -288,48 +362,39 @@ export default function StockHistory({ movements }) {
                       </small>
                     </td>
 
-                    {/* PRODUCTO */}
-
                     <td className="fw-semibold">
                       {movement.productName}
                     </td>
 
-                    {/* SKU */}
-
                     <td>
-
                       <span className="badge bg-dark">
                         {movement.sku ||
                           "Sin SKU"}
                       </span>
-
                     </td>
 
-                    {/* TIPO */}
-
                     <td>
-
                       {movement.type ===
                       "entrada" ? (
-
-                        <span className="badge bg-success">
-                          ↑ Entrada
+                        <span className="badge bg-success d-inline-flex align-items-center">
+                          <ArrowDownToLine
+                            size={14}
+                            className="me-1"
+                          />
+                          Entrada
                         </span>
-
                       ) : (
-
-                        <span className="badge bg-danger">
-                          ↓ Salida
+                        <span className="badge bg-danger d-inline-flex align-items-center">
+                          <ArrowUpFromLine
+                            size={14}
+                            className="me-1"
+                          />
+                          Salida
                         </span>
-
                       )}
-
                     </td>
 
-                    {/* CANTIDAD */}
-
                     <td>
-
                       <strong
                         className={
                           movement.type ===
@@ -338,21 +403,15 @@ export default function StockHistory({ movements }) {
                             : "text-danger"
                         }
                       >
-
                         {movement.type ===
                         "entrada"
                           ? "+"
                           : "-"}
                         {movement.quantity}
-
                       </strong>
-
                     </td>
 
-                    {/* MOTIVO */}
-
                     <td>
-
                       <span
                         className={
                           movement.reason
@@ -363,34 +422,20 @@ export default function StockHistory({ movements }) {
                         {movement.reason ||
                           "Sin especificar"}
                       </span>
-
                     </td>
-
-                    {/* STOCK */}
 
                     <td>
-
                       <strong>
-                        {
-                          movement.resultingStock
-                        }
+                        {movement.resultingStock}
                       </strong>
-
                     </td>
-
                   </tr>
-
                 )
               )}
-
             </tbody>
-
           </table>
-
         </div>
-
       )}
-
     </div>
   );
 }
