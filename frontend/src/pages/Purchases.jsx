@@ -5,6 +5,9 @@ import {
   Truck,
   RefreshCw,
   Search,
+  Plus,
+  Trash2,
+  Minus,
 } from "lucide-react";
 
 const API_URL = "http://127.0.0.1:5000";
@@ -16,7 +19,12 @@ export default function Purchases() {
 
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [selectedProduct, setSelectedProduct] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [unitPrice, setUnitPrice] = useState("");
+
   const [search, setSearch] = useState("");
+
+  const [cart, setCart] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -121,6 +129,103 @@ export default function Purchases() {
     (product) =>
       Number(product.id) === Number(selectedProduct)
   );
+
+  const cartTotal = cart.reduce(
+    (total, item) => total + item.quantity * item.unitPrice,
+    0
+  );
+
+  const cartItemsCount = cart.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
+
+  const handleAddToCart = () => {
+    if (!selectedProductData) {
+      setError("Selecciona un producto.");
+      return;
+    }
+
+    const parsedQuantity = Number(quantity);
+    const parsedPrice = Number(unitPrice);
+
+    if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) {
+      setError("La cantidad debe ser un número entero mayor que cero.");
+      return;
+    }
+
+    if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      setError("El precio de compra no puede ser negativo.");
+      return;
+    }
+
+    setError("");
+
+    const existingItem = cart.find(
+      (item) => item.productId === selectedProductData.id
+    );
+
+    if (existingItem) {
+      setCart(
+        cart.map((item) =>
+          item.productId === selectedProductData.id
+            ? {
+                ...item,
+                quantity: item.quantity + parsedQuantity,
+                unitPrice: parsedPrice,
+              }
+            : item
+        )
+      );
+    } else {
+      setCart([
+        ...cart,
+        {
+          productId: selectedProductData.id,
+          productName: selectedProductData.name,
+          sku: selectedProductData.sku,
+          barcode: selectedProductData.barcode,
+          quantity: parsedQuantity,
+          unitPrice: parsedPrice,
+        },
+      ]);
+    }
+
+    setSelectedProduct("");
+    setQuantity(1);
+    setUnitPrice("");
+  };
+
+  const handleRemoveFromCart = (productId) => {
+    setCart(
+      cart.filter(
+        (item) => item.productId !== productId
+      )
+    );
+  };
+
+  const handleChangeQuantity = (productId, change) => {
+    setCart(
+      cart
+        .map((item) => {
+          if (item.productId !== productId) {
+            return item;
+          }
+
+          const newQuantity = item.quantity + change;
+
+          if (newQuantity <= 0) {
+            return null;
+          }
+
+          return {
+            ...item,
+            quantity: newQuantity,
+          };
+        })
+        .filter(Boolean)
+    );
+  };
 
   return (
     <div className="container-fluid py-4">
@@ -227,6 +332,7 @@ export default function Purchases() {
           </div>
 
           <div className="row g-3">
+            {/* Proveedor */}
             <div className="col-md-6">
               <label className="form-label">
                 Proveedor
@@ -254,34 +360,8 @@ export default function Purchases() {
               </select>
             </div>
 
+            {/* Buscar */}
             <div className="col-md-6">
-              <label className="form-label">
-                Producto
-              </label>
-
-              <select
-                className="form-select"
-                value={selectedProduct}
-                onChange={(event) =>
-                  setSelectedProduct(event.target.value)
-                }
-              >
-                <option value="">
-                  Seleccionar producto
-                </option>
-
-                {products.map((product) => (
-                  <option
-                    key={product.id}
-                    value={product.id}
-                  >
-                    {product.name} — {product.sku}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="col-12">
               <label className="form-label">
                 Buscar producto
               </label>
@@ -301,6 +381,96 @@ export default function Purchases() {
                   }
                 />
               </div>
+            </div>
+
+            {/* Producto */}
+            <div className="col-md-6">
+              <label className="form-label">
+                Producto
+              </label>
+
+              <select
+                className="form-select"
+                value={selectedProduct}
+                onChange={(event) => {
+                  const productId = event.target.value;
+
+                  setSelectedProduct(productId);
+
+                  const product = products.find(
+                    (item) =>
+                      Number(item.id) === Number(productId)
+                  );
+
+                  if (product) {
+                    setUnitPrice(
+                      product.buyPrice ?? ""
+                    );
+                  }
+                }}
+              >
+                <option value="">
+                  Seleccionar producto
+                </option>
+
+                {filteredProducts.map((product) => (
+                  <option
+                    key={product.id}
+                    value={product.id}
+                  >
+                    {product.name} — {product.sku}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Cantidad */}
+            <div className="col-md-3">
+              <label className="form-label">
+                Cantidad
+              </label>
+
+              <input
+                type="number"
+                min="1"
+                step="1"
+                className="form-control"
+                value={quantity}
+                onChange={(event) =>
+                  setQuantity(event.target.value)
+                }
+              />
+            </div>
+
+            {/* Precio */}
+            <div className="col-md-3">
+              <label className="form-label">
+                Precio de compra
+              </label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                className="form-control"
+                placeholder="0.00"
+                value={unitPrice}
+                onChange={(event) =>
+                  setUnitPrice(event.target.value)
+                }
+              />
+            </div>
+
+            {/* Add */}
+            <div className="col-12">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleAddToCart}
+              >
+                <Plus size={17} className="me-2" />
+                Añadir al carrito
+              </button>
             </div>
           </div>
 
@@ -324,7 +494,137 @@ export default function Purchases() {
         </div>
       </div>
 
-      {/* Productos */}
+      {/* Carrito */}
+      <div className="card border-0 shadow-sm mb-4">
+        <div className="card-body">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="d-flex align-items-center">
+              <ShoppingCart size={20} className="me-2" />
+
+              <h5 className="mb-0">
+                Carrito de compra
+              </h5>
+            </div>
+
+            <span className="text-muted small">
+              {cartItemsCount} unidades
+            </span>
+          </div>
+
+          {cart.length === 0 ? (
+            <div className="text-muted">
+              No hay productos en el carrito.
+            </div>
+          ) : (
+            <>
+              <div className="table-responsive">
+                <table className="table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Producto</th>
+                      <th>SKU</th>
+                      <th>Cantidad</th>
+                      <th>Precio compra</th>
+                      <th>Subtotal</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {cart.map((item) => (
+                      <tr key={item.productId}>
+                        <td className="fw-medium">
+                          {item.productName}
+                        </td>
+
+                        <td>
+                          {item.sku || "-"}
+                        </td>
+
+                        <td>
+                          <div className="d-flex align-items-center gap-2">
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-secondary"
+                              onClick={() =>
+                                handleChangeQuantity(
+                                  item.productId,
+                                  -1
+                                )
+                              }
+                            >
+                              <Minus size={14} />
+                            </button>
+
+                            <span className="fw-semibold">
+                              {item.quantity}
+                            </span>
+
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-secondary"
+                              onClick={() =>
+                                handleChangeQuantity(
+                                  item.productId,
+                                  1
+                                )
+                              }
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+                        </td>
+
+                        <td>
+                          {formatCurrency(
+                            item.unitPrice
+                          )}
+                        </td>
+
+                        <td className="fw-semibold">
+                          {formatCurrency(
+                            item.quantity *
+                              item.unitPrice
+                          )}
+                        </td>
+
+                        <td className="text-end">
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() =>
+                              handleRemoveFromCart(
+                                item.productId
+                              )
+                            }
+                            aria-label="Eliminar producto"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="d-flex justify-content-end mt-4">
+                <div className="text-end">
+                  <div className="text-muted small">
+                    Total de la compra
+                  </div>
+
+                  <div className="fs-3 fw-bold">
+                    {formatCurrency(cartTotal)}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Productos disponibles */}
       <div className="card border-0 shadow-sm mb-4">
         <div className="card-body">
           <div className="d-flex justify-content-between align-items-center mb-3">
@@ -378,7 +678,9 @@ export default function Purchases() {
                       </td>
 
                       <td>
-                        {formatCurrency(product.buyPrice)}
+                        {formatCurrency(
+                          product.buyPrice
+                        )}
                       </td>
                     </tr>
                   ))}
