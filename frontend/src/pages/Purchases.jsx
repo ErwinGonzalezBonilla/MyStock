@@ -9,7 +9,9 @@ import {
   Trash2,
   Minus,
   CheckCircle,
+  Eye,
 } from "lucide-react";
+import PurchaseDetailsModal from "../components/purchases/PurchaseDetailsModal";
 
 const API_URL = "http://127.0.0.1:5000";
 
@@ -31,6 +33,8 @@ export default function Purchases() {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const [selectedPurchase, setSelectedPurchase] = useState(null);
 
   const loadData = async () => {
     try {
@@ -315,6 +319,7 @@ export default function Purchases() {
       );
     } catch (err) {
       console.error(err);
+
       setError(
         err.message ||
           "No se pudo registrar la compra."
@@ -326,10 +331,14 @@ export default function Purchases() {
 
   return (
     <div className="container-fluid py-4">
-      {/* Header */}
+
+      {/* HEADER */}
+
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 className="mb-1">Compras</h1>
+          <h1 className="mb-1">
+            Compras
+          </h1>
 
           <p className="text-muted mb-0">
             Gestiona tus compras y entradas de stock.
@@ -347,9 +356,14 @@ export default function Purchases() {
         </button>
       </div>
 
-      {/* Messages */}
+
+      {/* MENSAJES */}
+
       {error && (
-        <div className="alert alert-danger" role="alert">
+        <div
+          className="alert alert-danger"
+          role="alert"
+        >
           {error}
         </div>
       )}
@@ -359,16 +373,25 @@ export default function Purchases() {
           className="alert alert-success d-flex align-items-center"
           role="alert"
         >
-          <CheckCircle size={18} className="me-2" />
+          <CheckCircle
+            size={18}
+            className="me-2"
+          />
+
           {success}
         </div>
       )}
 
-      {/* Summary */}
+
+      {/* RESUMEN */}
+
       <div className="row g-3 mb-4">
+
         <div className="col-md-4">
           <div className="card border-0 shadow-sm h-100">
+
             <div className="card-body d-flex align-items-center">
+
               <div className="me-3">
                 <Truck size={28} />
               </div>
@@ -382,13 +405,18 @@ export default function Purchases() {
                   {suppliers.length}
                 </div>
               </div>
+
             </div>
+
           </div>
         </div>
 
+
         <div className="col-md-4">
           <div className="card border-0 shadow-sm h-100">
+
             <div className="card-body d-flex align-items-center">
+
               <div className="me-3">
                 <Package size={28} />
               </div>
@@ -402,13 +430,18 @@ export default function Purchases() {
                   {products.length}
                 </div>
               </div>
+
             </div>
+
           </div>
         </div>
 
+
         <div className="col-md-4">
           <div className="card border-0 shadow-sm h-100">
+
             <div className="card-body d-flex align-items-center">
+
               <div className="me-3">
                 <ShoppingCart size={28} />
               </div>
@@ -422,25 +455,41 @@ export default function Purchases() {
                   {purchases.length}
                 </div>
               </div>
+
             </div>
+
           </div>
         </div>
+
       </div>
 
-      {/* Nueva compra */}
+
+      {/* NUEVA COMPRA */}
+
       <div className="card border-0 shadow-sm mb-4">
+
         <div className="card-body">
+
           <div className="d-flex align-items-center mb-3">
-            <ShoppingCart size={20} className="me-2" />
+
+            <ShoppingCart
+              size={20}
+              className="me-2"
+            />
 
             <h5 className="mb-0">
               Nueva compra
             </h5>
+
           </div>
 
+
           <div className="row g-3">
-            {/* Proveedor */}
+
+            {/* PROVEEDOR */}
+
             <div className="col-md-6">
+
               <label className="form-label">
                 Proveedor
               </label>
@@ -452,33 +501,43 @@ export default function Purchases() {
                   setSelectedSupplier(
                     event.target.value
                   );
+
                   setError("");
                   setSuccess("");
                 }}
                 disabled={savingPurchase}
               >
+
                 <option value="">
                   Seleccionar proveedor
                 </option>
 
                 {suppliers.map((supplier) => (
+
                   <option
                     key={supplier.id}
                     value={supplier.id}
                   >
                     {supplier.name}
                   </option>
+
                 ))}
+
               </select>
+
             </div>
 
-            {/* Buscar */}
+
+            {/* BUSCAR */}
+
             <div className="col-md-6">
+
               <label className="form-label">
                 Buscar producto
               </label>
 
               <div className="input-group">
+
                 <span className="input-group-text">
                   <Search size={17} />
                 </span>
@@ -493,11 +552,16 @@ export default function Purchases() {
                   }
                   disabled={savingPurchase}
                 />
+
               </div>
+
             </div>
 
-            {/* Producto */}
+
+            {/* PRODUCTO */}
+
             <div className="col-md-6">
+
               <label className="form-label">
                 Producto
               </label>
@@ -506,44 +570,60 @@ export default function Purchases() {
                 className="form-select"
                 value={selectedProduct}
                 onChange={(event) => {
+
                   const productId =
                     event.target.value;
 
                   setSelectedProduct(productId);
+
                   setError("");
                   setSuccess("");
 
-                  const product = products.find(
-                    (item) =>
-                      Number(item.id) ===
-                      Number(productId)
-                  );
+                  const product =
+                    products.find(
+                      (item) =>
+                        Number(item.id) ===
+                        Number(productId)
+                    );
 
                   if (product) {
+
                     setUnitPrice(
                       product.buyPrice ?? ""
                     );
+
                   }
+
                 }}
                 disabled={savingPurchase}
               >
+
                 <option value="">
                   Seleccionar producto
                 </option>
 
-                {filteredProducts.map((product) => (
-                  <option
-                    key={product.id}
-                    value={product.id}
-                  >
-                    {product.name} — {product.sku}
-                  </option>
-                ))}
+                {filteredProducts.map(
+                  (product) => (
+
+                    <option
+                      key={product.id}
+                      value={product.id}
+                    >
+                      {product.name} — {product.sku}
+                    </option>
+
+                  )
+                )}
+
               </select>
+
             </div>
 
-            {/* Cantidad */}
+
+            {/* CANTIDAD */}
+
             <div className="col-md-3">
+
               <label className="form-label">
                 Cantidad
               </label>
@@ -555,14 +635,20 @@ export default function Purchases() {
                 className="form-control"
                 value={quantity}
                 onChange={(event) =>
-                  setQuantity(event.target.value)
+                  setQuantity(
+                    event.target.value
+                  )
                 }
                 disabled={savingPurchase}
               />
+
             </div>
 
-            {/* Precio */}
+
+            {/* PRECIO */}
+
             <div className="col-md-3">
+
               <label className="form-label">
                 Precio de compra
               </label>
@@ -575,85 +661,154 @@ export default function Purchases() {
                 placeholder="0.00"
                 value={unitPrice}
                 onChange={(event) =>
-                  setUnitPrice(event.target.value)
+                  setUnitPrice(
+                    event.target.value
+                  )
                 }
                 disabled={savingPurchase}
               />
+
             </div>
 
-            {/* Add */}
+
+            {/* AÑADIR */}
+
             <div className="col-12">
+
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={handleAddToCart}
                 disabled={savingPurchase}
               >
-                <Plus size={17} className="me-2" />
+
+                <Plus
+                  size={17}
+                  className="me-2"
+                />
+
                 Añadir al carrito
+
               </button>
+
             </div>
+
           </div>
 
+
           {selectedSupplierData && (
+
             <div className="alert alert-light border mt-3 mb-0">
+
               Proveedor seleccionado:{" "}
+
               <strong>
                 {selectedSupplierData.name}
               </strong>
+
             </div>
+
           )}
 
+
           {selectedProductData && (
+
             <div className="alert alert-light border mt-3 mb-0">
+
               Producto seleccionado:{" "}
+
               <strong>
                 {selectedProductData.name}
               </strong>
+
             </div>
+
           )}
+
         </div>
+
       </div>
 
-      {/* Carrito */}
+
+      {/* CARRITO */}
+
       <div className="card border-0 shadow-sm mb-4">
+
         <div className="card-body">
+
           <div className="d-flex justify-content-between align-items-center mb-3">
+
             <div className="d-flex align-items-center">
-              <ShoppingCart size={20} className="me-2" />
+
+              <ShoppingCart
+                size={20}
+                className="me-2"
+              />
 
               <h5 className="mb-0">
                 Carrito de compra
               </h5>
+
             </div>
 
             <span className="text-muted small">
               {cartItemsCount} unidades
             </span>
+
           </div>
 
+
           {cart.length === 0 ? (
+
             <div className="text-muted">
               No hay productos en el carrito.
             </div>
+
           ) : (
+
             <>
+
               <div className="table-responsive">
+
                 <table className="table align-middle mb-0">
+
                   <thead>
+
                     <tr>
-                      <th>Producto</th>
-                      <th>SKU</th>
-                      <th>Cantidad</th>
-                      <th>Precio compra</th>
-                      <th>Subtotal</th>
+
+                      <th>
+                        Producto
+                      </th>
+
+                      <th>
+                        SKU
+                      </th>
+
+                      <th>
+                        Cantidad
+                      </th>
+
+                      <th>
+                        Precio compra
+                      </th>
+
+                      <th>
+                        Subtotal
+                      </th>
+
                       <th></th>
+
                     </tr>
+
                   </thead>
 
+
                   <tbody>
+
                     {cart.map((item) => (
+
                       <tr key={item.productId}>
+
                         <td className="fw-medium">
                           {item.productName}
                         </td>
@@ -663,7 +818,9 @@ export default function Purchases() {
                         </td>
 
                         <td>
+
                           <div className="d-flex align-items-center gap-2">
+
                             <button
                               type="button"
                               className="btn btn-sm btn-outline-secondary"
@@ -678,9 +835,11 @@ export default function Purchases() {
                               <Minus size={14} />
                             </button>
 
+
                             <span className="fw-semibold">
                               {item.quantity}
                             </span>
+
 
                             <button
                               type="button"
@@ -695,7 +854,9 @@ export default function Purchases() {
                             >
                               <Plus size={14} />
                             </button>
+
                           </div>
+
                         </td>
 
                         <td>
@@ -712,6 +873,7 @@ export default function Purchases() {
                         </td>
 
                         <td className="text-end">
+
                           <button
                             type="button"
                             className="btn btn-sm btn-outline-danger"
@@ -725,15 +887,24 @@ export default function Purchases() {
                           >
                             <Trash2 size={16} />
                           </button>
+
                         </td>
+
                       </tr>
+
                     ))}
+
                   </tbody>
+
                 </table>
+
               </div>
 
+
               <div className="d-flex justify-content-between align-items-end mt-4">
+
                 <div>
+
                   <div className="text-muted small">
                     Productos en la compra
                   </div>
@@ -741,9 +912,12 @@ export default function Purchases() {
                   <div className="fw-semibold">
                     {cart.length}
                   </div>
+
                 </div>
 
+
                 <div className="text-end">
+
                   <div className="text-muted small">
                     Total de la compra
                   </div>
@@ -751,45 +925,71 @@ export default function Purchases() {
                   <div className="fs-3 fw-bold">
                     {formatCurrency(cartTotal)}
                   </div>
+
                 </div>
+
               </div>
 
+
               <div className="d-flex justify-content-end mt-3">
+
                 <button
                   type="button"
                   className="btn btn-success"
                   onClick={handleRegisterPurchase}
                   disabled={savingPurchase}
                 >
+
                   {savingPurchase ? (
+
                     <>
+
                       <span
                         className="spinner-border spinner-border-sm me-2"
                         role="status"
                         aria-hidden="true"
                       />
+
                       Registrando...
+
                     </>
+
                   ) : (
+
                     <>
+
                       <CheckCircle
                         size={17}
                         className="me-2"
                       />
+
                       Registrar compra
+
                     </>
+
                   )}
+
                 </button>
+
               </div>
+
             </>
+
           )}
+
         </div>
+
       </div>
 
-      {/* Productos disponibles */}
+
+      {/* PRODUCTOS DISPONIBLES */}
+
       <div className="card border-0 shadow-sm mb-4">
+
         <div className="card-body">
+
           <div className="d-flex justify-content-between align-items-center mb-3">
+
             <h5 className="mb-0">
               Productos disponibles
             </h5>
@@ -797,66 +997,112 @@ export default function Purchases() {
             <span className="text-muted small">
               {filteredProducts.length} productos
             </span>
+
           </div>
 
+
           {loading ? (
+
             <div className="text-muted">
               Cargando productos...
             </div>
+
           ) : filteredProducts.length === 0 ? (
+
             <div className="text-muted">
               No se encontraron productos.
             </div>
+
           ) : (
+
             <div className="table-responsive">
+
               <table className="table align-middle mb-0">
+
                 <thead>
+
                   <tr>
-                    <th>Producto</th>
-                    <th>SKU</th>
-                    <th>Código de barras</th>
-                    <th>Stock</th>
-                    <th>Precio compra</th>
+
+                    <th>
+                      Producto
+                    </th>
+
+                    <th>
+                      SKU
+                    </th>
+
+                    <th>
+                      Código de barras
+                    </th>
+
+                    <th>
+                      Stock
+                    </th>
+
+                    <th>
+                      Precio compra
+                    </th>
+
                   </tr>
+
                 </thead>
 
+
                 <tbody>
-                  {filteredProducts.map((product) => (
-                    <tr key={product.id}>
-                      <td className="fw-medium">
-                        {product.name}
-                      </td>
 
-                      <td>
-                        {product.sku || "-"}
-                      </td>
+                  {filteredProducts.map(
+                    (product) => (
 
-                      <td>
-                        {product.barcode || "-"}
-                      </td>
+                      <tr key={product.id}>
 
-                      <td>
-                        {product.stock}
-                      </td>
+                        <td className="fw-medium">
+                          {product.name}
+                        </td>
 
-                      <td>
-                        {formatCurrency(
-                          product.buyPrice
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        <td>
+                          {product.sku || "-"}
+                        </td>
+
+                        <td>
+                          {product.barcode || "-"}
+                        </td>
+
+                        <td>
+                          {product.stock}
+                        </td>
+
+                        <td>
+                          {formatCurrency(
+                            product.buyPrice
+                          )}
+                        </td>
+
+                      </tr>
+
+                    )
+                  )}
+
                 </tbody>
+
               </table>
+
             </div>
+
           )}
+
         </div>
+
       </div>
 
-      {/* Historial */}
+
+      {/* HISTORIAL */}
+
       <div className="card border-0 shadow-sm">
+
         <div className="card-body">
+
           <div className="d-flex justify-content-between align-items-center mb-3">
+
             <h5 className="mb-0">
               Historial de compras
             </h5>
@@ -864,63 +1110,146 @@ export default function Purchases() {
             <span className="text-muted small">
               {purchases.length} registros
             </span>
+
           </div>
 
+
           {loading ? (
+
             <div className="text-muted">
               Cargando compras...
             </div>
+
           ) : purchases.length === 0 ? (
+
             <div className="text-muted">
               No hay compras registradas.
             </div>
+
           ) : (
+
             <div className="table-responsive">
+
               <table className="table align-middle mb-0">
+
                 <thead>
+
                   <tr>
-                    <th>#</th>
-                    <th>Fecha</th>
-                    <th>Proveedor</th>
-                    <th>Productos</th>
-                    <th>Total</th>
+
+                    <th>
+                      #
+                    </th>
+
+                    <th>
+                      Fecha
+                    </th>
+
+                    <th>
+                      Proveedor
+                    </th>
+
+                    <th>
+                      Productos
+                    </th>
+
+                    <th>
+                      Total
+                    </th>
+
+                    <th className="text-end">
+                      Acción
+                    </th>
+
                   </tr>
+
                 </thead>
 
+
                 <tbody>
-                  {purchases.map((purchase) => (
-                    <tr key={purchase.id}>
-                      <td>
-                        #{purchase.id}
-                      </td>
 
-                      <td>
-                        {formatDate(
-                          purchase.createdAt
-                        )}
-                      </td>
+                  {purchases.map(
+                    (purchase) => (
 
-                      <td>
-                        {purchase.supplierName}
-                      </td>
+                      <tr key={purchase.id}>
 
-                      <td>
-                        {purchase.items?.length || 0}
-                      </td>
+                        <td>
+                          #{purchase.id}
+                        </td>
 
-                      <td className="fw-semibold">
-                        {formatCurrency(
-                          purchase.total
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        <td>
+                          {formatDate(
+                            purchase.createdAt
+                          )}
+                        </td>
+
+                        <td>
+                          {purchase.supplierName}
+                        </td>
+
+                        <td>
+                          {purchase.items?.length || 0}
+                        </td>
+
+                        <td className="fw-semibold">
+                          {formatCurrency(
+                            purchase.total
+                          )}
+                        </td>
+
+                        <td className="text-end">
+
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={() =>
+                              setSelectedPurchase(
+                                purchase
+                              )
+                            }
+                          >
+
+                            <Eye
+                              size={16}
+                              className="me-1"
+                            />
+
+                            Ver detalle
+
+                          </button>
+
+                        </td>
+
+                      </tr>
+
+                    )
+                  )}
+
                 </tbody>
+
               </table>
+
             </div>
+
           )}
+
         </div>
+
       </div>
+
+
+      {/* MODAL */}
+
+      {selectedPurchase && (
+
+        <PurchaseDetailsModal
+          purchase={selectedPurchase}
+          onClose={() =>
+            setSelectedPurchase(null)
+          }
+        />
+
+      )}
+
     </div>
   );
 }
