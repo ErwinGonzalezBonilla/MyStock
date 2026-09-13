@@ -8,6 +8,7 @@ import {
   Plus,
   Trash2,
   Minus,
+  CheckCircle,
 } from "lucide-react";
 
 const API_URL = "http://127.0.0.1:5000";
@@ -23,11 +24,13 @@ export default function Purchases() {
   const [unitPrice, setUnitPrice] = useState("");
 
   const [search, setSearch] = useState("");
-
   const [cart, setCart] = useState([]);
 
   const [loading, setLoading] = useState(true);
+  const [savingPurchase, setSavingPurchase] = useState(false);
+
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const loadData = async () => {
     try {
@@ -131,7 +134,8 @@ export default function Purchases() {
   );
 
   const cartTotal = cart.reduce(
-    (total, item) => total + item.quantity * item.unitPrice,
+    (total, item) =>
+      total + item.quantity * item.unitPrice,
     0
   );
 
@@ -141,6 +145,14 @@ export default function Purchases() {
   );
 
   const handleAddToCart = () => {
+    setError("");
+    setSuccess("");
+
+    if (!selectedSupplier) {
+      setError("Selecciona un proveedor.");
+      return;
+    }
+
     if (!selectedProductData) {
       setError("Selecciona un producto.");
       return;
@@ -149,20 +161,26 @@ export default function Purchases() {
     const parsedQuantity = Number(quantity);
     const parsedPrice = Number(unitPrice);
 
-    if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) {
-      setError("La cantidad debe ser un número entero mayor que cero.");
+    if (
+      !Number.isInteger(parsedQuantity) ||
+      parsedQuantity <= 0
+    ) {
+      setError(
+        "La cantidad debe ser un número entero mayor que cero."
+      );
       return;
     }
 
     if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
-      setError("El precio de compra no puede ser negativo.");
+      setError(
+        "El precio de compra no puede ser negativo."
+      );
       return;
     }
 
-    setError("");
-
     const existingItem = cart.find(
-      (item) => item.productId === selectedProductData.id
+      (item) =>
+        item.productId === selectedProductData.id
     );
 
     if (existingItem) {
@@ -171,7 +189,8 @@ export default function Purchases() {
           item.productId === selectedProductData.id
             ? {
                 ...item,
-                quantity: item.quantity + parsedQuantity,
+                quantity:
+                  item.quantity + parsedQuantity,
                 unitPrice: parsedPrice,
               }
             : item
@@ -227,6 +246,84 @@ export default function Purchases() {
     );
   };
 
+  const handleRegisterPurchase = async () => {
+    setError("");
+    setSuccess("");
+
+    if (!selectedSupplier) {
+      setError(
+        "Selecciona un proveedor antes de registrar la compra."
+      );
+      return;
+    }
+
+    if (cart.length === 0) {
+      setError(
+        "Añade al menos un producto al carrito."
+      );
+      return;
+    }
+
+    setSavingPurchase(true);
+
+    try {
+      const payload = {
+        supplierId: Number(selectedSupplier),
+        items: cart.map((item) => ({
+          productId: Number(item.productId),
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+        })),
+      };
+
+      const response = await fetch(
+        `${API_URL}/api/purchases`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || "No se pudo registrar la compra."
+        );
+      }
+
+      const purchaseId = data.purchase?.id;
+
+      setCart([]);
+      setSelectedSupplier("");
+      setSelectedProduct("");
+      setQuantity(1);
+      setUnitPrice("");
+      setSearch("");
+
+      await loadData();
+
+      setSuccess(
+        purchaseId
+          ? `Compra #${purchaseId} registrada correctamente por ${formatCurrency(
+              data.purchase.total
+            )}.`
+          : "Compra registrada correctamente."
+      );
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.message ||
+          "No se pudo registrar la compra."
+      );
+    } finally {
+      setSavingPurchase(false);
+    }
+  };
+
   return (
     <div className="container-fluid py-4">
       {/* Header */}
@@ -243,17 +340,27 @@ export default function Purchases() {
           type="button"
           className="btn btn-outline-secondary"
           onClick={loadData}
-          disabled={loading}
+          disabled={loading || savingPurchase}
         >
           <RefreshCw size={17} className="me-2" />
           Actualizar
         </button>
       </div>
 
-      {/* Error */}
+      {/* Messages */}
       {error && (
         <div className="alert alert-danger" role="alert">
           {error}
+        </div>
+      )}
+
+      {success && (
+        <div
+          className="alert alert-success d-flex align-items-center"
+          role="alert"
+        >
+          <CheckCircle size={18} className="me-2" />
+          {success}
         </div>
       )}
 
@@ -341,9 +448,14 @@ export default function Purchases() {
               <select
                 className="form-select"
                 value={selectedSupplier}
-                onChange={(event) =>
-                  setSelectedSupplier(event.target.value)
-                }
+                onChange={(event) => {
+                  setSelectedSupplier(
+                    event.target.value
+                  );
+                  setError("");
+                  setSuccess("");
+                }}
+                disabled={savingPurchase}
               >
                 <option value="">
                   Seleccionar proveedor
@@ -379,6 +491,7 @@ export default function Purchases() {
                   onChange={(event) =>
                     setSearch(event.target.value)
                   }
+                  disabled={savingPurchase}
                 />
               </div>
             </div>
@@ -393,13 +506,17 @@ export default function Purchases() {
                 className="form-select"
                 value={selectedProduct}
                 onChange={(event) => {
-                  const productId = event.target.value;
+                  const productId =
+                    event.target.value;
 
                   setSelectedProduct(productId);
+                  setError("");
+                  setSuccess("");
 
                   const product = products.find(
                     (item) =>
-                      Number(item.id) === Number(productId)
+                      Number(item.id) ===
+                      Number(productId)
                   );
 
                   if (product) {
@@ -408,6 +525,7 @@ export default function Purchases() {
                     );
                   }
                 }}
+                disabled={savingPurchase}
               >
                 <option value="">
                   Seleccionar producto
@@ -439,6 +557,7 @@ export default function Purchases() {
                 onChange={(event) =>
                   setQuantity(event.target.value)
                 }
+                disabled={savingPurchase}
               />
             </div>
 
@@ -458,6 +577,7 @@ export default function Purchases() {
                 onChange={(event) =>
                   setUnitPrice(event.target.value)
                 }
+                disabled={savingPurchase}
               />
             </div>
 
@@ -467,6 +587,7 @@ export default function Purchases() {
                 type="button"
                 className="btn btn-primary"
                 onClick={handleAddToCart}
+                disabled={savingPurchase}
               >
                 <Plus size={17} className="me-2" />
                 Añadir al carrito
@@ -552,6 +673,7 @@ export default function Purchases() {
                                   -1
                                 )
                               }
+                              disabled={savingPurchase}
                             >
                               <Minus size={14} />
                             </button>
@@ -569,6 +691,7 @@ export default function Purchases() {
                                   1
                                 )
                               }
+                              disabled={savingPurchase}
                             >
                               <Plus size={14} />
                             </button>
@@ -597,6 +720,7 @@ export default function Purchases() {
                                 item.productId
                               )
                             }
+                            disabled={savingPurchase}
                             aria-label="Eliminar producto"
                           >
                             <Trash2 size={16} />
@@ -608,7 +732,17 @@ export default function Purchases() {
                 </table>
               </div>
 
-              <div className="d-flex justify-content-end mt-4">
+              <div className="d-flex justify-content-between align-items-end mt-4">
+                <div>
+                  <div className="text-muted small">
+                    Productos en la compra
+                  </div>
+
+                  <div className="fw-semibold">
+                    {cart.length}
+                  </div>
+                </div>
+
                 <div className="text-end">
                   <div className="text-muted small">
                     Total de la compra
@@ -618,6 +752,34 @@ export default function Purchases() {
                     {formatCurrency(cartTotal)}
                   </div>
                 </div>
+              </div>
+
+              <div className="d-flex justify-content-end mt-3">
+                <button
+                  type="button"
+                  className="btn btn-success"
+                  onClick={handleRegisterPurchase}
+                  disabled={savingPurchase}
+                >
+                  {savingPurchase ? (
+                    <>
+                      <span
+                        className="spinner-border spinner-border-sm me-2"
+                        role="status"
+                        aria-hidden="true"
+                      />
+                      Registrando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle
+                        size={17}
+                        className="me-2"
+                      />
+                      Registrar compra
+                    </>
+                  )}
+                </button>
               </div>
             </>
           )}
