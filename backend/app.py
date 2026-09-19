@@ -13,6 +13,7 @@ from models import (
     Supplier,
     Purchase,
     PurchaseItem,
+    User,
 )
 from routes.health import health_bp
 from routes.company import company_bp
@@ -22,6 +23,7 @@ from routes.sale import sale_bp
 from routes.client import client_bp
 from routes.supplier import supplier_bp
 from routes.purchase import purchase_bp
+from routes.user import user_bp
 
 
 def create_app():
@@ -41,6 +43,7 @@ def create_app():
     app.register_blueprint(client_bp)
     app.register_blueprint(supplier_bp)
     app.register_blueprint(purchase_bp)
+    app.register_blueprint(user_bp)
 
     with app.app_context():
         db.create_all()

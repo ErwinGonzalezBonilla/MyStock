@@ -7,3 +7,4 @@ from .client import Client
 from .supplier import Supplier
 from .purchase import Purchase
 from .purchase_item import PurchaseItem
+from .user import User
