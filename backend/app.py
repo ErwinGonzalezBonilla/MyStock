@@ -1,4 +1,4 @@
-from flask import Flask
+﻿from flask import Flask
 from flask_cors import CORS
 
 from config import Config
@@ -24,6 +24,7 @@ from routes.client import client_bp
 from routes.supplier import supplier_bp
 from routes.purchase import purchase_bp
 from routes.user import user_bp
+from routes.auth import auth_bp
 
 
 def create_app():
@@ -44,6 +45,7 @@ def create_app():
     app.register_blueprint(supplier_bp)
     app.register_blueprint(purchase_bp)
     app.register_blueprint(user_bp)
+    app.register_blueprint(auth_bp)
 
     with app.app_context():
         db.create_all()
