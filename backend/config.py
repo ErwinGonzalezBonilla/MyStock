@@ -1,4 +1,9 @@
-import os
+﻿import os
+
+from dotenv import load_dotenv
+
+
+load_dotenv()
 
 
 class Config:
@@ -8,3 +13,8 @@ class Config:
     )
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    JWT_SECRET_KEY = os.getenv(
+        "JWT_SECRET_KEY",
+        "dev-secret-change-this"
+    )
