@@ -4,6 +4,8 @@ from flask_jwt_extended import JWTManager
 
 from config import Config
 from extensions import db
+from auth_protection import protect_api
+
 from models import (
     Company,
     Product,
@@ -16,6 +18,7 @@ from models import (
     PurchaseItem,
     User,
 )
+
 from routes.health import health_bp
 from routes.company import company_bp
 from routes.stock_movement import stock_movement_bp
@@ -37,6 +40,8 @@ def create_app():
 
     db.init_app(app)
     JWTManager(app)
+
+    app.before_request(protect_api)
 
     app.register_blueprint(health_bp)
     app.register_blueprint(company_bp)
