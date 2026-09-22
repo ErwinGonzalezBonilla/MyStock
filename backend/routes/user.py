@@ -1,7 +1,10 @@
 ﻿from flask import Blueprint, jsonify, request
+from flask_jwt_extended import get_jwt
 
 from extensions import db
 from models.user import User
+from models.company import Company
+from auth_user import require_current_user
 
 
 user_bp = Blueprint("users", __name__, url_prefix="/api/users")
@@ -21,51 +24,93 @@ def serialize_user(user):
 
 @user_bp.get("")
 def get_users():
-    users = User.query.order_by(User.id.desc()).all()
+    current_user, error = require_current_user()
+
+    if error:
+        return error
+
+    if not current_user.company_id:
+        return jsonify({
+            "error": "El usuario no pertenece a ninguna empresa"
+        }), 400
+
+    users = (
+        User.query
+        .filter_by(company_id=current_user.company_id)
+        .order_by(User.id.desc())
+        .all()
+    )
 
     return jsonify([serialize_user(user) for user in users]), 200
 
 
 @user_bp.get("/<int:user_id>")
 def get_user(user_id):
-    user = User.query.get(user_id)
+    current_user, error = require_current_user()
+
+    if error:
+        return error
+
+    user = User.query.filter_by(
+        id=user_id,
+        company_id=current_user.company_id,
+    ).first()
 
     if not user:
-        return jsonify({"error": "Usuario no encontrado"}), 404
+        return jsonify({
+            "error": "Usuario no encontrado"
+        }), 404
 
     return jsonify(serialize_user(user)), 200
 
 
 @user_bp.post("")
 def create_user():
+    current_user, error = require_current_user()
+
+    if error:
+        return error
+
+    if not current_user.company_id:
+        return jsonify({
+            "error": "El usuario autenticado no pertenece a ninguna empresa"
+        }), 400
+
     data = request.get_json() or {}
 
     name = str(data.get("name", "")).strip()
     email = str(data.get("email", "")).strip().lower()
     password_hash = str(data.get("passwordHash", "")).strip()
     role = str(data.get("role", "employee")).strip()
-    company_id = data.get("companyId")
 
     if not name:
-        return jsonify({"error": "El nombre es obligatorio"}), 400
+        return jsonify({
+            "error": "El nombre es obligatorio"
+        }), 400
 
     if not email:
-        return jsonify({"error": "El email es obligatorio"}), 400
+        return jsonify({
+            "error": "El email es obligatorio"
+        }), 400
 
     if not password_hash:
-        return jsonify({"error": "Password is required"}), 400
+        return jsonify({
+            "error": "Password is required"
+        }), 400
 
     existing_user = User.query.filter_by(email=email).first()
 
     if existing_user:
-        return jsonify({"error": "Ya existe un usuario con ese email"}), 409
+        return jsonify({
+            "error": "Ya existe un usuario con ese email"
+        }), 409
 
     user = User(
         name=name,
         email=email,
         password_hash=password_hash,
         role=role or "employee",
-        company_id=company_id,
+        company_id=current_user.company_id,
     )
 
     db.session.add(user)
@@ -76,10 +121,20 @@ def create_user():
 
 @user_bp.put("/<int:user_id>")
 def update_user(user_id):
-    user = User.query.get(user_id)
+    current_user, error = require_current_user()
+
+    if error:
+        return error
+
+    user = User.query.filter_by(
+        id=user_id,
+        company_id=current_user.company_id,
+    ).first()
 
     if not user:
-        return jsonify({"error": "Usuario no encontrado"}), 404
+        return jsonify({
+            "error": "Usuario no encontrado"
+        }), 404
 
     data = request.get_json() or {}
 
@@ -87,7 +142,9 @@ def update_user(user_id):
         name = str(data["name"]).strip()
 
         if not name:
-            return jsonify({"error": "El nombre no puede estar vacio"}), 400
+            return jsonify({
+                "error": "El nombre no puede estar vacio"
+            }), 400
 
         user.name = name
 
@@ -95,7 +152,9 @@ def update_user(user_id):
         email = str(data["email"]).strip().lower()
 
         if not email:
-            return jsonify({"error": "El email no puede estar vacio"}), 400
+            return jsonify({
+                "error": "El email no puede estar vacio"
+            }), 400
 
         existing_user = User.query.filter(
             User.email == email,
@@ -103,7 +162,9 @@ def update_user(user_id):
         ).first()
 
         if existing_user:
-            return jsonify({"error": "Ya existe un usuario con ese email"}), 409
+            return jsonify({
+                "error": "Ya existe un usuario con ese email"
+            }), 409
 
         user.email = email
 
@@ -116,8 +177,8 @@ def update_user(user_id):
     if "role" in data:
         user.role = str(data["role"]).strip() or "employee"
 
-    if "companyId" in data:
-        user.company_id = data["companyId"]
+    # El companyId ya no viene del cliente.
+    # Un usuario no puede mover a otro usuario a otra empresa.
 
     if "isActive" in data:
         user.is_active = bool(data["isActive"])
@@ -129,12 +190,29 @@ def update_user(user_id):
 
 @user_bp.delete("/<int:user_id>")
 def delete_user(user_id):
-    user = User.query.get(user_id)
+    current_user, error = require_current_user()
+
+    if error:
+        return error
+
+    user = User.query.filter_by(
+        id=user_id,
+        company_id=current_user.company_id,
+    ).first()
 
     if not user:
-        return jsonify({"error": "Usuario no encontrado"}), 404
+        return jsonify({
+            "error": "Usuario no encontrado"
+        }), 404
+
+    if user.id == current_user.id:
+        return jsonify({
+            "error": "No puedes eliminar tu propio usuario"
+        }), 400
 
     db.session.delete(user)
     db.session.commit()
 
-    return jsonify({"message": "Usuario eliminado correctamente"}), 200
+    return jsonify({
+        "message": "Usuario eliminado correctamente"
+    }), 200
