@@ -1,6 +1,8 @@
 from flask import request
 from flask_jwt_extended import verify_jwt_in_request
 
+from role_protection import protect_roles
+
 
 PUBLIC_ENDPOINTS = {
     "health.health",
@@ -15,6 +17,9 @@ def protect_api():
     and health-check endpoints.
     """
 
+    if request.method == "OPTIONS":
+        return
+
     if not request.path.startswith("/api/"):
         return
 
@@ -22,3 +27,5 @@ def protect_api():
         return
 
     verify_jwt_in_request()
+
+    return protect_roles()

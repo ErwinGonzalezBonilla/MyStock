@@ -1,13 +1,20 @@
 ﻿from flask import Blueprint, jsonify, request
-from flask_jwt_extended import get_jwt
+from werkzeug.security import generate_password_hash
 
 from extensions import db
 from models.user import User
-from models.company import Company
 from auth_user import require_current_user
 
 
 user_bp = Blueprint("users", __name__, url_prefix="/api/users")
+
+
+VALID_ROLES = {
+    "administrator",
+    "manager",
+    "cashier",
+    "employee",
+}
 
 
 def serialize_user(user):
@@ -80,8 +87,8 @@ def create_user():
 
     name = str(data.get("name", "")).strip()
     email = str(data.get("email", "")).strip().lower()
-    password_hash = str(data.get("passwordHash", "")).strip()
-    role = str(data.get("role", "employee")).strip()
+    password = str(data.get("password", ""))
+    role = str(data.get("role", "employee")).strip().lower()
 
     if not name:
         return jsonify({
@@ -93,9 +100,14 @@ def create_user():
             "error": "El email es obligatorio"
         }), 400
 
-    if not password_hash:
+    if len(password) < 8:
         return jsonify({
-            "error": "Password is required"
+            "error": "La contraseña debe tener al menos 8 caracteres"
+        }), 400
+
+    if role not in VALID_ROLES:
+        return jsonify({
+            "error": "Rol no valido"
         }), 400
 
     existing_user = User.query.filter_by(email=email).first()
@@ -108,8 +120,8 @@ def create_user():
     user = User(
         name=name,
         email=email,
-        password_hash=password_hash,
-        role=role or "employee",
+        password_hash=generate_password_hash(password),
+        role=role,
         company_id=current_user.company_id,
     )
 
@@ -168,17 +180,25 @@ def update_user(user_id):
 
         user.email = email
 
-    if "passwordHash" in data:
-        password_hash = str(data["passwordHash"]).strip()
+    if "password" in data:
+        password = str(data["password"])
 
-        if password_hash:
-            user.password_hash = password_hash
+        if len(password) < 8:
+            return jsonify({
+                "error": "La contraseña debe tener al menos 8 caracteres"
+            }), 400
+
+        user.password_hash = generate_password_hash(password)
 
     if "role" in data:
-        user.role = str(data["role"]).strip() or "employee"
+        role = str(data["role"]).strip().lower()
 
-    # El companyId ya no viene del cliente.
-    # Un usuario no puede mover a otro usuario a otra empresa.
+        if role not in VALID_ROLES:
+            return jsonify({
+                "error": "Rol no valido"
+            }), 400
+
+        user.role = role
 
     if "isActive" in data:
         user.is_active = bool(data["isActive"])
