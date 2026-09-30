@@ -1,92 +1,96 @@
-import { useContext, useEffect, useState } from "react";
-import CompanyContext from "../context/CompanyContext";
+import { useEffect, useState } from "react";
 
-const API_URL = "http://127.0.0.1:5000/api/companies";
+import { useAuth } from "../context/AuthContext";
+import { apiFetch } from "../services/api";
+
+const EMPTY_COMPANY = {
+  name: "",
+  taxId: "",
+  email: "",
+  phone: "",
+  country: "",
+  currency: "",
+};
+
+function toForm(company) {
+  return {
+    name: company?.name || "",
+    taxId: company?.taxId || "",
+    email: company?.email || "",
+    phone: company?.phone || "",
+    country: company?.country || "",
+    currency: company?.currency || "",
+  };
+}
+
+const FIELDS = [
+  { name: "name", label: "Nombre de la empresa", type: "text", required: true },
+  { name: "taxId", label: "DNI / NIF / CIF", type: "text" },
+  { name: "email", label: "Correo", type: "email" },
+  { name: "phone", label: "Teléfono", type: "text" },
+  { name: "country", label: "País", type: "text" },
+  { name: "currency", label: "Moneda", type: "text" },
+];
 
 export default function Company() {
-  const { company, setCompany } =
-    useContext(CompanyContext);
+  const { setCompany, hasRole } = useAuth();
 
-  const [loading, setLoading] =
-    useState(false);
+  // Solo el administrador puede modificar la empresa.
+  const canEdit = hasRole("administrator");
 
-  const [message, setMessage] =
-    useState("");
-
-  const [error, setError] =
-    useState("");
+  const [form, setForm] = useState(EMPTY_COMPANY);
+  const [loadingData, setLoadingData] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   // =========================
   // CARGAR EMPRESA
   // =========================
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadCompany = async () => {
       try {
-        setError("");
-
-        const response =
-          await fetch(API_URL);
+        const response = await apiFetch("/api/company");
 
         if (!response.ok) {
-          throw new Error(
-            "No se pudieron cargar las empresas."
-          );
+          throw new Error("No se pudo cargar la empresa.");
         }
 
-        const companies =
-          await response.json();
+        const data = await response.json();
 
-        if (companies.length > 0) {
-          const savedCompany =
-            companies[0];
-
-          setCompany((prev) => ({
-            ...prev,
-
-            id: savedCompany.id,
-
-            name:
-              savedCompany.name || "",
-
-            email:
-              savedCompany.email || "",
-
-            phone:
-              savedCompany.phone || "",
-
-            taxId:
-              savedCompany.taxId || "",
-
-            country:
-              savedCompany.country || "",
-
-            currency:
-              savedCompany.currency || "",
-          }));
+        if (!cancelled) {
+          setForm(toForm(data));
         }
       } catch (err) {
-        console.error(
-          "Error cargando empresa:",
-          err
-        );
+        console.error("Error cargando empresa:", err);
 
-        setError(
-          "No se pudo conectar con el servidor."
-        );
+        if (!cancelled) {
+          setError("No se pudo conectar con el servidor.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingData(false);
+        }
       }
     };
 
     loadCompany();
-  }, [setCompany]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // =========================
   // CAMBIAR CAMPOS
   // =========================
 
   const handleChange = (e) => {
-    setCompany({
-      ...company,
+    setForm({
+      ...form,
       [e.target.name]: e.target.value,
     });
 
@@ -95,193 +99,42 @@ export default function Company() {
   };
 
   // =========================
-  // LOGO
-  // =========================
-
-  const handleLogo = (e) => {
-    const file =
-      e.target.files[0];
-
-    if (!file) {
-      return;
-    }
-
-    setCompany({
-      ...company,
-      logo: URL.createObjectURL(file),
-    });
-
-    setMessage("");
-    setError("");
-  };
-
-  // =========================
-  // GUARDAR / ACTUALIZAR
+  // GUARDAR
   // =========================
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setLoading(true);
+    setSaving(true);
     setMessage("");
     setError("");
 
     try {
-      const isEditing =
-        Boolean(company.id);
-
-      const url = isEditing
-        ? `${API_URL}/${company.id}`
-        : API_URL;
-
-      const method = isEditing
-        ? "PUT"
-        : "POST";
-
-      const response =
-        await fetch(url, {
-          method,
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify({
-            name: company.name,
-            taxId: company.taxId,
-            email: company.email,
-            phone: company.phone,
-            country: company.country,
-            currency: company.currency,
-          }),
-        });
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-            "No se pudo guardar la empresa."
-        );
-      }
-
-      const savedCompany =
-        data.company;
-
-      setCompany((prev) => ({
-        ...prev,
-
-        id: savedCompany.id,
-
-        name:
-          savedCompany.name || "",
-
-        email:
-          savedCompany.email || "",
-
-        phone:
-          savedCompany.phone || "",
-
-        taxId:
-          savedCompany.taxId || "",
-
-        country:
-          savedCompany.country || "",
-
-        currency:
-          savedCompany.currency || "",
-      }));
-
-      setMessage(
-        isEditing
-          ? "Empresa actualizada correctamente."
-          : "Empresa guardada correctamente."
-      );
-    } catch (err) {
-      console.error(
-        "Error guardando empresa:",
-        err
-      );
-
-      setError(
-        err.message ||
-          "No se pudo guardar la empresa."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // =========================
-  // ELIMINAR EMPRESA
-  // =========================
-
-  const handleDelete = async () => {
-    if (!company.id) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      "¿Estás seguro de que quieres eliminar esta empresa?"
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    setLoading(true);
-    setMessage("");
-    setError("");
-
-    try {
-      const response =
-        await fetch(
-          `${API_URL}/${company.id}`,
-          {
-            method: "DELETE",
-          }
-        );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-            "No se pudo eliminar la empresa."
-        );
-      }
-
-      // Limpiar empresa del estado
-      setCompany({
-        id: null,
-        name: "",
-        taxId: "",
-        email: "",
-        phone: "",
-        country: "",
-        currency: "",
-        logo: "",
+      const response = await apiFetch("/api/company", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
       });
 
-      setMessage(
-        "Empresa eliminada correctamente."
-      );
+      const data = await response.json();
 
+      if (!response.ok) {
+        throw new Error(data.error || "No se pudo guardar la empresa.");
+      }
+
+      setForm(toForm(data.company));
+
+      // Actualiza también el nombre que se ve en la barra superior.
+      setCompany(data.company);
+
+      setMessage("Empresa actualizada correctamente.");
     } catch (err) {
-      console.error(
-        "Error eliminando empresa:",
-        err
-      );
-
-      setError(
-        err.message ||
-          "No se pudo eliminar la empresa."
-      );
+      console.error("Error guardando empresa:", err);
+      setError(err.message || "No se pudo guardar la empresa.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -292,230 +145,66 @@ export default function Company() {
         Configuración de la Empresa
       </h2>
 
-      {/* =========================
-          MENSAJE DE ÉXITO
-      ========================= */}
-
       {message && (
-        <div
-          className="alert alert-success"
-          role="alert"
-        >
-          {message.includes("actualizada")
-            ? "✏️"
-            : message.includes("eliminada")
-            ? "🗑️"
-            : "✅"}{" "}
-          {message}
+        <div className="alert alert-success" role="alert">
+          ✅ {message}
         </div>
       )}
 
-      {/* =========================
-          MENSAJE DE ERROR
-      ========================= */}
-
       {error && (
-        <div
-          className="alert alert-danger"
-          role="alert"
-        >
+        <div className="alert alert-danger" role="alert">
           ⚠️ {error}
+        </div>
+      )}
+
+      {!canEdit && (
+        <div className="alert alert-info" role="alert">
+          Solo el administrador puede modificar los datos de la empresa.
         </div>
       )}
 
       <div className="stat-card">
 
-        <form onSubmit={handleSubmit}>
-
-          {/* =========================
-              LOGO
-          ========================= */}
-
-          <div className="mb-4">
-
-            <label className="form-label fw-bold">
-              Logo de la empresa
-            </label>
-
-            <input
-              type="file"
-              className="form-control"
-              accept="image/*"
-              onChange={handleLogo}
-            />
-
-          </div>
-
-          {company.logo && (
-            <div className="mb-4 text-center">
-
-              <img
-                src={company.logo}
-                alt="Logo empresa"
-                style={{
-                  width: "160px",
-                  maxHeight: "160px",
-                  objectFit: "contain",
-                  borderRadius: "10px",
-                }}
-              />
-
+        {loadingData ? (
+          <div className="text-center py-4">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Cargando...</span>
             </div>
-          )}
-
-          {/* =========================
-              NOMBRE
-          ========================= */}
-
-          <div className="mb-3">
-
-            <label className="form-label">
-              Nombre de la empresa
-            </label>
-
-            <input
-              type="text"
-              name="name"
-              className="form-control"
-              value={company.name || ""}
-              onChange={handleChange}
-              required
-            />
-
           </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
 
-          {/* =========================
-              NIF / CIF
-          ========================= */}
+            {FIELDS.map((field) => (
+              <div className="mb-3" key={field.name}>
+                <label className="form-label" htmlFor={`company-${field.name}`}>
+                  {field.label}
+                </label>
 
-          <div className="mb-3">
+                <input
+                  id={`company-${field.name}`}
+                  type={field.type}
+                  name={field.name}
+                  className="form-control"
+                  value={form[field.name]}
+                  onChange={handleChange}
+                  required={field.required}
+                  disabled={!canEdit}
+                />
+              </div>
+            ))}
 
-            <label className="form-label">
-              DNI / NIF / CIF
-            </label>
-
-            <input
-              type="text"
-              name="taxId"
-              className="form-control"
-              value={company.taxId || ""}
-              onChange={handleChange}
-            />
-
-          </div>
-
-          {/* =========================
-              CORREO
-          ========================= */}
-
-          <div className="mb-3">
-
-            <label className="form-label">
-              Correo
-            </label>
-
-            <input
-              type="email"
-              name="email"
-              className="form-control"
-              value={company.email || ""}
-              onChange={handleChange}
-            />
-
-          </div>
-
-          {/* =========================
-              TELÉFONO
-          ========================= */}
-
-          <div className="mb-3">
-
-            <label className="form-label">
-              Teléfono
-            </label>
-
-            <input
-              type="text"
-              name="phone"
-              className="form-control"
-              value={company.phone || ""}
-              onChange={handleChange}
-            />
-
-          </div>
-
-          {/* =========================
-              PAÍS
-          ========================= */}
-
-          <div className="mb-3">
-
-            <label className="form-label">
-              País
-            </label>
-
-            <input
-              type="text"
-              name="country"
-              className="form-control"
-              value={company.country || ""}
-              onChange={handleChange}
-            />
-
-          </div>
-
-          {/* =========================
-              MONEDA
-          ========================= */}
-
-          <div className="mb-4">
-
-            <label className="form-label">
-              Moneda
-            </label>
-
-            <input
-              type="text"
-              name="currency"
-              className="form-control"
-              value={company.currency || ""}
-              onChange={handleChange}
-            />
-
-          </div>
-
-          {/* =========================
-              BOTONES
-          ========================= */}
-
-          <div className="d-flex gap-2">
-
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-            >
-              {loading
-                ? "Procesando..."
-                : company.id
-                ? "Actualizar empresa"
-                : "Guardar empresa"}
-            </button>
-
-            {company.id && (
+            {canEdit && (
               <button
-                type="button"
-                className="btn btn-danger"
-                onClick={handleDelete}
-                disabled={loading}
+                type="submit"
+                className="btn btn-primary mt-2"
+                disabled={saving}
               >
-                Eliminar empresa
+                {saving ? "Guardando..." : "Guardar cambios"}
               </button>
             )}
 
-          </div>
-
-        </form>
+          </form>
+        )}
 
       </div>
 

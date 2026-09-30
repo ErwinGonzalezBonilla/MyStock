@@ -1,13 +1,14 @@
+import { API_URL as API_BASE_URL, apiFetch } from "../services/api";
 import { useState, useEffect } from "react";
 
 import ProductForm from "../components/products/ProductForm";
 import ProductTable from "../components/products/ProductTable";
 import StockHistory from "../components/products/StockHistory";
 
-const API_URL = "http://127.0.0.1:5000/api/products";
+const API_URL = `${API_BASE_URL}/api/products`;
 
 const STOCK_MOVEMENTS_API_URL =
-  "http://127.0.0.1:5000/api/stock-movements";
+  `${API_BASE_URL}/api/stock-movements`;
 
 const EMPTY_PRODUCT = {
   id: "",
@@ -76,7 +77,7 @@ export default function Products() {
         setLoading(true);
         setError("");
 
-        const response = await fetch(API_URL);
+        const response = await apiFetch(API_URL);
 
         if (!response.ok) {
           throw new Error(
@@ -111,7 +112,7 @@ export default function Products() {
   useEffect(() => {
     const loadMovements = async () => {
       try {
-        const response = await fetch(
+        const response = await apiFetch(
           STOCK_MOVEMENTS_API_URL
         );
 
@@ -203,7 +204,7 @@ export default function Products() {
         ? product.barcode.trim()
         : "";
 
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method,
 
         headers: {
@@ -304,7 +305,7 @@ export default function Products() {
       setError("");
       setMessage("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}/${id}`,
         {
           method: "DELETE",
@@ -414,7 +415,7 @@ export default function Products() {
       setError("");
       setMessage("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         STOCK_MOVEMENTS_API_URL,
         {
           method: "POST",
@@ -508,7 +509,7 @@ export default function Products() {
       setError("");
       setMessage("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         STOCK_MOVEMENTS_API_URL,
         {
           method: "POST",

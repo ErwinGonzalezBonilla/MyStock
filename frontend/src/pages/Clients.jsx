@@ -1,10 +1,10 @@
+import { API_URL, apiFetch } from "../services/api";
 import { useEffect, useState } from "react";
 
 import ClientForm from "../components/clients/ClientForm";
 import ClientDetailsModal from "../components/clients/ClientDetailsModal";
 import StatCard from "../components/common/StatCard";
 
-const API_URL = "http://127.0.0.1:5000";
 
 const EMPTY_CLIENT = {
   id: "",
@@ -48,8 +48,8 @@ export default function Clients() {
 
         const [clientsResponse, salesResponse] =
           await Promise.all([
-            fetch(`${API_URL}/api/clients`),
-            fetch(`${API_URL}/api/sales`),
+            apiFetch(`${API_URL}/api/clients`),
+            apiFetch(`${API_URL}/api/sales`),
           ]);
 
         const clientsData =
@@ -156,7 +156,7 @@ export default function Clients() {
         postalCode: client.postalCode.trim(),
       };
 
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -280,7 +280,7 @@ export default function Clients() {
     try {
       setMessage("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}/api/clients/${id}`,
         {
           method: "DELETE",

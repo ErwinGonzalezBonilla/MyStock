@@ -1,6 +1,8 @@
 import logo from "../../assets/images/mystock-logo.png";
 import { NavLink } from "react-router-dom";
 
+import { useAuth } from "../../context/AuthContext";
+
 import {
   LayoutDashboard,
   Building2,
@@ -43,6 +45,7 @@ const menuItems = [
   },
   {
     name: "Compras",
+    roles: ["administrator", "manager"],
     path: "/purchases",
     icon: ShoppingBag,
   },
@@ -53,6 +56,7 @@ const menuItems = [
   },
   {
     name: "Proveedores",
+    roles: ["administrator", "manager"],
     path: "/suppliers",
     icon: Truck,
   },
@@ -77,6 +81,13 @@ const bottomMenuItems = [
 ];
 
 export default function Sidebar() {
+  const { hasRole } = useAuth();
+
+  // Oculta las secciones que el rol del usuario no puede usar.
+  const visibleMenuItems = menuItems.filter(
+    (item) => !item.roles || hasRole(...item.roles)
+  );
+
   return (
     <aside
       className="mystock-sidebar"
@@ -111,7 +122,7 @@ export default function Sidebar() {
 
           <nav className="mystock-nav">
 
-            {menuItems.map((item) => {
+            {visibleMenuItems.map((item) => {
               const Icon = item.icon;
 
               return (

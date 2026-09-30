@@ -10,11 +10,14 @@ import "./assets/styles/globals.css";
 import "./assets/styles/layout.css";
 
 import App from "./App";
+import { AuthProvider } from "./context/AuthContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

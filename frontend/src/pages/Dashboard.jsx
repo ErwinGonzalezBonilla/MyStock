@@ -1,3 +1,4 @@
+import { API_URL, apiFetch } from "../services/api";
 import { useEffect, useState } from "react";
 import {
   DollarSign,
@@ -14,7 +15,6 @@ import SalesChart from "../components/common/SalesChart";
 import RecentSales from "../components/common/RecentSales";
 import LowStockProducts from "../components/common/LowStockProducts";
 
-const API_URL = "http://127.0.0.1:5000";
 
 export default function Dashboard() {
   const [products, setProducts] = useState([]);
@@ -28,8 +28,8 @@ export default function Dashboard() {
 
       const [productsResponse, salesResponse] =
         await Promise.all([
-          fetch(`${API_URL}/api/products`),
-          fetch(`${API_URL}/api/sales`),
+          apiFetch(`${API_URL}/api/products`),
+          apiFetch(`${API_URL}/api/sales`),
         ]);
 
       if (!productsResponse.ok || !salesResponse.ok) {

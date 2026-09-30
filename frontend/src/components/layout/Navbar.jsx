@@ -1,4 +1,11 @@
+import { LogOut } from "lucide-react";
+
+import { useAuth } from "../../context/AuthContext";
+import { ROLE_LABELS } from "../../constants/roles";
+
 export default function Navbar() {
+  const { user, company, logout } = useAuth();
+
   return (
     <nav
       className="navbar bg-white border-bottom px-4"
@@ -6,22 +13,30 @@ export default function Navbar() {
     >
       <div className="container-fluid">
 
-        <input
-          className="form-control"
-          type="text"
-          placeholder="Buscar productos, clientes o ventas..."
-          style={{ maxWidth: "400px" }}
-        />
+        <div className="fw-semibold">
+          {company?.name}
+        </div>
 
         <div className="d-flex align-items-center gap-3">
 
-          <button className="btn btn-light">
-            🔔
-          </button>
-
-          <div className="fw-semibold">
-            Erwin
+          <div className="text-end lh-sm">
+            <div className="fw-semibold">
+              {user?.name}
+            </div>
+            <small style={{ color: "var(--text-secondary)" }}>
+              {ROLE_LABELS[user?.role] || user?.role}
+            </small>
           </div>
+
+          <button
+            type="button"
+            className="btn btn-light d-flex align-items-center gap-2"
+            onClick={logout}
+            title="Cerrar sesión"
+          >
+            <LogOut size={18} />
+            <span className="d-none d-md-inline">Salir</span>
+          </button>
 
         </div>
 

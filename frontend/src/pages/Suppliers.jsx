@@ -1,3 +1,4 @@
+import { API_URL, apiFetch } from "../services/api";
 import { useEffect, useMemo, useState } from "react";
 import {
   Plus,
@@ -8,7 +9,6 @@ import {
   Truck,
 } from "lucide-react";
 
-const API_URL = "http://127.0.0.1:5000";
 
 const emptySupplier = {
   name: "",
@@ -32,7 +32,7 @@ function Suppliers() {
 
   const loadSuppliers = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/suppliers`);
+      const response = await apiFetch(`${API_URL}/api/suppliers`);
 
       if (!response.ok) {
         throw new Error("No se pudieron cargar los proveedores");
@@ -53,7 +53,7 @@ function Suppliers() {
 
     const fetchSuppliers = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/suppliers`);
+        const response = await apiFetch(`${API_URL}/api/suppliers`);
 
         if (!response.ok) {
           throw new Error("No se pudieron cargar los proveedores");
@@ -160,7 +160,7 @@ function Suppliers() {
 
       const isEditing = Boolean(editingSupplier);
 
-      const response = await fetch(
+      const response = await apiFetch(
         isEditing
           ? `${API_URL}/api/suppliers/${editingSupplier.id}`
           : `${API_URL}/api/suppliers`,
@@ -200,7 +200,7 @@ function Suppliers() {
     try {
       setError("");
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}/api/suppliers/${supplier.id}`,
         {
           method: "DELETE",

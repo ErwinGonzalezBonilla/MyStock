@@ -1,9 +1,9 @@
+import { API_URL, apiFetch } from "../services/api";
 import { useEffect, useRef, useState } from "react";
 
 import SaleForm from "../components/sales/SaleForm";
 import SaleTable from "../components/sales/SaleTable";
 
-const API_URL = "http://127.0.0.1:5000";
 
 export default function Sales() {
   const scannerRef = useRef(null);
@@ -39,9 +39,9 @@ export default function Sales() {
           salesResponse,
           clientsResponse,
         ] = await Promise.all([
-          fetch(`${API_URL}/api/products`),
-          fetch(`${API_URL}/api/sales`),
-          fetch(`${API_URL}/api/clients`),
+          apiFetch(`${API_URL}/api/products`),
+          apiFetch(`${API_URL}/api/sales`),
+          apiFetch(`${API_URL}/api/clients`),
         ]);
 
         if (!productsResponse.ok) {
@@ -140,7 +140,7 @@ export default function Sales() {
     setSuccess("");
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}/api/products/lookup?code=${encodeURIComponent(
           cleanCode
         )}`
@@ -393,7 +393,7 @@ export default function Sales() {
         })),
       };
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}/api/sales`,
         {
           method: "POST",
@@ -413,7 +413,7 @@ export default function Sales() {
         );
       }
 
-      const productsResponse = await fetch(
+      const productsResponse = await apiFetch(
         `${API_URL}/api/products`
       );
 
@@ -424,7 +424,7 @@ export default function Sales() {
         setProducts(productsData);
       }
 
-      const salesResponse = await fetch(
+      const salesResponse = await apiFetch(
         `${API_URL}/api/sales`
       );
 
@@ -435,7 +435,7 @@ export default function Sales() {
         setSales(salesData);
       }
 
-      const clientsResponse = await fetch(
+      const clientsResponse = await apiFetch(
         `${API_URL}/api/clients`
       );
 

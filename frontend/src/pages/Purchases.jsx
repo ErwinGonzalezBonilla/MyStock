@@ -1,3 +1,4 @@
+import { API_URL, apiFetch } from "../services/api";
 import { useEffect, useState } from "react";
 import {
   Package,
@@ -13,7 +14,6 @@ import {
 } from "lucide-react";
 import PurchaseDetailsModal from "../components/purchases/PurchaseDetailsModal";
 
-const API_URL = "http://127.0.0.1:5000";
 
 export default function Purchases() {
   const [suppliers, setSuppliers] = useState([]);
@@ -45,9 +45,9 @@ export default function Purchases() {
         productsResponse,
         purchasesResponse,
       ] = await Promise.all([
-        fetch(`${API_URL}/api/suppliers`),
-        fetch(`${API_URL}/api/products`),
-        fetch(`${API_URL}/api/purchases`),
+        apiFetch(`${API_URL}/api/suppliers`),
+        apiFetch(`${API_URL}/api/products`),
+        apiFetch(`${API_URL}/api/purchases`),
       ]);
 
       if (
@@ -280,7 +280,7 @@ export default function Purchases() {
         })),
       };
 
-      const response = await fetch(
+      const response = await apiFetch(
         `${API_URL}/api/purchases`,
         {
           method: "POST",
