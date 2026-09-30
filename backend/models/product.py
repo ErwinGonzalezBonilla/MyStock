@@ -6,56 +6,39 @@ from extensions import db
 class Product(db.Model):
     __tablename__ = "products"
 
-    id = db.Column(
+    # SKU y código de barras son únicos DENTRO de cada empresa.
+    # Dos tiendas distintas pueden vender el mismo producto
+    # (mismo EAN) o usar el mismo SKU.
+    __table_args__ = (
+        db.UniqueConstraint(
+            "company_id", "sku",
+            name="uq_products_company_sku"
+        ),
+        db.UniqueConstraint(
+            "company_id", "barcode",
+            name="uq_products_company_barcode"
+        ),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    company_id = db.Column(
         db.Integer,
-        primary_key=True
-    )
-
-    name = db.Column(
-        db.String(150),
-        nullable=False
-    )
-
-    sku = db.Column(
-        db.String(100),
-        unique=True,
-        nullable=False
-    )
-
-    barcode = db.Column(
-        db.String(100),
-        unique=True,
-        nullable=True
-    )
-
-    category = db.Column(
-        db.String(100),
-        nullable=True
-    )
-
-    buy_price = db.Column(
-        db.Float,
+        db.ForeignKey("companies.id"),
         nullable=False,
-        default=0
+        index=True,
     )
 
-    sell_price = db.Column(
-        db.Float,
-        nullable=False,
-        default=0
-    )
+    name = db.Column(db.String(150), nullable=False)
+    sku = db.Column(db.String(100), nullable=False)
+    barcode = db.Column(db.String(100), nullable=True)
+    category = db.Column(db.String(100), nullable=True)
 
-    stock = db.Column(
-        db.Integer,
-        nullable=False,
-        default=0
-    )
+    buy_price = db.Column(db.Float, nullable=False, default=0)
+    sell_price = db.Column(db.Float, nullable=False, default=0)
 
-    min_stock = db.Column(
-        db.Integer,
-        nullable=False,
-        default=0
-    )
+    stock = db.Column(db.Integer, nullable=False, default=0)
+    min_stock = db.Column(db.Integer, nullable=False, default=0)
 
     created_at = db.Column(
         db.DateTime,
@@ -71,6 +54,4 @@ class Product(db.Model):
     )
 
     def __repr__(self):
-        return (
-            f"<Product {self.name}>"
-        )
+        return f"<Product {self.name}>"

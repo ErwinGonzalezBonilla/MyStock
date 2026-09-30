@@ -2,6 +2,11 @@ from flask import Blueprint, jsonify, request
 
 from extensions import db
 from models import Product, Sale, SaleItem, StockMovement, Client
+from tenant import (
+    company_query,
+    get_company_record,
+    get_current_company_id,
+)
 
 
 sale_bp = Blueprint(
@@ -15,21 +20,9 @@ def serialize_sale_item(item):
     return {
         "id": item.id,
         "productId": item.product_id,
-        "productName": (
-            item.product.name
-            if item.product
-            else None
-        ),
-        "sku": (
-            item.product.sku
-            if item.product
-            else None
-        ),
-        "barcode": (
-            item.product.barcode
-            if item.product
-            else None
-        ),
+        "productName": item.product.name if item.product else None,
+        "sku": item.product.sku if item.product else None,
+        "barcode": item.product.barcode if item.product else None,
         "quantity": item.quantity,
         "unitPrice": item.unit_price,
         "subtotal": item.subtotal,
@@ -40,10 +33,7 @@ def serialize_sale(sale):
     return {
         "id": sale.id,
         "clientId": sale.client_id,
-        "clientName": (
-            sale.client_name
-            or "Venta sin cliente"
-        ),
+        "clientName": sale.client_name or "Venta sin cliente",
         "total": sale.total,
         "date": (
             sale.created_at.isoformat()
@@ -59,7 +49,7 @@ def serialize_sale(sale):
 
 @sale_bp.route("", methods=["GET"])
 def get_sales():
-    sales = Sale.query.order_by(
+    sales = company_query(Sale).order_by(
         Sale.created_at.desc()
     ).all()
 
@@ -71,7 +61,7 @@ def get_sales():
 
 @sale_bp.route("", methods=["POST"])
 def create_sale():
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
     if not data:
         return jsonify({
@@ -82,211 +72,150 @@ def create_sale():
 
     if not isinstance(items, list) or not items:
         return jsonify({
-            "error": (
-                "La venta debe contener "
-                "al menos un producto"
-            )
+            "error": "La venta debe contener al menos un producto"
         }), 400
 
+    company_id = get_current_company_id()
+
     # -----------------------------------------
-    # VALIDAR CLIENTE
+    # VALIDAR CLIENTE (debe ser de esta empresa)
     # -----------------------------------------
 
     client_id = data.get("clientId")
-
-    try:
-        if client_id in ("", None):
-            client_id = None
-        else:
-            client_id = int(client_id)
-    except (TypeError, ValueError):
-        return jsonify({
-            "error": "El cliente no es válido"
-        }), 400
-
     client = None
 
-    if client_id is not None:
-        client = db.session.get(
-            Client,
-            client_id
-        )
+    if client_id not in ("", None):
+        client = get_company_record(Client, client_id)
 
         if not client:
             return jsonify({
                 "error": "El cliente seleccionado no existe"
             }), 404
 
-    # El nombre siempre sale de la base de datos.
-    # No confiamos en clientName enviado desde frontend.
-    client_name = (
-        client.name
-        if client
-        else None
-    )
-
     # -----------------------------------------
-    # VALIDAR PRODUCTOS
+    # AGRUPAR CANTIDADES POR PRODUCTO
     # -----------------------------------------
+    # Si el mismo producto llega en dos líneas, la comprobación
+    # de stock debe hacerse sobre la suma. Si no, con stock 5
+    # dos líneas de 3 unidades pasarían la validación y el
+    # stock acabaría en -1.
 
-    try:
-        validated_items = []
+    quantities = {}
 
-        for item in items:
-            product_id = item.get(
-                "productId"
-            )
+    for item in items:
+        if not isinstance(item, dict):
+            return jsonify({
+                "error": "Producto o cantidad no válidos"
+            }), 400
 
-            quantity = item.get(
-                "quantity"
-            )
+        try:
+            product_id = int(item.get("productId"))
+            quantity = int(item.get("quantity"))
+        except (TypeError, ValueError):
+            return jsonify({
+                "error": "Producto o cantidad no válidos"
+            }), 400
 
-            try:
-                product_id = int(
-                    product_id
-                )
+        if quantity <= 0:
+            return jsonify({
+                "error": "La cantidad debe ser mayor que cero"
+            }), 400
 
-                quantity = int(
-                    quantity
-                )
-
-            except (TypeError, ValueError):
-                return jsonify({
-                    "error": (
-                        "Producto o cantidad "
-                        "no válidos"
-                    )
-                }), 400
-
-            if quantity <= 0:
-                return jsonify({
-                    "error": (
-                        "La cantidad debe ser "
-                        "mayor que cero"
-                    )
-                }), 400
-
-            product = db.session.get(
-                Product,
-                product_id
-            )
-
-            if not product:
-                return jsonify({
-                    "error": (
-                        f"El producto {product_id} "
-                        "no existe"
-                    )
-                }), 404
-
-            if quantity > product.stock:
-                return jsonify({
-                    "error": (
-                        f"No hay suficiente stock "
-                        f"de {product.name}. "
-                        f"Stock disponible: "
-                        f"{product.stock}"
-                    )
-                }), 400
-
-            unit_price = float(
-                product.sell_price
-            )
-
-            subtotal = (
-                unit_price * quantity
-            )
-
-            validated_items.append({
-                "product": product,
-                "quantity": quantity,
-                "unit_price": unit_price,
-                "subtotal": subtotal,
-            })
-
-        # -----------------------------------------
-        # CALCULAR TOTAL
-        # -----------------------------------------
-
-        total = sum(
-            item["subtotal"]
-            for item in validated_items
+        quantities[product_id] = (
+            quantities.get(product_id, 0) + quantity
         )
 
-        # -----------------------------------------
-        # CREAR VENTA
-        # -----------------------------------------
+    # -----------------------------------------
+    # VALIDAR PRODUCTOS (de esta empresa) Y STOCK
+    # -----------------------------------------
 
+    validated_items = []
+
+    for product_id, quantity in quantities.items():
+        # with_for_update bloquea la fila en PostgreSQL mientras
+        # dura la transacción, para que dos ventas simultáneas
+        # no vendan el mismo stock. En SQLite no tiene efecto.
+        product = get_company_record(
+            Product,
+            product_id,
+            for_update=True,
+        )
+
+        if not product:
+            db.session.rollback()
+            return jsonify({
+                "error": f"El producto {product_id} no existe"
+            }), 404
+
+        if quantity > product.stock:
+            db.session.rollback()
+            return jsonify({
+                "error": (
+                    f"No hay suficiente stock de {product.name}. "
+                    f"Stock disponible: {product.stock}"
+                )
+            }), 400
+
+        unit_price = float(product.sell_price)
+
+        validated_items.append({
+            "product": product,
+            "quantity": quantity,
+            "unit_price": unit_price,
+            "subtotal": round(unit_price * quantity, 2),
+        })
+
+    total = round(
+        sum(item["subtotal"] for item in validated_items),
+        2
+    )
+
+    try:
         sale = Sale(
-            client_id=client_id,
-            client_name=client_name,
+            company_id=company_id,
+            client_id=client.id if client else None,
+            # El nombre siempre sale de la base de datos.
+            client_name=client.name if client else None,
             total=total,
         )
 
         db.session.add(sale)
-
         db.session.flush()
-
-        # -----------------------------------------
-        # CREAR ITEMS + DESCONTAR STOCK
-        # -----------------------------------------
 
         for item in validated_items:
             product = item["product"]
             quantity = item["quantity"]
 
-            new_stock = (
-                product.stock - quantity
-            )
+            product.stock = product.stock - quantity
 
-            sale_item = SaleItem(
+            db.session.add(SaleItem(
                 sale_id=sale.id,
                 product_id=product.id,
                 quantity=quantity,
                 unit_price=item["unit_price"],
                 subtotal=item["subtotal"],
-            )
+            ))
 
-            db.session.add(
-                sale_item
-            )
-
-            product.stock = new_stock
-
-            movement = StockMovement(
+            db.session.add(StockMovement(
+                company_id=company_id,
                 product_id=product.id,
                 type="salida",
                 quantity=quantity,
-                reason="Venta",
-                resulting_stock=new_stock,
-            )
-
-            db.session.add(
-                movement
-            )
-
-        # -----------------------------------------
-        # GUARDAR TODO
-        # -----------------------------------------
+                reason=f"Venta #{sale.id}",
+                resulting_stock=product.stock,
+            ))
 
         db.session.commit()
 
-        return jsonify({
-            "message": (
-                "Venta registrada correctamente"
-            ),
-            "sale": serialize_sale(sale)
-        }), 201
-
     except Exception as error:
         db.session.rollback()
-
-        print(
-            f"Error al crear venta: {error}"
-        )
+        print(f"Error al crear venta: {error}")
 
         return jsonify({
-            "error": (
-                "No se pudo registrar la venta"
-            )
+            "error": "No se pudo registrar la venta"
         }), 500
+
+    return jsonify({
+        "message": "Venta registrada correctamente",
+        "sale": serialize_sale(sale)
+    }), 201

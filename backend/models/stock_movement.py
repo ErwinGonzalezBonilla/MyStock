@@ -4,12 +4,15 @@ from extensions import db
 
 
 class StockMovement(db.Model):
-
     __tablename__ = "stock_movements"
 
-    id = db.Column(
+    id = db.Column(db.Integer, primary_key=True)
+
+    company_id = db.Column(
         db.Integer,
-        primary_key=True
+        db.ForeignKey("companies.id"),
+        nullable=False,
+        index=True,
     )
 
     product_id = db.Column(
@@ -18,25 +21,10 @@ class StockMovement(db.Model):
         nullable=False
     )
 
-    type = db.Column(
-        db.String(20),
-        nullable=False
-    )
-
-    quantity = db.Column(
-        db.Integer,
-        nullable=False
-    )
-
-    reason = db.Column(
-        db.String(255),
-        nullable=True
-    )
-
-    resulting_stock = db.Column(
-        db.Integer,
-        nullable=False
-    )
+    type = db.Column(db.String(20), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    reason = db.Column(db.String(255), nullable=True)
+    resulting_stock = db.Column(db.Integer, nullable=False)
 
     created_at = db.Column(
         db.DateTime,
@@ -51,3 +39,6 @@ class StockMovement(db.Model):
             lazy=True
         )
     )
+
+    def __repr__(self):
+        return f"<StockMovement {self.id} {self.type} {self.quantity}>"

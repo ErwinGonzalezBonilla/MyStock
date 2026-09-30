@@ -1,151 +1,88 @@
-from flask import jsonify, request
+from flask import g, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 
+from extensions import db
 from models.user import User
 
 
+ALL_ROLES = {
+    "administrator",
+    "manager",
+    "cashier",
+    "employee",
+}
+
+ADMIN = {"administrator"}
+
+ADMIN_MANAGER = {
+    "administrator",
+    "manager",
+}
+
+SELLERS = {
+    "administrator",
+    "manager",
+    "cashier",
+}
+
+
 ROLE_PERMISSIONS = {
-    # Companies
-    "companies.get_companies": {
-        "administrator",
-        "manager",
-        "cashier",
-        "employee",
-    },
-    "companies.create_company": {
-        "administrator",
-    },
-    "companies.update_company": {
-        "administrator",
-    },
-    "companies.delete_company": {
-        "administrator",
-    },
+    # Auth
+    "auth.me": ALL_ROLES,
+
+    # Company (empresa del usuario autenticado)
+    "companies.get_current_company": ALL_ROLES,
+    "companies.update_current_company": ADMIN,
 
     # Products
-    "products.get_products": {
-        "administrator",
-        "manager",
-        "cashier",
-        "employee",
-    },
-    "products.lookup_product": {
-        "administrator",
-        "manager",
-        "cashier",
-        "employee",
-    },
-    "products.create_product": {
-        "administrator",
-        "manager",
-    },
-    "products.update_product": {
-        "administrator",
-        "manager",
-    },
-    "products.delete_product": {
-        "administrator",
-        "manager",
-    },
+    "products.get_products": ALL_ROLES,
+    "products.lookup_product": ALL_ROLES,
+    "products.create_product": ADMIN_MANAGER,
+    "products.update_product": ADMIN_MANAGER,
+    "products.delete_product": ADMIN_MANAGER,
 
     # Sales
-    "sales.get_sales": {
-        "administrator",
-        "manager",
-        "cashier",
-        "employee",
-    },
-    "sales.create_sale": {
-        "administrator",
-        "manager",
-        "cashier",
-    },
+    "sales.get_sales": ALL_ROLES,
+    "sales.create_sale": SELLERS,
 
     # Clients
-    "clients.get_clients": {
-        "administrator",
-        "manager",
-        "cashier",
-        "employee",
-    },
-    "clients.create_client": {
-        "administrator",
-        "manager",
-        "cashier",
-    },
-    "clients.update_client": {
-        "administrator",
-        "manager",
-        "cashier",
-    },
-    "clients.delete_client": {
-        "administrator",
-        "manager",
-    },
+    "clients.get_clients": ALL_ROLES,
+    "clients.create_client": SELLERS,
+    "clients.update_client": SELLERS,
+    "clients.delete_client": ADMIN_MANAGER,
 
     # Suppliers
-    "supplier.get_suppliers": {
-        "administrator",
-        "manager",
-    },
-    "supplier.create_supplier": {
-        "administrator",
-        "manager",
-    },
-    "supplier.update_supplier": {
-        "administrator",
-        "manager",
-    },
-    "supplier.delete_supplier": {
-        "administrator",
-        "manager",
-    },
+    "supplier.get_suppliers": ADMIN_MANAGER,
+    "supplier.create_supplier": ADMIN_MANAGER,
+    "supplier.update_supplier": ADMIN_MANAGER,
+    "supplier.delete_supplier": ADMIN_MANAGER,
 
     # Purchases
-    "purchase.get_purchases": {
-        "administrator",
-        "manager",
-    },
-    "purchase.create_purchase": {
-        "administrator",
-        "manager",
-    },
+    "purchase.get_purchases": ADMIN_MANAGER,
+    "purchase.create_purchase": ADMIN_MANAGER,
 
     # Stock movements
-    "stock_movements.get_stock_movements": {
-        "administrator",
-        "manager",
-        "cashier",
-        "employee",
-    },
-    "stock_movements.create_stock_movement": {
-        "administrator",
-        "manager",
-    },
+    "stock_movements.get_stock_movements": ALL_ROLES,
+    "stock_movements.create_stock_movement": ADMIN_MANAGER,
 
     # Users
-    "users.get_users": {
-        "administrator",
-    },
-    "users.get_user": {
-        "administrator",
-    },
-    "users.create_user": {
-        "administrator",
-    },
-    "users.update_user": {
-        "administrator",
-    },
-    "users.delete_user": {
-        "administrator",
-    },
+    "users.get_users": ADMIN,
+    "users.get_user": ADMIN,
+    "users.create_user": ADMIN,
+    "users.update_user": ADMIN,
+    "users.delete_user": ADMIN,
 }
 
 
 def protect_roles():
     """
-    Check whether the authenticated user's role is allowed
-    to access the current API endpoint.
+    Se ejecuta después de verificar el JWT.
+
+    1. Carga el usuario real desde la base de datos.
+    2. Comprueba que existe, está activo y pertenece a una empresa.
+    3. Comprueba que su rol puede usar el endpoint solicitado.
+    4. Deja el usuario en g.current_user para las rutas
+       (aislamiento multiempresa, ver tenant.py).
     """
 
     if request.method == "OPTIONS":
@@ -177,7 +114,10 @@ def protect_roles():
             "error": "Usuario no autenticado"
         }), 401
 
-    user = User.query.get(int(user_id))
+    try:
+        user = db.session.get(User, int(user_id))
+    except (TypeError, ValueError):
+        user = None
 
     if not user:
         return jsonify({
@@ -189,7 +129,14 @@ def protect_roles():
             "error": "El usuario está desactivado"
         }), 403
 
+    if not user.company_id:
+        return jsonify({
+            "error": "El usuario no pertenece a ninguna empresa"
+        }), 403
+
     if user.role not in allowed_roles:
         return jsonify({
             "error": "No tienes permisos para realizar esta acción"
         }), 403
+
+    g.current_user = user

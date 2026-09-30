@@ -6,26 +6,19 @@ from extensions import db
 class Sale(db.Model):
     __tablename__ = "sales"
 
-    id = db.Column(
+    id = db.Column(db.Integer, primary_key=True)
+
+    company_id = db.Column(
         db.Integer,
-        primary_key=True
-    )
-
-    client_id = db.Column(
-        db.Integer,
-        nullable=True
-    )
-
-    client_name = db.Column(
-        db.String(150),
-        nullable=True
-    )
-
-    total = db.Column(
-        db.Float,
+        db.ForeignKey("companies.id"),
         nullable=False,
-        default=0
+        index=True,
     )
+
+    client_id = db.Column(db.Integer, nullable=True)
+    client_name = db.Column(db.String(150), nullable=True)
+
+    total = db.Column(db.Float, nullable=False, default=0)
 
     created_at = db.Column(
         db.DateTime,

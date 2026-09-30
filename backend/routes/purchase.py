@@ -6,6 +6,11 @@ from models.purchase_item import PurchaseItem
 from models.product import Product
 from models.supplier import Supplier
 from models.stock_movement import StockMovement
+from tenant import (
+    company_query,
+    get_company_record,
+    get_current_company_id,
+)
 
 
 purchase_bp = Blueprint("purchase", __name__)
@@ -26,9 +31,9 @@ def serialize_purchase(purchase):
             {
                 "id": item.id,
                 "productId": item.product_id,
-                "productName": item.product.name,
-                "sku": item.product.sku,
-                "barcode": item.product.barcode,
+                "productName": item.product.name if item.product else None,
+                "sku": item.product.sku if item.product else None,
+                "barcode": item.product.barcode if item.product else None,
                 "quantity": item.quantity,
                 "unitPrice": item.unit_price,
                 "subtotal": item.subtotal,
@@ -40,19 +45,19 @@ def serialize_purchase(purchase):
 
 @purchase_bp.get("/api/purchases")
 def get_purchases():
-    purchases = Purchase.query.order_by(
+    purchases = company_query(Purchase).order_by(
         Purchase.created_at.desc()
     ).all()
 
     return jsonify([
         serialize_purchase(purchase)
         for purchase in purchases
-    ])
+    ]), 200
 
 
 @purchase_bp.post("/api/purchases")
 def create_purchase():
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
 
     supplier_id = data.get("supplierId")
     items = data.get("items")
@@ -67,20 +72,24 @@ def create_purchase():
             "error": "La compra debe contener al menos un producto"
         }), 400
 
-    supplier = db.session.get(Supplier, supplier_id)
+    supplier = get_company_record(Supplier, supplier_id)
 
     if not supplier:
         return jsonify({
             "error": "Proveedor no encontrado"
         }), 404
 
+    company_id = get_current_company_id()
     purchase_items = []
     total = 0
 
     for item_data in items:
+        if not isinstance(item_data, dict):
+            return jsonify({
+                "error": "Producto, cantidad o precio no válidos"
+            }), 400
+
         product_id = item_data.get("productId")
-        quantity = item_data.get("quantity")
-        unit_price = item_data.get("unitPrice")
 
         if not product_id:
             return jsonify({
@@ -88,8 +97,8 @@ def create_purchase():
             }), 400
 
         try:
-            quantity = int(quantity)
-            unit_price = float(unit_price)
+            quantity = int(item_data.get("quantity"))
+            unit_price = float(item_data.get("unitPrice"))
         except (TypeError, ValueError):
             return jsonify({
                 "error": "Cantidad y precio deben ser numéricos"
@@ -105,9 +114,14 @@ def create_purchase():
                 "error": "El precio de compra no puede ser negativo"
             }), 400
 
-        product = db.session.get(Product, product_id)
+        product = get_company_record(
+            Product,
+            product_id,
+            for_update=True,
+        )
 
         if not product:
+            db.session.rollback()
             return jsonify({
                 "error": f"Producto {product_id} no encontrado"
             }), 404
@@ -122,53 +136,48 @@ def create_purchase():
             "subtotal": subtotal,
         })
 
-    total = round(total, 2)
-
-    purchase = Purchase(
-        supplier_id=supplier.id,
-        supplier_name=supplier.name,
-        total=total,
-    )
-
-    db.session.add(purchase)
-    db.session.flush()
-
-    for item_data in purchase_items:
-        product = item_data["product"]
-        quantity = item_data["quantity"]
-        unit_price = item_data["unit_price"]
-        subtotal = item_data["subtotal"]
-
-        product.stock += quantity
-
-        purchase_item = PurchaseItem(
-            purchase_id=purchase.id,
-            product_id=product.id,
-            quantity=quantity,
-            unit_price=unit_price,
-            subtotal=subtotal,
-        )
-
-        movement = StockMovement(
-            product_id=product.id,
-            type="entrada",
-            quantity=quantity,
-            reason="Compra",
-            resulting_stock=product.stock,
-        )
-
-        db.session.add(purchase_item)
-        db.session.add(movement)
-
     try:
+        purchase = Purchase(
+            company_id=company_id,
+            supplier_id=supplier.id,
+            supplier_name=supplier.name,
+            total=round(total, 2),
+        )
+
+        db.session.add(purchase)
+        db.session.flush()
+
+        for item_data in purchase_items:
+            product = item_data["product"]
+            quantity = item_data["quantity"]
+
+            product.stock += quantity
+
+            db.session.add(PurchaseItem(
+                purchase_id=purchase.id,
+                product_id=product.id,
+                quantity=quantity,
+                unit_price=item_data["unit_price"],
+                subtotal=item_data["subtotal"],
+            ))
+
+            db.session.add(StockMovement(
+                company_id=company_id,
+                product_id=product.id,
+                type="entrada",
+                quantity=quantity,
+                reason=f"Compra #{purchase.id}",
+                resulting_stock=product.stock,
+            ))
+
         db.session.commit()
 
     except Exception as error:
         db.session.rollback()
+        print(f"Error al crear compra: {error}")
 
         return jsonify({
-            "error": "No se pudo registrar la compra",
-            "details": str(error),
+            "error": "No se pudo registrar la compra"
         }), 500
 
     return jsonify({

@@ -2,232 +2,119 @@ from flask import Blueprint, jsonify, request
 
 from extensions import db
 from models import Company
+from tenant import get_current_company_id
 
 
+# Nombre de blueprint "companies" mantenido por compatibilidad
+# con role_protection.py.
 company_bp = Blueprint(
     "companies",
     __name__,
-    url_prefix="/api/companies"
+    url_prefix="/api/company"
 )
 
 
+def serialize_company(company):
+    return {
+        "id": company.id,
+        "name": company.name,
+        "taxId": company.tax_id,
+        "email": company.email,
+        "phone": company.phone,
+        "country": company.country,
+        "currency": company.currency,
+        "createdAt": (
+            company.created_at.isoformat()
+            if company.created_at
+            else None
+        ),
+    }
+
+
+def get_own_company():
+    return db.session.get(Company, get_current_company_id())
+
+
 # =========================
-# OBTENER EMPRESAS
+# OBTENER MI EMPRESA
 # =========================
+# Un usuario solo puede ver la empresa a la que pertenece.
+# Las empresas se crean en el registro (POST /api/auth/register).
 
 @company_bp.route("", methods=["GET"])
-def get_companies():
-    companies = Company.query.order_by(
-        Company.created_at.desc()
-    ).all()
-
-    return jsonify([
-        {
-            "id": company.id,
-            "name": company.name,
-            "taxId": company.tax_id,
-            "email": company.email,
-            "phone": company.phone,
-            "country": company.country,
-            "currency": company.currency,
-            "createdAt": (
-                company.created_at.isoformat()
-                if company.created_at
-                else None
-            ),
-        }
-        for company in companies
-    ]), 200
-
-
-# =========================
-# CREAR EMPRESA
-# =========================
-
-@company_bp.route("", methods=["POST"])
-def create_company():
-    data = request.get_json()
-
-    if not data:
-        return jsonify({
-            "error": "No se recibieron datos"
-        }), 400
-
-    name = data.get("name", "").strip()
-
-    if not name:
-        return jsonify({
-            "error": "El nombre de la empresa es obligatorio"
-        }), 400
-
-    tax_id = data.get("taxId")
-
-    if tax_id:
-        tax_id = tax_id.strip()
-
-        existing_company = Company.query.filter_by(
-            tax_id=tax_id
-        ).first()
-
-        if existing_company:
-            return jsonify({
-                "error": "Ya existe una empresa con ese NIF/CIF"
-            }), 409
-
-    company = Company(
-        name=name,
-        tax_id=tax_id,
-        email=data.get("email"),
-        phone=data.get("phone"),
-        country=data.get("country"),
-        currency=data.get("currency"),
-    )
-
-    db.session.add(company)
-    db.session.commit()
-
-    return jsonify({
-        "message": "Empresa creada correctamente",
-        "company": {
-            "id": company.id,
-            "name": company.name,
-            "taxId": company.tax_id,
-            "email": company.email,
-            "phone": company.phone,
-            "country": company.country,
-            "currency": company.currency,
-            "createdAt": (
-                company.created_at.isoformat()
-                if company.created_at
-                else None
-            ),
-        }
-    }), 201
-
-
-# =========================
-# ACTUALIZAR EMPRESA
-# =========================
-
-@company_bp.route(
-    "/<int:company_id>",
-    methods=["PUT"]
-)
-def update_company(company_id):
-
-    company = db.session.get(
-        Company,
-        company_id
-    )
+def get_current_company():
+    company = get_own_company()
 
     if not company:
         return jsonify({
             "error": "Empresa no encontrada"
         }), 404
 
-    data = request.get_json()
+    return jsonify(serialize_company(company)), 200
+
+
+# =========================
+# ACTUALIZAR MI EMPRESA
+# =========================
+
+@company_bp.route("", methods=["PUT"])
+def update_current_company():
+    company = get_own_company()
+
+    if not company:
+        return jsonify({
+            "error": "Empresa no encontrada"
+        }), 404
+
+    data = request.get_json(silent=True)
 
     if not data:
         return jsonify({
             "error": "No se recibieron datos"
         }), 400
 
-    name = data.get(
-        "name",
-        company.name
-    )
+    if "name" in data:
+        name = str(data.get("name") or "").strip()
 
-    name = name.strip()
-
-    if not name:
-        return jsonify({
-            "error": "El nombre de la empresa es obligatorio"
-        }), 400
-
-    tax_id = data.get(
-        "taxId",
-        company.tax_id
-    )
-
-    if tax_id:
-        tax_id = tax_id.strip()
-
-        existing_company = Company.query.filter(
-            Company.tax_id == tax_id,
-            Company.id != company_id
-        ).first()
-
-        if existing_company:
+        if not name:
             return jsonify({
-                "error": "Ya existe otra empresa con ese NIF/CIF"
-            }), 409
+                "error": "El nombre de la empresa es obligatorio"
+            }), 400
 
-    company.name = name
-    company.tax_id = tax_id
+        company.name = name
 
-    company.email = data.get(
-        "email",
-        company.email
-    )
+    if "taxId" in data:
+        tax_id = str(data.get("taxId") or "").strip() or None
 
-    company.phone = data.get(
-        "phone",
-        company.phone
-    )
+        if tax_id:
+            existing_company = Company.query.filter(
+                Company.tax_id == tax_id,
+                Company.id != company.id
+            ).first()
 
-    company.country = data.get(
-        "country",
-        company.country
-    )
+            if existing_company:
+                return jsonify({
+                    "error": "Ya existe otra empresa con ese NIF/CIF"
+                }), 409
 
-    company.currency = data.get(
-        "currency",
-        company.currency
-    )
+        company.tax_id = tax_id
+
+    for field, attribute in (
+        ("email", "email"),
+        ("phone", "phone"),
+        ("country", "country"),
+        ("currency", "currency"),
+    ):
+        if field in data:
+            setattr(
+                company,
+                attribute,
+                str(data.get(field) or "").strip() or None
+            )
 
     db.session.commit()
 
     return jsonify({
         "message": "Empresa actualizada correctamente",
-        "company": {
-            "id": company.id,
-            "name": company.name,
-            "taxId": company.tax_id,
-            "email": company.email,
-            "phone": company.phone,
-            "country": company.country,
-            "currency": company.currency,
-            "createdAt": (
-                company.created_at.isoformat()
-                if company.created_at
-                else None
-            ),
-        }
-    }), 200
-
-    # =========================
-# ELIMINAR EMPRESA
-# =========================
-
-@company_bp.route(
-    "/<int:company_id>",
-    methods=["DELETE"]
-)
-def delete_company(company_id):
-
-    company = db.session.get(
-        Company,
-        company_id
-    )
-
-    if not company:
-        return jsonify({
-            "error": "Empresa no encontrada"
-        }), 404
-
-    db.session.delete(company)
-    db.session.commit()
-
-    return jsonify({
-        "message": "Empresa eliminada correctamente"
+        "company": serialize_company(company),
     }), 200

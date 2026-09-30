@@ -2,6 +2,11 @@ from flask import Blueprint, jsonify, request
 
 from extensions import db
 from models import Product, StockMovement
+from tenant import (
+    company_query,
+    get_company_record,
+    get_current_company_id,
+)
 
 
 product_bp = Blueprint(
@@ -16,7 +21,6 @@ product_bp = Blueprint(
 # =========================
 
 def serialize_product(product):
-
     return {
         "id": product.id,
         "name": product.name,
@@ -40,14 +44,17 @@ def serialize_product(product):
     }
 
 
+def clean_text(value):
+    return str(value or "").strip() or None
+
+
 # =========================
 # OBTENER PRODUCTOS
 # =========================
 
 @product_bp.route("", methods=["GET"])
 def get_products():
-
-    products = Product.query.order_by(
+    products = company_query(Product).order_by(
         Product.created_at.desc()
     ).all()
 
@@ -56,13 +63,13 @@ def get_products():
         for product in products
     ]), 200
 
+
 # =========================
 # BUSCAR PRODUCTO POR SKU O CÓDIGO DE BARRAS
 # =========================
 
 @product_bp.route("/lookup", methods=["GET"])
 def lookup_product():
-
     code = request.args.get("code", "").strip()
 
     if not code:
@@ -70,7 +77,7 @@ def lookup_product():
             "error": "El SKU o código de barras es obligatorio"
         }), 400
 
-    product = Product.query.filter(
+    product = company_query(Product).filter(
         db.or_(
             db.func.lower(Product.sku) == code.lower(),
             Product.barcode == code
@@ -84,7 +91,7 @@ def lookup_product():
 
     return jsonify({
         "product": serialize_product(product)
-    }), 200    
+    }), 200
 
 
 # =========================
@@ -93,78 +100,55 @@ def lookup_product():
 
 @product_bp.route("", methods=["POST"])
 def create_product():
-
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
     if not data:
         return jsonify({
             "error": "No se recibieron datos"
         }), 400
 
-    name = data.get("name", "").strip()
+    name = str(data.get("name") or "").strip()
 
     if not name:
         return jsonify({
             "error": "El nombre del producto es obligatorio"
         }), 400
 
-    sku = data.get("sku", "").strip()
+    sku = str(data.get("sku") or "").strip()
 
     if not sku:
         return jsonify({
             "error": "El SKU es obligatorio"
         }), 400
 
-    existing_product = Product.query.filter_by(
-        sku=sku
-    ).first()
-
-    if existing_product:
+    if company_query(Product).filter_by(sku=sku).first():
         return jsonify({
             "error": "Ya existe un producto con ese SKU"
         }), 409
 
-    barcode = data.get("barcode")
+    barcode = clean_text(data.get("barcode"))
 
-    if barcode:
-        barcode = barcode.strip()
-
-        existing_barcode = Product.query.filter_by(
-            barcode=barcode
-        ).first()
-
-        if existing_barcode:
-            return jsonify({
-                "error": "Ya existe un producto con ese código de barras"
-            }), 409
+    if barcode and company_query(Product).filter_by(
+        barcode=barcode
+    ).first():
+        return jsonify({
+            "error": "Ya existe un producto con ese código de barras"
+        }), 409
 
     try:
-
-        initial_stock = int(
-            data.get("stock", 0)
-        )
-
-        if initial_stock < 0:
-            return jsonify({
-                "error": "El stock no puede ser negativo"
-            }), 400
-
-        buy_price = float(
-            data.get("buyPrice", 0)
-        )
-
-        sell_price = float(
-            data.get("sellPrice", 0)
-        )
-
-        min_stock = int(
-            data.get("minStock", 0)
-        )
+        initial_stock = int(data.get("stock", 0))
+        buy_price = float(data.get("buyPrice", 0))
+        sell_price = float(data.get("sellPrice", 0))
+        min_stock = int(data.get("minStock", 0))
 
     except (TypeError, ValueError):
-
         return jsonify({
             "error": "Los valores numéricos del producto no son válidos"
+        }), 400
+
+    if initial_stock < 0:
+        return jsonify({
+            "error": "El stock no puede ser negativo"
         }), 400
 
     if min_stock < 0:
@@ -172,21 +156,23 @@ def create_product():
             "error": "El stock mínimo no puede ser negativo"
         }), 400
 
-    # =========================
-    # CREAR PRODUCTO
-    # =========================
+    if buy_price < 0 or sell_price < 0:
+        return jsonify({
+            "error": "Los precios no pueden ser negativos"
+        }), 400
+
+    company_id = get_current_company_id()
 
     product = Product(
+        company_id=company_id,
         name=name,
         sku=sku,
         barcode=barcode,
-        category=data.get("category"),
+        category=clean_text(data.get("category")),
         buy_price=buy_price,
         sell_price=sell_price,
-
         # El producto nace con su stock inicial.
         stock=initial_stock,
-
         min_stock=min_stock,
     )
 
@@ -196,23 +182,15 @@ def create_product():
     # antes de crear el movimiento.
     db.session.flush()
 
-    # =========================
-    # MOVIMIENTO INICIAL
-    # =========================
-
     if initial_stock > 0:
-
-        initial_movement = StockMovement(
+        db.session.add(StockMovement(
+            company_id=company_id,
             product_id=product.id,
             type="entrada",
             quantity=initial_stock,
             reason="Stock inicial",
             resulting_stock=initial_stock,
-        )
-
-        db.session.add(
-            initial_movement
-        )
+        ))
 
     db.session.commit()
 
@@ -228,108 +206,59 @@ def create_product():
 
 @product_bp.route("/<int:product_id>", methods=["PUT"])
 def update_product(product_id):
-
-    product = db.session.get(
-        Product,
-        product_id
-    )
+    product = get_company_record(Product, product_id)
 
     if not product:
         return jsonify({
             "error": "Producto no encontrado"
         }), 404
 
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
     if not data:
         return jsonify({
             "error": "No se recibieron datos"
         }), 400
 
-    name = data.get(
-        "name",
-        product.name
-    )
-
-    name = name.strip()
+    name = str(data.get("name", product.name) or "").strip()
 
     if not name:
         return jsonify({
             "error": "El nombre del producto es obligatorio"
         }), 400
 
-    sku = data.get(
-        "sku",
-        product.sku
-    )
-
-    sku = sku.strip()
+    sku = str(data.get("sku", product.sku) or "").strip()
 
     if not sku:
         return jsonify({
             "error": "El SKU es obligatorio"
         }), 400
 
-    existing_product = Product.query.filter(
+    if company_query(Product).filter(
         Product.sku == sku,
-        Product.id != product_id
-    ).first()
-
-    if existing_product:
+        Product.id != product.id
+    ).first():
         return jsonify({
             "error": "Ya existe otro producto con ese SKU"
         }), 409
 
-    barcode = data.get(
-        "barcode",
-        product.barcode
-    )
+    barcode = clean_text(data.get("barcode", product.barcode))
 
-    if barcode:
-        barcode = barcode.strip()
-
-        existing_barcode = Product.query.filter(
-            Product.barcode == barcode,
-            Product.id != product_id
-        ).first()
-
-        if existing_barcode:
-            return jsonify({
-                "error": "Ya existe otro producto con ese código de barras"
-            }), 409
+    if barcode and company_query(Product).filter(
+        Product.barcode == barcode,
+        Product.id != product.id
+    ).first():
+        return jsonify({
+            "error": "Ya existe otro producto con ese código de barras"
+        }), 409
 
     try:
-
-        new_stock = int(
-            data.get(
-                "stock",
-                product.stock
-            )
-        )
-
-        buy_price = float(
-            data.get(
-                "buyPrice",
-                product.buy_price
-            )
-        )
-
-        sell_price = float(
-            data.get(
-                "sellPrice",
-                product.sell_price
-            )
-        )
-
-        min_stock = int(
-            data.get(
-                "minStock",
-                product.min_stock
-            )
-        )
+        new_stock = int(data.get("stock", product.stock))
+        buy_price = float(data.get("buyPrice", product.buy_price))
+        sell_price = float(data.get("sellPrice", product.sell_price))
+        min_stock = int(data.get("minStock", product.min_stock))
 
     except (TypeError, ValueError):
-
         return jsonify({
             "error": "Los valores numéricos del producto no son válidos"
         }), 400
@@ -344,15 +273,17 @@ def update_product(product_id):
             "error": "El stock mínimo no puede ser negativo"
         }), 400
 
+    if buy_price < 0 or sell_price < 0:
+        return jsonify({
+            "error": "Los precios no pueden ser negativos"
+        }), 400
+
     product.name = name
     product.sku = sku
     product.barcode = barcode
-
-    product.category = data.get(
-        "category",
-        product.category
+    product.category = clean_text(
+        data.get("category", product.category)
     )
-
     product.buy_price = buy_price
     product.sell_price = sell_price
     product.stock = new_stock
@@ -370,16 +301,9 @@ def update_product(product_id):
 # ELIMINAR PRODUCTO
 # =========================
 
-@product_bp.route(
-    "/<int:product_id>",
-    methods=["DELETE"]
-)
+@product_bp.route("/<int:product_id>", methods=["DELETE"])
 def delete_product(product_id):
-
-    product = db.session.get(
-        Product,
-        product_id
-    )
+    product = get_company_record(Product, product_id)
 
     if not product:
         return jsonify({

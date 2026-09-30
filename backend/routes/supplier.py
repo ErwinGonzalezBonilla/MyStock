@@ -2,9 +2,24 @@ from flask import Blueprint, jsonify, request
 
 from extensions import db
 from models.supplier import Supplier
+from tenant import (
+    company_query,
+    get_company_record,
+    get_current_company_id,
+)
 
 
 supplier_bp = Blueprint("supplier", __name__)
+
+
+TEXT_FIELDS = (
+    ("taxId", "tax_id"),
+    ("phone", "phone"),
+    ("email", "email"),
+    ("address", "address"),
+    ("city", "city"),
+    ("postalCode", "postal_code"),
+)
 
 
 def serialize_supplier(supplier):
@@ -22,18 +37,24 @@ def serialize_supplier(supplier):
     }
 
 
+def clean_text(value):
+    return str(value or "").strip() or None
+
+
 @supplier_bp.get("/api/suppliers")
 def get_suppliers():
-    suppliers = Supplier.query.order_by(Supplier.name.asc()).all()
+    suppliers = company_query(Supplier).order_by(
+        Supplier.name.asc()
+    ).all()
 
-    return jsonify([serialize_supplier(supplier) for supplier in suppliers])
+    return jsonify([serialize_supplier(supplier) for supplier in suppliers]), 200
 
 
 @supplier_bp.post("/api/suppliers")
 def create_supplier():
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
 
-    name = str(data.get("name", "")).strip()
+    name = str(data.get("name") or "").strip()
 
     if not name:
         return jsonify({
@@ -41,14 +62,12 @@ def create_supplier():
         }), 400
 
     supplier = Supplier(
+        company_id=get_current_company_id(),
         name=name,
-        tax_id=str(data.get("taxId", "")).strip() or None,
-        phone=str(data.get("phone", "")).strip() or None,
-        email=str(data.get("email", "")).strip() or None,
-        address=str(data.get("address", "")).strip() or None,
-        city=str(data.get("city", "")).strip() or None,
-        postal_code=str(data.get("postalCode", "")).strip() or None,
     )
+
+    for field, attribute in TEXT_FIELDS:
+        setattr(supplier, attribute, clean_text(data.get(field)))
 
     db.session.add(supplier)
     db.session.commit()
@@ -61,17 +80,17 @@ def create_supplier():
 
 @supplier_bp.put("/api/suppliers/<int:supplier_id>")
 def update_supplier(supplier_id):
-    supplier = db.session.get(Supplier, supplier_id)
+    supplier = get_company_record(Supplier, supplier_id)
 
     if not supplier:
         return jsonify({
             "error": "Proveedor no encontrado"
         }), 404
 
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
 
     if "name" in data:
-        name = str(data.get("name", "")).strip()
+        name = str(data.get("name") or "").strip()
 
         if not name:
             return jsonify({
@@ -80,35 +99,21 @@ def update_supplier(supplier_id):
 
         supplier.name = name
 
-    if "taxId" in data:
-        supplier.tax_id = str(data.get("taxId", "")).strip() or None
-
-    if "phone" in data:
-        supplier.phone = str(data.get("phone", "")).strip() or None
-
-    if "email" in data:
-        supplier.email = str(data.get("email", "")).strip() or None
-
-    if "address" in data:
-        supplier.address = str(data.get("address", "")).strip() or None
-
-    if "city" in data:
-        supplier.city = str(data.get("city", "")).strip() or None
-
-    if "postalCode" in data:
-        supplier.postal_code = str(data.get("postalCode", "")).strip() or None
+    for field, attribute in TEXT_FIELDS:
+        if field in data:
+            setattr(supplier, attribute, clean_text(data.get(field)))
 
     db.session.commit()
 
     return jsonify({
         "message": "Proveedor actualizado correctamente",
         "supplier": serialize_supplier(supplier),
-    })
+    }), 200
 
 
 @supplier_bp.delete("/api/suppliers/<int:supplier_id>")
 def delete_supplier(supplier_id):
-    supplier = db.session.get(Supplier, supplier_id)
+    supplier = get_company_record(Supplier, supplier_id)
 
     if not supplier:
         return jsonify({
@@ -120,4 +125,4 @@ def delete_supplier(supplier_id):
 
     return jsonify({
         "message": "Proveedor eliminado correctamente"
-    })
+    }), 200

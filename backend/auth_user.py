@@ -1,23 +1,19 @@
 from flask import jsonify
-from flask_jwt_extended import get_jwt_identity
-from models.user import User
+
+from tenant import get_current_user as get_tenant_user
 
 
 def get_current_user():
     """
-    Return the authenticated user from the JWT.
+    Devuelve el usuario autenticado de la petición actual.
+    Lo carga role_protection.protect_roles a partir del JWT.
     """
-    user_id = get_jwt_identity()
-
-    if not user_id:
-        return None
-
-    return User.query.get(int(user_id))
+    return get_tenant_user()
 
 
 def require_current_user():
     """
-    Return the authenticated user or a standard 401 response.
+    Devuelve el usuario autenticado o una respuesta 401 estándar.
     """
     user = get_current_user()
 

@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request
 from werkzeug.security import generate_password_hash
 
 from extensions import db
@@ -83,7 +83,7 @@ def create_user():
             "error": "El usuario autenticado no pertenece a ninguna empresa"
         }), 400
 
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
 
     name = str(data.get("name", "")).strip()
     email = str(data.get("email", "")).strip().lower()
@@ -148,7 +148,7 @@ def update_user(user_id):
             "error": "Usuario no encontrado"
         }), 404
 
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
 
     if "name" in data:
         name = str(data["name"]).strip()
@@ -198,10 +198,23 @@ def update_user(user_id):
                 "error": "Rol no valido"
             }), 400
 
+        # Evita que la empresa se quede sin administrador.
+        if user.id == current_user.id and role != "administrator":
+            return jsonify({
+                "error": "No puedes quitarte el rol de administrador"
+            }), 400
+
         user.role = role
 
     if "isActive" in data:
-        user.is_active = bool(data["isActive"])
+        is_active = bool(data["isActive"])
+
+        if user.id == current_user.id and not is_active:
+            return jsonify({
+                "error": "No puedes desactivar tu propio usuario"
+            }), 400
+
+        user.is_active = is_active
 
     db.session.commit()
 

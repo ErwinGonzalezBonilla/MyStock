@@ -8,6 +8,13 @@ class Client(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
+    company_id = db.Column(
+        db.Integer,
+        db.ForeignKey("companies.id"),
+        nullable=False,
+        index=True,
+    )
+
     name = db.Column(db.String(150), nullable=False)
     tax_id = db.Column(db.String(50), nullable=True)
     phone = db.Column(db.String(50), nullable=True)
