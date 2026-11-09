@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from extensions import db
-from models import Product, StockMovement
+from models import Product, PurchaseItem, SaleItem, StockMovement
 from tenant import (
     company_query,
     get_company_record,
@@ -31,6 +31,7 @@ def serialize_product(product):
         "sellPrice": product.sell_price,
         "stock": product.stock,
         "minStock": product.min_stock,
+        "isActive": product.is_active,
         "createdAt": (
             product.created_at.isoformat()
             if product.created_at
@@ -48,13 +49,38 @@ def clean_text(value):
     return str(value or "").strip() or None
 
 
+def has_history(product):
+    """
+    True si el producto aparece en ventas, compras o movimientos.
+    Borrarlo rompería ese historial, así que solo se puede archivar.
+    """
+    for model in (StockMovement, SaleItem, PurchaseItem):
+        if model.query.filter_by(product_id=product.id).first():
+            return True
+
+    return False
+
+
 # =========================
 # OBTENER PRODUCTOS
 # =========================
+# Por defecto solo los activos (ventas, compras, dashboard).
+# ?includeArchived=true devuelve también los archivados
+# (página de productos, para poder restaurarlos).
 
 @product_bp.route("", methods=["GET"])
 def get_products():
-    products = company_query(Product).order_by(
+    query = company_query(Product)
+
+    include_archived = (
+        request.args.get("includeArchived", "").lower()
+        in ("1", "true")
+    )
+
+    if not include_archived:
+        query = query.filter(Product.is_active.is_(True))
+
+    products = query.order_by(
         Product.created_at.desc()
     ).all()
 
@@ -78,6 +104,7 @@ def lookup_product():
         }), 400
 
     product = company_query(Product).filter(
+        Product.is_active.is_(True),
         db.or_(
             db.func.lower(Product.sku) == code.lower(),
             Product.barcode == code
@@ -310,9 +337,55 @@ def delete_product(product_id):
             "error": "Producto no encontrado"
         }), 404
 
+    # Solo se borran productos sin historial. Con historial,
+    # el borrado dejaría ventas y movimientos sin producto.
+    if has_history(product):
+        return jsonify({
+            "error": (
+                "El producto tiene ventas, compras o movimientos "
+                "de stock y no se puede eliminar. Puedes archivarlo."
+            ),
+            "canArchive": True,
+        }), 409
+
     db.session.delete(product)
     db.session.commit()
 
     return jsonify({
         "message": "Producto eliminado correctamente"
     }), 200
+
+
+# =========================
+# ARCHIVAR / RESTAURAR PRODUCTO
+# =========================
+
+def set_product_active(product_id, is_active):
+    product = get_company_record(Product, product_id)
+
+    if not product:
+        return jsonify({
+            "error": "Producto no encontrado"
+        }), 404
+
+    product.is_active = is_active
+    db.session.commit()
+
+    return jsonify({
+        "message": (
+            "Producto restaurado correctamente"
+            if is_active
+            else "Producto archivado correctamente"
+        ),
+        "product": serialize_product(product),
+    }), 200
+
+
+@product_bp.route("/<int:product_id>/archive", methods=["POST"])
+def archive_product(product_id):
+    return set_product_active(product_id, False)
+
+
+@product_bp.route("/<int:product_id>/restore", methods=["POST"])
+def restore_product(product_id):
+    return set_product_active(product_id, True)

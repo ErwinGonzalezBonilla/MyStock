@@ -147,6 +147,15 @@ def create_sale():
                 "error": f"El producto {product_id} no existe"
             }), 404
 
+        if not product.is_active:
+            db.session.rollback()
+            return jsonify({
+                "error": (
+                    f"El producto {product.name} está archivado "
+                    "y no se puede vender"
+                )
+            }), 400
+
         if quantity > product.stock:
             db.session.rollback()
             return jsonify({

@@ -59,6 +59,8 @@ export default function Products() {
 
   const [search, setSearch] = useState("");
 
+  const [showArchived, setShowArchived] = useState(false);
+
   const [editingId, setEditingId] = useState(null);
 
   const [loading, setLoading] = useState(false);
@@ -77,7 +79,11 @@ export default function Products() {
         setLoading(true);
         setError("");
 
-        const response = await apiFetch(API_URL);
+        // También los archivados, para poder restaurarlos
+        // y para que el SKU automático no repita uno archivado.
+        const response = await apiFetch(
+          `${API_URL}?includeArchived=true`
+        );
 
         if (!response.ok) {
           throw new Error(
@@ -314,6 +320,22 @@ export default function Products() {
 
       const data = await response.json();
 
+      // Con historial no se puede borrar: ofrecer archivarlo.
+      if (response.status === 409 && data.canArchive) {
+        const archive = window.confirm(
+          "Este producto tiene ventas, compras o movimientos de stock, " +
+            "así que no se puede eliminar.\n\n" +
+            "¿Quieres archivarlo? Dejará de aparecer en ventas y compras, " +
+            "pero se conservará su historial y podrás restaurarlo."
+        );
+
+        if (archive) {
+          await setArchived(id, true);
+        }
+
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(
           data.error ||
@@ -357,6 +379,67 @@ export default function Products() {
       );
     }
   };
+
+  // =========================
+  // ARCHIVAR / RESTAURAR
+  // =========================
+
+  const setArchived = async (id, archived) => {
+    try {
+      setError("");
+      setMessage("");
+
+      const response = await apiFetch(
+        `${API_URL}/${id}/${archived ? "archive" : "restore"}`,
+        {
+          method: "POST",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "No se pudo actualizar el producto."
+        );
+      }
+
+      setProducts((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? data.product
+            : item
+        )
+      );
+
+      if (archived && editingId === id) {
+        setEditingId(null);
+
+        setProduct({
+          ...EMPTY_PRODUCT,
+        });
+      }
+
+      setMessage(
+        archived
+          ? "Producto archivado. Su historial se conserva."
+          : "Producto restaurado correctamente."
+      );
+    } catch (err) {
+      console.error(
+        "Error archivando producto:",
+        err
+      );
+
+      setError(
+        err.message ||
+          "No se pudo actualizar el producto."
+      );
+    }
+  };
+
+  const handleRestore = (id) => setArchived(id, false);
 
   // =========================
   // EDITAR
@@ -579,8 +662,16 @@ export default function Products() {
   // BÚSQUEDA
   // =========================
 
+  const activeProducts =
+    products.filter(
+      (item) => item.isActive !== false
+    );
+
+  const archivedCount =
+    products.length - activeProducts.length;
+
   const filteredProducts =
-    products.filter((item) => {
+    (showArchived ? products : activeProducts).filter((item) => {
       const searchTerm =
         search.toLowerCase().trim();
 
@@ -605,14 +696,14 @@ export default function Products() {
     });
 
   // =========================
-  // RESUMEN
+  // RESUMEN (solo productos activos)
   // =========================
 
   const totalProducts =
-    products.length;
+    activeProducts.length;
 
   const inventoryValue =
-    products.reduce(
+    activeProducts.reduce(
       (total, item) => {
         const buyPrice =
           Number(item.buyPrice) || 0;
@@ -629,7 +720,7 @@ export default function Products() {
     );
 
   const lowStockProducts =
-    products.filter(
+    activeProducts.filter(
       (item) =>
         Number(item.stock) > 0 &&
         Number(item.stock) <=
@@ -637,7 +728,7 @@ export default function Products() {
     ).length;
 
   const outOfStockProducts =
-    products.filter(
+    activeProducts.filter(
       (item) =>
         Number(item.stock) === 0
     ).length;
@@ -756,6 +847,26 @@ export default function Products() {
           }
         />
 
+        <div className="form-check form-switch mt-3 mb-0">
+          <input
+            className="form-check-input"
+            type="checkbox"
+            role="switch"
+            id="show-archived"
+            checked={showArchived}
+            onChange={(e) =>
+              setShowArchived(e.target.checked)
+            }
+          />
+
+          <label
+            className="form-check-label"
+            htmlFor="show-archived"
+          >
+            Mostrar archivados ({archivedCount})
+          </label>
+        </div>
+
       </div>
 
       {/* CARGANDO */}
@@ -772,6 +883,7 @@ export default function Products() {
         products={filteredProducts}
         movements={movements}
         handleDelete={handleDelete}
+        handleRestore={handleRestore}
         handleEdit={handleEdit}
         handleIncreaseStock={
           handleIncreaseStock

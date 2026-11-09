@@ -40,6 +40,8 @@ ROLE_PERMISSIONS = {
     "products.create_product": ADMIN_MANAGER,
     "products.update_product": ADMIN_MANAGER,
     "products.delete_product": ADMIN_MANAGER,
+    "products.archive_product": ADMIN_MANAGER,
+    "products.restore_product": ADMIN_MANAGER,
 
     # Sales
     "sales.get_sales": ALL_ROLES,

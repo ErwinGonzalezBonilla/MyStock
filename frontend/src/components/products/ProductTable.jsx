@@ -5,6 +5,7 @@ export default function ProductTable({
   products,
   movements,
   handleDelete,
+  handleRestore,
   handleEdit,
   handleIncreaseStock,
   handleDecreaseStock,
@@ -163,9 +164,15 @@ export default function ProductTable({
                 const lastMovement =
                   getLastMovement(item.id);
 
+                const archived =
+                  item.isActive === false;
+
                 return (
 
-                  <tr key={item.id}>
+                  <tr
+                    key={item.id}
+                    className={archived ? "table-secondary" : undefined}
+                  >
 
                     {/* IMAGEN */}
 
@@ -245,6 +252,12 @@ export default function ProductTable({
 
                     <td className="fw-semibold">
                       {item.name}
+
+                      {archived && (
+                        <span className="badge bg-secondary ms-2">
+                          Archivado
+                        </span>
+                      )}
                     </td>
 
                     {/* CATEGORÍA */}
@@ -269,7 +282,7 @@ export default function ProductTable({
                             )
                           }
                           disabled={
-                            stock === 0
+                            archived || stock === 0
                           }
                           title="Registrar salida"
                         >
@@ -289,6 +302,7 @@ export default function ProductTable({
                               "entrada"
                             )
                           }
+                          disabled={archived}
                           title="Registrar entrada"
                         >
                           +
@@ -375,18 +389,37 @@ export default function ProductTable({
                           ✏️
                         </button>
 
-                        <button
-                          type="button"
-                          className="btn btn-danger btn-sm"
-                          onClick={() =>
-                            handleDelete(
-                              item.id
-                            )
-                          }
-                          title="Eliminar producto"
-                        >
-                          🗑️
-                        </button>
+                        {archived ? (
+
+                          <button
+                            type="button"
+                            className="btn btn-outline-success btn-sm"
+                            onClick={() =>
+                              handleRestore(
+                                item.id
+                              )
+                            }
+                            title="Restaurar producto"
+                          >
+                            ♻️
+                          </button>
+
+                        ) : (
+
+                          <button
+                            type="button"
+                            className="btn btn-danger btn-sm"
+                            onClick={() =>
+                              handleDelete(
+                                item.id
+                              )
+                            }
+                            title="Eliminar o archivar producto"
+                          >
+                            🗑️
+                          </button>
+
+                        )}
 
                       </div>
 

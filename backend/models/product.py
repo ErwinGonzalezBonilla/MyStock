@@ -40,6 +40,16 @@ class Product(db.Model):
     stock = db.Column(db.Integer, nullable=False, default=0)
     min_stock = db.Column(db.Integer, nullable=False, default=0)
 
+    # Un producto con historial (ventas, compras o movimientos)
+    # no se borra: se archiva. Archivado no aparece en ventas
+    # ni compras, pero su historial se conserva.
+    is_active = db.Column(
+        db.Boolean,
+        nullable=False,
+        default=True,
+        server_default=db.true(),
+    )
+
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,

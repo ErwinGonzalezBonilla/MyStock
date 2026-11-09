@@ -103,6 +103,12 @@ def create_stock_movement():
             "error": "Producto no encontrado"
         }), 404
 
+    if not product.is_active:
+        db.session.rollback()
+        return jsonify({
+            "error": "El producto está archivado. Restáuralo para mover su stock"
+        }), 400
+
     reason = str(data.get("reason") or "").strip() or None
 
     if movement_type == "entrada":

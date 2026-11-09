@@ -126,6 +126,15 @@ def create_purchase():
                 "error": f"Producto {product_id} no encontrado"
             }), 404
 
+        if not product.is_active:
+            db.session.rollback()
+            return jsonify({
+                "error": (
+                    f"El producto {product.name} está archivado "
+                    "y no se puede comprar"
+                )
+            }), 400
+
         subtotal = round(quantity * unit_price, 2)
         total += subtotal
 

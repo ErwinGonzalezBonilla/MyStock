@@ -5,6 +5,7 @@ from flask_jwt_extended import JWTManager
 from config import Config
 from extensions import db
 from auth_protection import protect_api
+from schema_upgrades import apply_schema_upgrades
 
 from models import (
     Company,
@@ -56,6 +57,7 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        apply_schema_upgrades()
 
     return app
 
