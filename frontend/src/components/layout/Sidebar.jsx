@@ -11,6 +11,7 @@ import {
   ShoppingCart,
   ShoppingBag,
   Users,
+  UserCog,
   Truck,
   BarChart3,
   Sparkles,
@@ -64,6 +65,12 @@ const menuItems = [
     name: "Reportes",
     path: "/reports",
     icon: BarChart3,
+  },
+  {
+    name: "Usuarios",
+    roles: ["administrator"],
+    path: "/users",
+    icon: UserCog,
   },
 ];
 

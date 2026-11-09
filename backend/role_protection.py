@@ -126,10 +126,14 @@ def protect_roles():
             "error": "Usuario autenticado no encontrado"
         }), 401
 
+    # 401 y no 403: el token ya no representa una sesión válida.
+    # Así el frontend cierra la sesión del usuario desactivado en su
+    # siguiente petición, en vez de dejarlo dentro viendo errores
+    # hasta que caduque el token.
     if not user.is_active:
         return jsonify({
             "error": "El usuario está desactivado"
-        }), 403
+        }), 401
 
     if not user.company_id:
         return jsonify({

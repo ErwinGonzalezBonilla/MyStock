@@ -100,6 +100,11 @@ def create_user():
             "error": "El email es obligatorio"
         }), 400
 
+    if "@" not in email:
+        return jsonify({
+            "error": "El email no es valido"
+        }), 400
+
     if len(password) < 8:
         return jsonify({
             "error": "La contraseña debe tener al menos 8 caracteres"
@@ -166,6 +171,11 @@ def update_user(user_id):
         if not email:
             return jsonify({
                 "error": "El email no puede estar vacio"
+            }), 400
+
+        if "@" not in email:
+            return jsonify({
+                "error": "El email no es valido"
             }), 400
 
         existing_user = User.query.filter(
