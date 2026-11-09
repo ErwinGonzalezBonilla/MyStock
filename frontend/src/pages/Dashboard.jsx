@@ -14,6 +14,7 @@ import {
 import SalesChart from "../components/common/SalesChart";
 import RecentSales from "../components/common/RecentSales";
 import LowStockProducts from "../components/common/LowStockProducts";
+import { parseApiDate } from "../utils/dates";
 
 
 export default function Dashboard() {
@@ -84,7 +85,11 @@ export default function Dashboard() {
       return false;
     }
 
-    const saleDate = new Date(date);
+    const saleDate = parseApiDate(date);
+
+    if (!saleDate) {
+      return false;
+    }
 
     return (
       saleDate.getDate() === today.getDate() &&

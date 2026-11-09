@@ -7,6 +7,7 @@ import {
   Package,
   TrendingUp,
 } from "lucide-react";
+import { apiDateTime, parseApiDate } from "../../utils/dates";
 
 export default function StockHistory({ movements = [] }) {
   const [search, setSearch] = useState("");
@@ -18,7 +19,7 @@ export default function StockHistory({ movements = [] }) {
       return "Sin fecha";
     }
 
-    return new Date(date).toLocaleString("es-ES", {
+    return parseApiDate(date)?.toLocaleString("es-ES", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -78,8 +79,8 @@ export default function StockHistory({ movements = [] }) {
       })
       .sort((a, b) => {
         return (
-          new Date(b.date || 0) -
-          new Date(a.date || 0)
+          apiDateTime(b.date) -
+          apiDateTime(a.date)
         );
       });
   }, [

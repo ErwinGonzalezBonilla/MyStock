@@ -1,3 +1,5 @@
+import { apiDateTime, parseApiDate } from "../../utils/dates";
+
 export default function ClientDetailsModal({
   client,
   sales = [],
@@ -16,7 +18,7 @@ export default function ClientDetailsModal({
       return "Sin fecha";
     }
 
-    return new Date(date).toLocaleString(
+    return parseApiDate(date)?.toLocaleString(
       "es-ES",
       {
         day: "2-digit",
@@ -40,8 +42,8 @@ export default function ClientDetailsModal({
     )
     .sort(
       (a, b) =>
-        new Date(b.date) -
-        new Date(a.date)
+        apiDateTime(b.date) -
+        apiDateTime(a.date)
     );
 
   // =========================

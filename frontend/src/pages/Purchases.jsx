@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import PurchaseDetailsModal from "../components/purchases/PurchaseDetailsModal";
 import { useAuth } from "../context/AuthContext";
+import { parseApiDate } from "../utils/dates";
 
 
 export default function Purchases() {
@@ -127,7 +128,7 @@ export default function Purchases() {
       return "-";
     }
 
-    return new Date(date).toLocaleString("es-ES", {
+    return parseApiDate(date)?.toLocaleString("es-ES", {
       dateStyle: "short",
       timeStyle: "short",
     });

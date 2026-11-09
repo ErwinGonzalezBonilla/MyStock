@@ -1,3 +1,5 @@
+import { parseApiDate } from "../../utils/dates";
+
 export default function SaleTable({
   sales,
 }) {
@@ -6,7 +8,7 @@ export default function SaleTable({
       return "Sin fecha";
     }
 
-    return new Date(date).toLocaleString(
+    return parseApiDate(date)?.toLocaleString(
       "es-ES",
       {
         day: "2-digit",

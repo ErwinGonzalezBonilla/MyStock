@@ -5,6 +5,7 @@ import {
   Calendar,
   Package,
 } from "lucide-react";
+import { parseApiDate } from "../../utils/dates";
 
 export default function PurchaseDetailsModal({ purchase, onClose }) {
   if (!purchase) {
@@ -23,7 +24,7 @@ export default function PurchaseDetailsModal({ purchase, onClose }) {
       return "-";
     }
 
-    return new Date(date).toLocaleString("es-ES", {
+    return parseApiDate(date)?.toLocaleString("es-ES", {
       dateStyle: "medium",
       timeStyle: "short",
     });

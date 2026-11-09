@@ -1,5 +1,6 @@
 import { useState } from "react";
 import StockMovementModal from "./StockMovementModal";
+import { parseApiDate } from "../../utils/dates";
 
 export default function ProductTable({
   products,
@@ -23,7 +24,7 @@ export default function ProductTable({
       return "Sin movimientos";
     }
 
-    return new Date(date).toLocaleString("es-ES", {
+    return parseApiDate(date)?.toLocaleString("es-ES", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",

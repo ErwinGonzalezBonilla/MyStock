@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import ClientForm from "../components/clients/ClientForm";
 import ClientDetailsModal from "../components/clients/ClientDetailsModal";
 import StatCard from "../components/common/StatCard";
+import { parseApiDate } from "../utils/dates";
 
 
 const EMPTY_CLIENT = {
@@ -408,7 +409,11 @@ export default function Clients() {
       }
 
       const date =
-        new Date(item.createdAt);
+        parseApiDate(item.createdAt);
+
+      if (!date) {
+        return false;
+      }
 
       const now =
         new Date();

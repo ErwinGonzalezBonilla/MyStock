@@ -8,15 +8,8 @@ import {
   Tooltip,
 } from "recharts";
 
-// La API guarda las fechas en UTC y las envía sin zona horaria
-// ("2026-11-09T23:30:00"). Sin la "Z", el navegador las tomaría
-// como hora local y una venta de madrugada caería en el día anterior.
-const parseApiDate = (value) => {
-  const text = String(value);
-  const hasTimezone = /(Z|[+-]\d{2}:?\d{2})$/.test(text);
-
-  return new Date(hasTimezone ? text : `${text}Z`);
-};
+// Fechas de la API en UTC sin zona horaria: ver utils/dates.js.
+import { parseApiDate } from "../../utils/dates";
 
 // sales: ventas reales de GET /api/sales (las carga Dashboard).
 export default function SalesChart({ sales = [] }) {
@@ -44,6 +37,10 @@ export default function SalesChart({ sales = [] }) {
 
         const saleDate =
           parseApiDate(sale.date);
+
+        if (!saleDate) {
+          return false;
+        }
 
         return (
           saleDate.getDate() ===

@@ -1,10 +1,12 @@
+import { parseApiDate } from "../../utils/dates";
+
 export default function RecentSales({ sales }) {
   const formatDate = (date) => {
     if (!date) {
       return "Sin fecha";
     }
 
-    return new Date(date).toLocaleString("es-ES", {
+    return parseApiDate(date)?.toLocaleString("es-ES", {
       day: "2-digit",
       month: "2-digit",
       hour: "2-digit",
