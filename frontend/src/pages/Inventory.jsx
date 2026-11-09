@@ -8,6 +8,7 @@ import {
 
 import { API_URL, apiFetch } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { STOCK_STATUS, getStockStatus } from "../utils/stock";
 
 // =========================================================
 // INVENTARIO
@@ -21,35 +22,8 @@ import { useAuth } from "../context/AuthContext";
 //   - Correcto:   el resto
 // =========================================================
 
-const STATUS = {
-  out: {
-    label: "Sin stock",
-    className: "bg-danger",
-  },
-  low: {
-    label: "Stock bajo",
-    className: "bg-warning text-dark",
-  },
-  ok: {
-    label: "Correcto",
-    className: "bg-success",
-  },
-};
-
-function getStockStatus(product) {
-  const stock = Number(product.stock) || 0;
-  const minStock = Number(product.minStock) || 0;
-
-  if (stock <= 0) {
-    return "out";
-  }
-
-  if (stock <= minStock) {
-    return "low";
-  }
-
-  return "ok";
-}
+// Regla de stock compartida con Dashboard y Productos.
+const STATUS = STOCK_STATUS;
 
 export default function Inventory() {
   const { company } = useAuth();
@@ -323,7 +297,7 @@ export default function Inventory() {
                           {Number(product.minStock) || 0}
                         </td>
                         <td>
-                          <span className={`badge ${productStatus.className}`}>
+                          <span className={`badge ${productStatus.badgeClass}`}>
                             {productStatus.label}
                           </span>
                         </td>

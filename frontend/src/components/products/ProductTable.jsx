@@ -1,6 +1,7 @@
 import { useState } from "react";
 import StockMovementModal from "./StockMovementModal";
 import { parseApiDate } from "../../utils/dates";
+import { STOCK_STATUS, getStockStatus } from "../../utils/stock";
 
 export default function ProductTable({
   products,
@@ -145,24 +146,17 @@ export default function ProductTable({
                       ).toFixed(0)
                     : 0;
 
-                const stockInfo =
-                  stock === 0
-                    ? {
-                        text: "Sin stock",
-                        className:
-                          "bg-danger",
-                      }
-                    : stock <= 10
-                    ? {
-                        text: "Stock bajo",
-                        className:
-                          "bg-warning text-dark",
-                      }
-                    : {
-                        text: "Disponible",
-                        className:
-                          "bg-success",
-                      };
+                // Misma regla en toda la app (utils/stock.js).
+                const status =
+                  STOCK_STATUS[getStockStatus(item)];
+
+                const stockInfo = {
+                  text:
+                    status === STOCK_STATUS.ok
+                      ? "Disponible"
+                      : status.label,
+                  className: status.badgeClass,
+                };
 
                 const lastMovement =
                   getLastMovement(item.id);

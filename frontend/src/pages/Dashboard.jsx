@@ -15,6 +15,7 @@ import SalesChart from "../components/common/SalesChart";
 import RecentSales from "../components/common/RecentSales";
 import LowStockProducts from "../components/common/LowStockProducts";
 import { parseApiDate } from "../utils/dates";
+import { needsRestock } from "../utils/stock";
 
 
 export default function Dashboard() {
@@ -110,19 +111,9 @@ export default function Dashboard() {
 
   const totalProducts = products.length;
 
-  const lowStockCount = products.filter(
-    (product) => {
-      const stock =
-        Number(product.stock) || 0;
-
-      const minimum =
-        Number(product.minStock) ||
-        Number(product.minimumStock) ||
-        10;
-
-      return stock >= 0 && stock <= minimum;
-    }
-  ).length;
+  // Sin stock o por debajo de su mínimo (utils/stock.js).
+  const lowStockCount =
+    products.filter(needsRestock).length;
 
   const inventoryCost = products.reduce(
     (total, product) => {

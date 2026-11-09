@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import ProductForm from "../components/products/ProductForm";
 import ProductTable from "../components/products/ProductTable";
 import StockHistory from "../components/products/StockHistory";
+import { getStockStatus } from "../utils/stock";
 
 const API_URL = `${API_BASE_URL}/api/products`;
 
@@ -755,16 +756,12 @@ export default function Products() {
 
   const lowStockProducts =
     activeProducts.filter(
-      (item) =>
-        Number(item.stock) > 0 &&
-        Number(item.stock) <=
-          Number(item.minStock || 10)
+      (item) => getStockStatus(item) === "low"
     ).length;
 
   const outOfStockProducts =
     activeProducts.filter(
-      (item) =>
-        Number(item.stock) === 0
+      (item) => getStockStatus(item) === "out"
     ).length;
 
   return (

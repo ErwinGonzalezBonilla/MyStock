@@ -308,7 +308,8 @@ export default function ProductForm({
           />
 
           <div className="form-text">
-            MyStock podrá utilizar este valor para avisarte cuando el stock sea bajo.
+            Con este stock o menos, el producto aparecerá como "Stock bajo"
+            en Dashboard, Productos e Inventario. Con 0, solo avisa al agotarse.
           </div>
 
         </div>

@@ -1,30 +1,16 @@
+import { STOCK_STATUS, getStockStatus, needsRestock } from "../../utils/stock";
+
 export default function LowStockProducts({
   products,
 }) {
+  // Sin stock o por debajo de su stock mínimo (utils/stock.js).
   const lowStockProducts = products
-    .filter((product) => {
-      const stock =
-        Number(product.stock) || 0;
-
-      return stock >= 0 && stock <= 10;
-    })
+    .filter(needsRestock)
     .sort(
       (a, b) =>
         Number(a.stock) -
         Number(b.stock)
     );
-
-  const getStockClass = (stock) => {
-    if (stock === 0) {
-      return "text-danger";
-    }
-
-    if (stock <= 3) {
-      return "text-danger";
-    }
-
-    return "text-warning";
-  };
 
   return (
     <div className="stat-card mb-4">
@@ -74,6 +60,9 @@ export default function LowStockProducts({
 
               const stock =
                 Number(product.stock) || 0;
+
+              const status =
+                STOCK_STATUS[getStockStatus(product)];
 
               return (
                 <div
@@ -130,19 +119,14 @@ export default function LowStockProducts({
                   <div className="text-end">
 
                     <div
-                      className={`fw-bold ${getStockClass(
-                        stock
-                      )}`}
+                      className={`fw-bold ${status.textClass}`}
                     >
                       {stock} unidades
                     </div>
 
                     <small className="text-muted">
-                      {stock === 0
-                        ? "Sin stock"
-                        : stock <= 3
-                        ? "Crítico"
-                        : "Stock bajo"}
+                      {status.label} · mín.{" "}
+                      {Number(product.minStock) || 0}
                     </small>
 
                   </div>
