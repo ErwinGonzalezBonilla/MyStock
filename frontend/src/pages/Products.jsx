@@ -22,6 +22,10 @@ const EMPTY_PRODUCT = {
   minStock: 0,
   image: "",
   barcode: "",
+  // Solo al editar: stock guardado y motivo del ajuste
+  // si el usuario lo cambia.
+  originalStock: null,
+  stockReason: "",
 };
 
 // =========================
@@ -234,6 +238,12 @@ export default function Products() {
 
           minStock:
             Number(product.minStock) || 0,
+
+          // El backend lo exige si el stock cambia
+          // y crea un movimiento de ajuste con él.
+          ...(isEditing && {
+            stockReason: product.stockReason.trim(),
+          }),
         }),
       });
 
@@ -257,8 +267,17 @@ export default function Products() {
           )
         );
 
+        if (data.movement) {
+          setMovements((prev) => [
+            data.movement,
+            ...prev,
+          ]);
+        }
+
         setMessage(
-          "Producto actualizado correctamente."
+          data.movement
+            ? "Producto actualizado. Ajuste de stock registrado en el historial."
+            : "Producto actualizado correctamente."
         );
       } else {
         setProducts((prev) => [
@@ -457,6 +476,8 @@ export default function Products() {
     setProduct({
       ...EMPTY_PRODUCT,
       ...selected,
+      originalStock: selected.stock,
+      stockReason: "",
     });
 
     setEditingId(id);

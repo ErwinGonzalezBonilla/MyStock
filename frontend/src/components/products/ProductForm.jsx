@@ -7,6 +7,17 @@ export default function ProductForm({
   handleImage,
   editingIndex,
 }) {
+  // Al editar, cambiar el stock es un ajuste de inventario
+  // y hay que indicar el motivo.
+  const stockChanged =
+    Boolean(editingIndex) &&
+    product.originalStock !== null &&
+    product.stock !== "" &&
+    Number(product.stock) !== Number(product.originalStock);
+
+  const stockDifference =
+    Number(product.stock) - Number(product.originalStock);
+
   return (
     <div className="stat-card mb-4">
 
@@ -225,7 +236,7 @@ export default function ProductForm({
           <div className="col-md-4 mb-3">
 
             <label className="form-label">
-              Stock inicial
+              {editingIndex ? "Stock" : "Stock inicial"}
             </label>
 
             <input
@@ -242,6 +253,41 @@ export default function ProductForm({
           </div>
 
         </div>
+
+        {/* MOTIVO DEL AJUSTE */}
+
+        {stockChanged && (
+
+          <div className="mb-3">
+
+            <label
+              className="form-label"
+              htmlFor="stock-reason"
+            >
+              Motivo del ajuste de stock
+            </label>
+
+            <input
+              id="stock-reason"
+              type="text"
+              className="form-control"
+              name="stockReason"
+              value={product.stockReason}
+              onChange={handleChange}
+              placeholder="Ej. Recuento de inventario, producto dañado..."
+              maxLength="200"
+              required
+            />
+
+            <div className="form-text">
+              Se registrará una {stockDifference > 0 ? "entrada" : "salida"} de{" "}
+              {Math.abs(stockDifference)} uds. en el historial
+              ({product.originalStock} → {Number(product.stock)}).
+            </div>
+
+          </div>
+
+        )}
 
         {/* STOCK MÍNIMO */}
 

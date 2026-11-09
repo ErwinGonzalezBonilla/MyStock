@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 
 from extensions import db
 from models import Product, PurchaseItem, SaleItem, StockMovement
+from routes.stock_movement import serialize_movement
 from tenant import (
     company_query,
     get_company_record,
@@ -233,7 +234,13 @@ def create_product():
 
 @product_bp.route("/<int:product_id>", methods=["PUT"])
 def update_product(product_id):
-    product = get_company_record(Product, product_id)
+    # Bloqueo de fila: el ajuste de stock se calcula
+    # sobre el stock actual (ver create_sale).
+    product = get_company_record(
+        Product,
+        product_id,
+        for_update=True,
+    )
 
     if not product:
         return jsonify({
@@ -305,6 +312,17 @@ def update_product(product_id):
             "error": "Los precios no pueden ser negativos"
         }), 400
 
+    # Un cambio de stock desde la edición es un ajuste de inventario
+    # (recuento, rotura, error...). Se registra como movimiento para
+    # que el historial siga explicando el stock actual.
+    stock_difference = new_stock - product.stock
+    stock_reason = clean_text(data.get("stockReason"))
+
+    if stock_difference != 0 and not stock_reason:
+        return jsonify({
+            "error": "Indica el motivo del ajuste de stock"
+        }), 400
+
     product.name = name
     product.sku = sku
     product.barcode = barcode
@@ -316,11 +334,30 @@ def update_product(product_id):
     product.stock = new_stock
     product.min_stock = min_stock
 
+    movement = None
+
+    if stock_difference != 0:
+        # Se guarda como entrada/salida para que los totales del
+        # historial (entradas, salidas, balance) sigan cuadrando.
+        movement = StockMovement(
+            company_id=product.company_id,
+            product_id=product.id,
+            type="entrada" if stock_difference > 0 else "salida",
+            quantity=abs(stock_difference),
+            reason=f"Ajuste: {stock_reason}",
+            resulting_stock=new_stock,
+        )
+        db.session.add(movement)
+
     db.session.commit()
 
     return jsonify({
         "message": "Producto actualizado correctamente",
-        "product": serialize_product(product)
+        "product": serialize_product(product),
+        # Movimiento de ajuste creado, o null si el stock no cambió.
+        "movement": (
+            serialize_movement(movement) if movement else None
+        ),
     }), 200
 
 
