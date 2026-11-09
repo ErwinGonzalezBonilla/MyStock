@@ -14,8 +14,6 @@ import {
   UserCog,
   Truck,
   BarChart3,
-  Sparkles,
-  Settings,
 } from "lucide-react";
 
 const menuItems = [
@@ -62,7 +60,8 @@ const menuItems = [
     icon: Truck,
   },
   {
-    name: "Reportes",
+    name: "Informes",
+    roles: ["administrator", "manager"],
     path: "/reports",
     icon: BarChart3,
   },
@@ -71,19 +70,6 @@ const menuItems = [
     roles: ["administrator"],
     path: "/users",
     icon: UserCog,
-  },
-];
-
-const bottomMenuItems = [
-  {
-    name: "MyStock AI",
-    path: "/ai",
-    icon: Sparkles,
-  },
-  {
-    name: "Configuración",
-    path: "/settings",
-    icon: Settings,
   },
 ];
 
@@ -162,46 +148,10 @@ export default function Sidebar() {
         </div>
 
         {/* =========================
-            MENÚ INFERIOR
-        ========================= */}
-
-        <div className="mystock-sidebar-bottom">
-
-          {bottomMenuItems.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) =>
-                  `mystock-nav-link ${
-                    isActive
-                      ? "mystock-nav-link-active"
-                      : ""
-                  }`
-                }
-              >
-                <Icon
-                  className="mystock-nav-icon"
-                  size={19}
-                  strokeWidth={2}
-                />
-
-                <span>
-                  {item.name}
-                </span>
-              </NavLink>
-            );
-          })}
-
-        </div>
-
-        {/* =========================
             VERSIÓN
         ========================= */}
 
-        <div className="mystock-version">
+        <div className="mystock-version mt-auto">
           MyStock · v1.0
         </div>
 

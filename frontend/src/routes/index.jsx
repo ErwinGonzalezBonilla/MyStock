@@ -8,6 +8,8 @@ import Clients from "../pages/Clients";
 import Suppliers from "../pages/Suppliers";
 import Purchases from "../pages/Purchases";
 import Users from "../pages/Users";
+import Inventory from "../pages/Inventory";
+import Reports from "../pages/Reports";
 import { useAuth } from "../context/AuthContext";
 
 // Evita que un rol sin permiso entre escribiendo la URL.
@@ -32,6 +34,16 @@ export default function AppRouter() {
       <Route path="/products" element={<Products />} />
       <Route path="/sales" element={<Sales />} />
       <Route path="/clients" element={<Clients />} />
+      <Route path="/inventory" element={<Inventory />} />
+
+      <Route
+        path="/reports"
+        element={
+          <RequireRole roles={ADMIN_MANAGER}>
+            <Reports />
+          </RequireRole>
+        }
+      />
 
       <Route
         path="/suppliers"
