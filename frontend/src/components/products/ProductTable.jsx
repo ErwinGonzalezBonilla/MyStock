@@ -9,6 +9,8 @@ export default function ProductTable({
   handleEdit,
   handleIncreaseStock,
   handleDecreaseStock,
+  // Qué puede hacer el rol del usuario (ver pages/Products.jsx).
+  permissions = {},
 }) {
   const [movementProduct, setMovementProduct] =
     useState(null);
@@ -272,6 +274,7 @@ export default function ProductTable({
 
                       <div className="d-flex align-items-center gap-2">
 
+                        {permissions.moveStock && (
                         <button
                           type="button"
                           className="btn btn-outline-danger btn-sm"
@@ -288,11 +291,13 @@ export default function ProductTable({
                         >
                           −
                         </button>
+                        )}
 
                         <strong>
                           {stock}
                         </strong>
 
+                        {permissions.moveStock && (
                         <button
                           type="button"
                           className="btn btn-outline-success btn-sm"
@@ -307,6 +312,7 @@ export default function ProductTable({
                         >
                           +
                         </button>
+                        )}
 
                       </div>
 
@@ -376,6 +382,13 @@ export default function ProductTable({
 
                       <div className="d-flex gap-2">
 
+                        {!permissions.edit &&
+                          !permissions.delete &&
+                          !permissions.restore && (
+                            <span className="text-muted">—</span>
+                          )}
+
+                        {permissions.edit && (
                         <button
                           type="button"
                           className="btn btn-warning btn-sm"
@@ -388,8 +401,10 @@ export default function ProductTable({
                         >
                           ✏️
                         </button>
+                        )}
 
                         {archived ? (
+                          permissions.restore && (
 
                           <button
                             type="button"
@@ -403,8 +418,9 @@ export default function ProductTable({
                           >
                             ♻️
                           </button>
-
+                          )
                         ) : (
+                          permissions.delete && (
 
                           <button
                             type="button"
@@ -418,7 +434,7 @@ export default function ProductTable({
                           >
                             🗑️
                           </button>
-
+                          )
                         )}
 
                       </div>

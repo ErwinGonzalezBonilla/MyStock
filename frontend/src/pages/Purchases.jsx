@@ -13,9 +13,15 @@ import {
   Eye,
 } from "lucide-react";
 import PurchaseDetailsModal from "../components/purchases/PurchaseDetailsModal";
+import { useAuth } from "../context/AuthContext";
 
 
 export default function Purchases() {
+  const { can } = useAuth();
+
+  // Mismo permiso que el backend (constants/permissions.js).
+  const canCreatePurchase = can("purchase.create_purchase");
+
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
   const [purchases, setPurchases] = useState([]);
@@ -464,7 +470,10 @@ export default function Purchases() {
       </div>
 
 
-      {/* NUEVA COMPRA */}
+      {/* NUEVA COMPRA + CARRITO (solo si el rol puede comprar) */}
+
+      {canCreatePurchase && (
+      <>
 
       <div className="card border-0 shadow-sm mb-4">
 
@@ -981,6 +990,9 @@ export default function Purchases() {
 
       </div>
 
+
+      </>
+      )}
 
       {/* PRODUCTOS DISPONIBLES */}
 

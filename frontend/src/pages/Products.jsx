@@ -1,6 +1,8 @@
 import { API_URL as API_BASE_URL, apiFetch } from "../services/api";
 import { useState, useEffect } from "react";
 
+import { useAuth } from "../context/AuthContext";
+
 import ProductForm from "../components/products/ProductForm";
 import ProductTable from "../components/products/ProductTable";
 import StockHistory from "../components/products/StockHistory";
@@ -55,6 +57,17 @@ const generateSku = (products) => {
 };
 
 export default function Products() {
+  const { can } = useAuth();
+
+  // Mismos permisos que el backend (constants/permissions.js).
+  const permissions = {
+    create: can("products.create_product"),
+    edit: can("products.update_product"),
+    delete: can("products.delete_product"),
+    restore: can("products.restore_product"),
+    moveStock: can("stock_movements.create_stock_movement"),
+  };
+
   const [product, setProduct] = useState(EMPTY_PRODUCT);
 
   const [products, setProducts] = useState([]);
@@ -842,13 +855,24 @@ export default function Products() {
 
       {/* FORMULARIO */}
 
-      <ProductForm
-        product={product}
-        handleChange={handleChange}
-        handleSubmit={handleSubmit}
-        handleImage={handleImage}
-        editingIndex={editingId}
-      />
+      {(editingId ? permissions.edit : permissions.create) ? (
+
+        <ProductForm
+          product={product}
+          handleChange={handleChange}
+          handleSubmit={handleSubmit}
+          handleImage={handleImage}
+          editingIndex={editingId}
+        />
+
+      ) : (
+
+        <div className="alert alert-light border mb-4">
+          Tu rol puede consultar el catálogo, pero no crear ni
+          modificar productos.
+        </div>
+
+      )}
 
       {/* BÚSQUEDA */}
 
@@ -906,6 +930,7 @@ export default function Products() {
         handleDelete={handleDelete}
         handleRestore={handleRestore}
         handleEdit={handleEdit}
+        permissions={permissions}
         handleIncreaseStock={
           handleIncreaseStock
         }

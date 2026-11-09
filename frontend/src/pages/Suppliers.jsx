@@ -9,6 +9,8 @@ import {
   Truck,
 } from "lucide-react";
 
+import { useAuth } from "../context/AuthContext";
+
 
 const emptySupplier = {
   name: "",
@@ -21,6 +23,13 @@ const emptySupplier = {
 };
 
 function Suppliers() {
+  const { can } = useAuth();
+
+  // Mismos permisos que el backend (constants/permissions.js).
+  const canCreate = can("supplier.create_supplier");
+  const canEdit = can("supplier.update_supplier");
+  const canDelete = can("supplier.delete_supplier");
+
   const [suppliers, setSuppliers] = useState([]);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -235,14 +244,16 @@ function Suppliers() {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="btn btn-dark d-flex align-items-center gap-2"
-          onClick={openCreateForm}
-        >
-          <Plus size={18} />
-          Nuevo proveedor
-        </button>
+        {canCreate && (
+          <button
+            type="button"
+            className="btn btn-dark d-flex align-items-center gap-2"
+            onClick={openCreateForm}
+          >
+            <Plus size={18} />
+            Nuevo proveedor
+          </button>
+        )}
       </div>
 
       {error && !showForm && (
@@ -291,7 +302,7 @@ function Suppliers() {
                   : "Añade tu primer proveedor para comenzar."}
               </p>
 
-              {!search && (
+              {!search && canCreate && (
                 <button
                   type="button"
                   className="btn btn-dark"
@@ -343,23 +354,27 @@ function Suppliers() {
 
                       <td>
                         <div className="d-flex justify-content-end gap-2">
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-secondary"
-                            title="Editar proveedor"
-                            onClick={() => openEditForm(supplier)}
-                          >
-                            <Pencil size={16} />
-                          </button>
+                          {canEdit && (
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-secondary"
+                              title="Editar proveedor"
+                              onClick={() => openEditForm(supplier)}
+                            >
+                              <Pencil size={16} />
+                            </button>
+                          )}
 
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-outline-danger"
-                            title="Eliminar proveedor"
-                            onClick={() => handleDelete(supplier)}
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                          {canDelete && (
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-danger"
+                              title="Eliminar proveedor"
+                              onClick={() => handleDelete(supplier)}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

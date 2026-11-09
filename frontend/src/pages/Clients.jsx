@@ -1,6 +1,8 @@
 import { API_URL, apiFetch } from "../services/api";
 import { useEffect, useState } from "react";
 
+import { useAuth } from "../context/AuthContext";
+
 import ClientForm from "../components/clients/ClientForm";
 import ClientDetailsModal from "../components/clients/ClientDetailsModal";
 import StatCard from "../components/common/StatCard";
@@ -18,6 +20,13 @@ const EMPTY_CLIENT = {
 };
 
 export default function Clients() {
+  const { can } = useAuth();
+
+  // Mismos permisos que el backend (constants/permissions.js).
+  const canCreate = can("clients.create_client");
+  const canEdit = can("clients.update_client");
+  const canDelete = can("clients.delete_client");
+
   const [clients, setClients] = useState([]);
   const [sales, setSales] = useState([]);
 
@@ -447,11 +456,18 @@ export default function Clients() {
           FORMULARIO
       ========================= */}
 
-      <ClientForm
-        client={client}
-        handleChange={handleChange}
-        handleSubmit={handleSubmit}
-      />
+      {(editingId ? canEdit : canCreate) ? (
+        <ClientForm
+          client={client}
+          handleChange={handleChange}
+          handleSubmit={handleSubmit}
+        />
+      ) : (
+        <div className="alert alert-light border mb-4">
+          Tu rol puede consultar los clientes, pero no crearlos ni
+          modificarlos.
+        </div>
+      )}
 
       {saving && (
         <div className="text-muted mb-3">
@@ -699,31 +715,35 @@ export default function Clients() {
                             👁️
                           </button>
 
-                          <button
-                            type="button"
-                            className="btn btn-warning btn-sm"
-                            onClick={() =>
-                              handleEdit(
-                                item.id
-                              )
-                            }
-                            title="Editar cliente"
-                          >
-                            ✏️
-                          </button>
+                          {canEdit && (
+                            <button
+                              type="button"
+                              className="btn btn-warning btn-sm"
+                              onClick={() =>
+                                handleEdit(
+                                  item.id
+                                )
+                              }
+                              title="Editar cliente"
+                            >
+                              ✏️
+                            </button>
+                          )}
 
-                          <button
-                            type="button"
-                            className="btn btn-danger btn-sm"
-                            onClick={() =>
-                              handleDelete(
-                                item.id
-                              )
-                            }
-                            title="Eliminar cliente"
-                          >
-                            🗑️
-                          </button>
+                          {canDelete && (
+                            <button
+                              type="button"
+                              className="btn btn-danger btn-sm"
+                              onClick={() =>
+                                handleDelete(
+                                  item.id
+                                )
+                              }
+                              title="Eliminar cliente"
+                            >
+                              🗑️
+                            </button>
+                          )}
 
                         </div>
 

@@ -3,9 +3,15 @@ import { useEffect, useRef, useState } from "react";
 
 import SaleForm from "../components/sales/SaleForm";
 import SaleTable from "../components/sales/SaleTable";
+import { useAuth } from "../context/AuthContext";
 
 
 export default function Sales() {
+  const { can } = useAuth();
+
+  // Mismo permiso que el backend (constants/permissions.js).
+  const canSell = can("sales.create_sale");
+
   const scannerRef = useRef(null);
 
   const [products, setProducts] = useState([]);
@@ -496,6 +502,16 @@ export default function Sales() {
         </div>
       </div>
 
+      {!canSell && (
+        <div className="alert alert-light border mb-4">
+          Tu rol puede consultar el historial de ventas, pero no
+          registrar ventas.
+        </div>
+      )}
+
+      {canSell && (
+      <>
+
       <div className="stat-card mb-4">
 
         <h4 className="mb-3">
@@ -587,6 +603,9 @@ export default function Sales() {
           savingSale
         }
       />
+
+      </>
+      )}
 
       <SaleTable
         sales={sales}

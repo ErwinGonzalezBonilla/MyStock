@@ -14,6 +14,7 @@ import {
   onUnauthorized,
   setToken,
 } from "../services/api";
+import { roleCan } from "../constants/permissions";
 
 const AuthContext = createContext(null);
 
@@ -132,6 +133,13 @@ export function AuthProvider({ children }) {
     [user]
   );
 
+  // can("products.create_product"): mismo permiso que el backend
+  // (ver constants/permissions.js). Solo para mostrar u ocultar UI.
+  const can = useCallback(
+    (permission) => roleCan(user?.role, permission),
+    [user]
+  );
+
   const value = useMemo(() => ({
     user,
     company,
@@ -142,7 +150,8 @@ export function AuthProvider({ children }) {
     register,
     logout,
     hasRole,
-  }), [user, company, loading, login, register, logout, hasRole]);
+    can,
+  }), [user, company, loading, login, register, logout, hasRole, can]);
 
   return (
     <AuthContext.Provider value={value}>
