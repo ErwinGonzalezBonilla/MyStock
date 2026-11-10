@@ -6,18 +6,14 @@ import {
   Package,
 } from "lucide-react";
 import { parseApiDate } from "../../utils/dates";
+import { useMoney } from "../../hooks/useMoney";
 
 export default function PurchaseDetailsModal({ purchase, onClose }) {
+  const formatCurrency = useMoney();
+
   if (!purchase) {
     return null;
   }
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "EUR",
-    }).format(Number(value) || 0);
-  };
 
   const formatDate = (date) => {
     if (!date) {

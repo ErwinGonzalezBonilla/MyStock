@@ -1,3 +1,5 @@
+import { useMoney } from "../../hooks/useMoney";
+
 export default function SaleForm({
   products = [],
   clients = [],
@@ -12,6 +14,8 @@ export default function SaleForm({
   removeFromCart,
   loadingProducts,
 }) {
+  const formatMoney = useMoney();
+
   const selectedClient = clients.find(
     (client) =>
       Number(client.id) === Number(sale?.clientId)
@@ -299,10 +303,7 @@ export default function SaleForm({
                       </td>
 
                       <td>
-                        €{" "}
-                        {Number(
-                          item.unitPrice
-                        ).toFixed(2)}
+                        {formatMoney(item.unitPrice)}
                       </td>
 
                       <td>
@@ -324,10 +325,7 @@ export default function SaleForm({
                       </td>
 
                       <td className="fw-semibold">
-                        €{" "}
-                        {Number(
-                          item.subtotal
-                        ).toFixed(2)}
+                        {formatMoney(item.subtotal)}
                       </td>
 
                       <td>
@@ -399,7 +397,7 @@ export default function SaleForm({
             </span>
 
             <span className="fs-3 fw-bold">
-              € {Number(cartTotal).toFixed(2)}
+              {formatMoney(cartTotal)}
             </span>
 
           </div>

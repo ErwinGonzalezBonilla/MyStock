@@ -1,6 +1,9 @@
 import { parseApiDate } from "../../utils/dates";
+import { useMoney } from "../../hooks/useMoney";
 
 export default function RecentSales({ sales }) {
+  const formatMoney = useMoney();
+
   const formatDate = (date) => {
     if (!date) {
       return "Sin fecha";
@@ -107,11 +110,7 @@ export default function RecentSales({ sales }) {
                   </td>
 
                   <td className="fw-bold">
-                    €
-                    {" "}
-                    {Number(
-                      sale.total
-                    ).toFixed(2)}
+                    {formatMoney(sale.total)}
                   </td>
 
                 </tr>

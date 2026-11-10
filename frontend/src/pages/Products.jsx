@@ -1,5 +1,5 @@
 import { API_URL as API_BASE_URL, apiFetch } from "../services/api";
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "../context/AuthContext";
 
@@ -7,6 +7,7 @@ import ProductForm from "../components/products/ProductForm";
 import ProductTable from "../components/products/ProductTable";
 import StockHistory from "../components/products/StockHistory";
 import { getStockStatus } from "../utils/stock";
+import { useMoney } from "../hooks/useMoney";
 
 const API_URL = `${API_BASE_URL}/api/products`;
 
@@ -35,29 +36,53 @@ const EMPTY_PRODUCT = {
 // GENERAR SKU AUTOMÁTICO
 // =========================
 
+// Sigue el formato más usado en los SKU de la empresa
+// (p. ej. COS-0001 -> COS-0031). Sin SKU previos: PRD-000001.
+
+const DEFAULT_SKU_PREFIX = "PRD-";
+const DEFAULT_SKU_DIGITS = 6;
+
 const generateSku = (products) => {
-  let highestNumber = 0;
+  const formats = new Map();
 
   products.forEach((item) => {
-    if (!item.sku) {
+    const match = item.sku?.match(/^([A-Za-z]+-?)(\d+)$/);
+
+    if (!match) {
       return;
     }
 
-    const match = item.sku.match(/^PET-(\d+)$/);
+    const [, prefix, digits] = match;
+    const key = `${prefix}|${digits.length}`;
+    const format = formats.get(key) || {
+      prefix,
+      digits: digits.length,
+      count: 0,
+      highest: 0,
+    };
 
-    if (match) {
-      const number = Number(match[1]);
-
-      if (number > highestNumber) {
-        highestNumber = number;
-      }
-    }
+    format.count += 1;
+    format.highest = Math.max(format.highest, Number(digits));
+    formats.set(key, format);
   });
 
-  return `PET-${String(highestNumber + 1).padStart(6, "0")}`;
+  const format = [...formats.values()].sort(
+    (a, b) => b.count - a.count
+  )[0] || {
+    prefix: DEFAULT_SKU_PREFIX,
+    digits: DEFAULT_SKU_DIGITS,
+    highest: 0,
+  };
+
+  return `${format.prefix}${String(format.highest + 1).padStart(
+    format.digits,
+    "0"
+  )}`;
 };
 
 export default function Products() {
+  const formatMoney = useMoney();
+
   const { can } = useAuth();
 
   // Mismos permisos que el backend (constants/permissions.js).
@@ -86,6 +111,20 @@ export default function Products() {
   const [error, setError] = useState("");
 
   const [message, setMessage] = useState("");
+
+  // Categorías que ya usa la empresa (también las de archivados),
+  // para sugerirlas en el formulario.
+  const categories = useMemo(
+    () =>
+      [
+        ...new Set(
+          products
+            .map((item) => item.category?.trim())
+            .filter(Boolean)
+        ),
+      ].sort((a, b) => a.localeCompare(b, "es")),
+    [products]
+  );
 
   // =========================
   // CARGAR PRODUCTOS
@@ -220,9 +259,10 @@ export default function Products() {
         ? "PUT"
         : "POST";
 
+      // Al crear se respeta el SKU escrito; vacío, se genera.
       const sku = isEditing
         ? product.sku
-        : generateSku(products);
+        : product.sku?.trim() || generateSku(products);
 
       const barcode = product.barcode
         ? product.barcode.trim()
@@ -811,10 +851,7 @@ export default function Products() {
             </div>
 
             <h3 className="fw-bold mt-2 mb-0">
-              €{" "}
-              {inventoryValue.toFixed(
-                2
-              )}
+              {formatMoney(inventoryValue)}
             </h3>
 
           </div>
@@ -860,6 +897,7 @@ export default function Products() {
           handleSubmit={handleSubmit}
           handleImage={handleImage}
           editingIndex={editingId}
+          categories={categories}
         />
 
       ) : (

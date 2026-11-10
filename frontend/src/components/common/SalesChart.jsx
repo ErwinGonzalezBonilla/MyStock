@@ -10,9 +10,12 @@ import {
 
 // Fechas de la API en UTC sin zona horaria: ver utils/dates.js.
 import { parseApiDate } from "../../utils/dates";
+import { useMoney } from "../../hooks/useMoney";
 
 // sales: ventas reales de GET /api/sales (las carga Dashboard).
 export default function SalesChart({ sales = [] }) {
+  const formatCurrency = useMoney();
+
   // =========================
   // ÚLTIMOS 30 DÍAS
   // =========================
@@ -74,20 +77,6 @@ export default function SalesChart({ sales = [] }) {
     });
   }
 
-  // =========================
-  // FORMATO DE MONEDA
-  // =========================
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat(
-      "es-ES",
-      {
-        style: "currency",
-        currency: "EUR",
-      }
-    ).format(value);
-  };
-
   return (
     <ResponsiveContainer
       width="100%"
@@ -105,7 +94,7 @@ export default function SalesChart({ sales = [] }) {
 
         <YAxis
           tickFormatter={(value) =>
-            `${value} €`
+            formatCurrency(value, { decimals: 0 })
           }
         />
 

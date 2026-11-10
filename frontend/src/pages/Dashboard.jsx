@@ -7,7 +7,6 @@ import {
   AlertTriangle,
   TrendingUp,
   Percent,
-  Sparkles,
   RefreshCw,
 } from "lucide-react";
 
@@ -16,9 +15,12 @@ import RecentSales from "../components/common/RecentSales";
 import LowStockProducts from "../components/common/LowStockProducts";
 import { parseApiDate } from "../utils/dates";
 import { needsRestock } from "../utils/stock";
+import { useMoney } from "../hooks/useMoney";
 
 
 export default function Dashboard() {
+  const formatCurrency = useMoney();
+
   const [products, setProducts] = useState([]);
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -154,13 +156,6 @@ export default function Dashboard() {
           100
         ).toFixed(1)
       : 0;
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "EUR",
-    }).format(Number(value) || 0);
-  };
 
   if (loading) {
     return (
@@ -467,13 +462,11 @@ export default function Dashboard() {
 
       </div>
 
-      {/* GRÁFICO + IA */}
+      {/* GRÁFICO */}
 
       <div className="row g-4 mb-4">
 
-        {/* GRÁFICO */}
-
-        <div className="col-xl-8">
+        <div className="col-12">
 
           <div className="dashboard-panel">
 
@@ -498,73 +491,6 @@ export default function Dashboard() {
               <SalesChart
                 sales={sales}
               />
-
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* IA */}
-
-        <div className="col-xl-4">
-
-          <div className="dashboard-ai-card">
-
-            <div className="dashboard-ai-header">
-
-              <div className="dashboard-ai-icon">
-                <Sparkles size={22} />
-              </div>
-
-              <div>
-
-                <h2>
-                  MyStock AI
-                </h2>
-
-                <span>
-                  Asistente inteligente
-                </span>
-
-              </div>
-
-            </div>
-
-            <div className="dashboard-ai-content">
-
-              <p>
-                Bienvenido a MyStock.
-              </p>
-
-              <p>
-                Estamos preparando el análisis
-                inteligente de tu negocio.
-              </p>
-
-              <div className="dashboard-ai-list">
-
-                <div>
-                  <span>•</span>
-                  Analizar productos
-                </div>
-
-                <div>
-                  <span>•</span>
-                  Detectar productos a reponer
-                </div>
-
-                <div>
-                  <span>•</span>
-                  Analizar ventas
-                </div>
-
-                <div>
-                  <span>•</span>
-                  Mejorar la rentabilidad
-                </div>
-
-              </div>
 
             </div>
 

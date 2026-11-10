@@ -12,7 +12,13 @@ export default function AppShell({ children }) {
     >
       <Sidebar />
 
-      <div className="flex-grow-1 d-flex flex-column">
+      {/* minWidth 0: sin esto, la columna crece hasta el ancho de su
+          contenido más ancho (tablas, tarjetas) y aparece scroll
+          horizontal en toda la página en vez de ajustarse. */}
+      <div
+        className="flex-grow-1 d-flex flex-column"
+        style={{ minWidth: 0 }}
+      >
         <Navbar />
 
         <main className="p-4">

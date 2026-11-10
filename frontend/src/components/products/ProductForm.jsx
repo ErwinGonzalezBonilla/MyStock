@@ -1,11 +1,11 @@
-import { PRODUCT_CATEGORIES } from "../../constants/productCategories";
-
 export default function ProductForm({
   product,
   handleChange,
   handleSubmit,
   handleImage,
   editingIndex,
+  // Categorías existentes en los productos de la empresa.
+  categories = [],
 }) {
   // Al editar, cambiar el stock es un ajuste de inventario
   // y hay que indicar el motivo.
@@ -78,7 +78,7 @@ export default function ProductForm({
             name="name"
             value={product.name}
             onChange={handleChange}
-            placeholder="Ej. Royal Canin Adult"
+            placeholder="Ej. Crema hidratante 50 ml"
             required
           />
 
@@ -100,13 +100,15 @@ export default function ProductForm({
               name="sku"
               value={product.sku}
               onChange={handleChange}
-              placeholder="PET-000001"
+              placeholder="Ej. PRD-000001"
               maxLength="100"
-              required
+              required={Boolean(editingIndex)}
             />
 
             <div className="form-text">
-              Identificador interno del producto.
+              {editingIndex
+                ? "Identificador interno del producto."
+                : "Identificador interno. Déjalo vacío para generarlo automáticamente."}
             </div>
 
           </div>
@@ -141,34 +143,49 @@ export default function ProductForm({
 
         <div className="mb-3">
 
-          <label className="form-label">
+          <label
+            className="form-label"
+            htmlFor="product-category"
+          >
             Categoría
           </label>
 
-          <select
-            className="form-select"
+          <input
+            id="product-category"
+            type="text"
+            className="form-control"
             name="category"
             value={product.category}
             onChange={handleChange}
+            list="product-category-options"
+            placeholder={
+              categories.length
+                ? "Elige una o escribe una nueva"
+                : "Ej. Cuidado facial"
+            }
+            maxLength="100"
+            autoComplete="off"
+            aria-describedby="product-category-help"
             required
-          >
+          />
 
-            <option value="">
-              Seleccione...
-            </option>
-
-            {PRODUCT_CATEGORIES.map((category) => (
-
+          <datalist id="product-category-options">
+            {categories.map((category) => (
               <option
                 key={category}
                 value={category}
-              >
-                {category}
-              </option>
-
+              />
             ))}
+          </datalist>
 
-          </select>
+          <div
+            id="product-category-help"
+            className="form-text"
+          >
+            {categories.length
+              ? "Elige una categoría existente o escribe una nueva."
+              : "Escribe la categoría del producto."}
+          </div>
 
         </div>
 

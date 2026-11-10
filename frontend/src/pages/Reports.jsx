@@ -11,7 +11,7 @@ import {
 import { BarChart3, Table2 } from "lucide-react";
 
 import { API_URL, apiFetch } from "../services/api";
-import { useAuth } from "../context/AuthContext";
+import { useMoney } from "../hooks/useMoney";
 import { localDayKey, parseApiDate } from "../utils/dates";
 
 // =========================================================
@@ -77,7 +77,6 @@ function StatTile({ label, value, hint }) {
 }
 
 export default function Reports() {
-  const { company } = useAuth();
 
   const [sales, setSales] = useState([]);
   const [products, setProducts] = useState([]);
@@ -128,14 +127,7 @@ export default function Reports() {
     };
   }, []);
 
-  const currency = useMemo(
-    () =>
-      new Intl.NumberFormat("es-ES", {
-        style: "currency",
-        currency: company?.currency || "EUR",
-      }),
-    [company?.currency]
-  );
+  const formatMoney = useMoney();
 
   // =========================
   // VENTAS DEL PERIODO
@@ -281,7 +273,7 @@ export default function Reports() {
             <div className="col-sm-6 col-lg-3">
               <StatTile
                 label={`Ingresos (${periodDays} días)`}
-                value={currency.format(periodRevenue)}
+                value={formatMoney(periodRevenue)}
               />
             </div>
             <div className="col-sm-6 col-lg-3">
@@ -290,13 +282,13 @@ export default function Reports() {
             <div className="col-sm-6 col-lg-3">
               <StatTile
                 label="Ticket medio"
-                value={currency.format(averageTicket)}
+                value={formatMoney(averageTicket)}
               />
             </div>
             <div className="col-sm-6 col-lg-3">
               <StatTile
                 label="Mejor día"
-                value={bestDay ? currency.format(bestDay.revenue) : "—"}
+                value={bestDay ? formatMoney(bestDay.revenue) : "—"}
                 hint={bestDay ? bestDay.longLabel : "Sin ventas en el periodo"}
               />
             </div>
@@ -346,7 +338,7 @@ export default function Reports() {
                       <tr key={day.key}>
                         <td className="text-capitalize">{day.longLabel}</td>
                         <td className="text-end">{day.count}</td>
-                        <td className="text-end">{currency.format(day.revenue)}</td>
+                        <td className="text-end">{formatMoney(day.revenue)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -378,7 +370,7 @@ export default function Reports() {
                   <Tooltip
                     cursor={{ fill: "rgba(13, 110, 253, 0.06)" }}
                     formatter={(value, _name, item) => [
-                      `${currency.format(value)} · ${item.payload.count} venta${
+                      `${formatMoney(value)} · ${item.payload.count} venta${
                         item.payload.count === 1 ? "" : "s"
                       }`,
                       "Ingresos",
@@ -459,7 +451,7 @@ export default function Reports() {
                               </div>
                             </td>
                             <td className="text-end">
-                              {currency.format(product.revenue)}
+                              {formatMoney(product.revenue)}
                             </td>
                           </tr>
                         ))}
@@ -484,7 +476,7 @@ export default function Reports() {
                     <div className="border rounded p-3 h-100">
                       <div className="text-muted small">A precio de coste</div>
                       <div className="fs-4 fw-bold">
-                        {currency.format(stockValue.cost)}
+                        {formatMoney(stockValue.cost)}
                       </div>
                     </div>
                   </div>
@@ -493,7 +485,7 @@ export default function Reports() {
                     <div className="border rounded p-3 h-100">
                       <div className="text-muted small">A precio de venta</div>
                       <div className="fs-4 fw-bold">
-                        {currency.format(stockValue.retail)}
+                        {formatMoney(stockValue.retail)}
                       </div>
                     </div>
                   </div>
@@ -502,7 +494,7 @@ export default function Reports() {
                     <div className="border rounded p-3 h-100">
                       <div className="text-muted small">Margen potencial</div>
                       <div className="fs-4 fw-bold">
-                        {currency.format(stockValue.retail - stockValue.cost)}
+                        {formatMoney(stockValue.retail - stockValue.cost)}
                       </div>
                     </div>
                   </div>

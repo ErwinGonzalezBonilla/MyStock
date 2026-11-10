@@ -4,9 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import SaleForm from "../components/sales/SaleForm";
 import SaleTable from "../components/sales/SaleTable";
 import { useAuth } from "../context/AuthContext";
+import { useMoney } from "../hooks/useMoney";
 
 
 export default function Sales() {
+  const formatMoney = useMoney();
+
   const { can } = useAuth();
 
   // Mismo permiso que el backend (constants/permissions.js).
@@ -464,9 +467,9 @@ export default function Sales() {
       });
 
       setSuccess(
-        `Venta #${data.sale.id} registrada correctamente por € ${Number(
+        `Venta #${data.sale.id} registrada correctamente por ${formatMoney(
           data.sale.total
-        ).toFixed(2)}.`
+        )}.`
       );
 
       setTimeout(() => {

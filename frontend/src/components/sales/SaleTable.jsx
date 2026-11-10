@@ -1,8 +1,11 @@
 import { parseApiDate } from "../../utils/dates";
+import { useMoney } from "../../hooks/useMoney";
 
 export default function SaleTable({
   sales,
 }) {
+  const formatMoney = useMoney();
+
   const formatDate = (date) => {
     if (!date) {
       return "Sin fecha";
@@ -152,19 +155,13 @@ export default function SaleTable({
                   {/* PRECIO */}
 
                   <td>
-                    €{" "}
-                    {Number(
-                      sale.unitPrice || 0
-                    ).toFixed(2)}
+                    {formatMoney(sale.unitPrice || 0)}
                   </td>
 
                   {/* TOTAL */}
 
                   <td className="fw-bold">
-                    €{" "}
-                    {Number(
-                      sale.total || 0
-                    ).toFixed(2)}
+                    {formatMoney(sale.total || 0)}
                   </td>
 
                 </tr>

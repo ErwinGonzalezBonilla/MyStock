@@ -1,10 +1,13 @@
 import { apiDateTime, parseApiDate } from "../../utils/dates";
+import { useMoney } from "../../hooks/useMoney";
 
 export default function ClientDetailsModal({
   client,
   sales = [],
   onClose,
 }) {
+  const formatMoney = useMoney();
+
   if (!client) {
     return null;
   }
@@ -333,10 +336,7 @@ export default function ClientDetailsModal({
                       </small>
 
                       <div className="fs-5 fw-bold">
-                        €{" "}
-                        {totalPurchases.toFixed(
-                          2
-                        )}
+                        {formatMoney(totalPurchases)}
                       </div>
 
                     </div>
@@ -352,10 +352,7 @@ export default function ClientDetailsModal({
                       </small>
 
                       <div className="fs-5 fw-bold">
-                        €{" "}
-                        {averageTicket.toFixed(
-                          2
-                        )}
+                        {formatMoney(averageTicket)}
                       </div>
 
                     </div>
@@ -394,11 +391,7 @@ export default function ClientDetailsModal({
                     {" · "}
 
                     <span>
-                      €
-                      {" "}
-                      {Number(
-                        lastPurchase.total
-                      ).toFixed(2)}
+                      {formatMoney(lastPurchase.total)}
                     </span>
 
                   </div>
@@ -528,17 +521,11 @@ export default function ClientDetailsModal({
                               </td>
 
                               <td>
-                                €{" "}
-                                {item.unitPrice.toFixed(
-                                  2
-                                )}
+                                {formatMoney(item.unitPrice)}
                               </td>
 
                               <td className="fw-bold">
-                                €{" "}
-                                {item.subtotal.toFixed(
-                                  2
-                                )}
+                                {formatMoney(item.subtotal)}
                               </td>
 
                             </tr>

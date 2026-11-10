@@ -15,9 +15,12 @@ import {
 import PurchaseDetailsModal from "../components/purchases/PurchaseDetailsModal";
 import { useAuth } from "../context/AuthContext";
 import { parseApiDate } from "../utils/dates";
+import { useMoney } from "../hooks/useMoney";
 
 
 export default function Purchases() {
+  const formatCurrency = useMoney();
+
   const { can } = useAuth();
 
   // Mismo permiso que el backend (constants/permissions.js).
@@ -115,13 +118,6 @@ export default function Purchases() {
       product.barcode?.toLowerCase().includes(searchValue)
     );
   });
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "EUR",
-    }).format(Number(value) || 0);
-  };
 
   const formatDate = (date) => {
     if (!date) {

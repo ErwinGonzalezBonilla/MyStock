@@ -496,108 +496,6 @@
 
 
 /* =========================================================
-   MY STOCK AI
-   ========================================================= */
-
-.dashboard-ai-card {
-  height: 100%;
-
-  padding: 24px;
-
-  border-radius: var(--radius-md);
-
-  background:
-    linear-gradient(
-      145deg,
-      #ffffff,
-      #f4f7ff
-    );
-
-  border: 1px solid var(--border-color);
-
-  box-shadow: var(--shadow-sm);
-}
-
-.dashboard-ai-header {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-
-  margin-bottom: 24px;
-}
-
-.dashboard-ai-icon {
-  width: 44px;
-  height: 44px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 12px;
-
-  background: rgba(13, 110, 253, 0.10);
-
-  color: var(--primary-color);
-}
-
-.dashboard-ai-header h2 {
-  margin: 0;
-
-  font-size: 18px;
-  font-weight: 700;
-
-  color: var(--text-color);
-}
-
-.dashboard-ai-header span {
-  display: block;
-
-  margin-top: 3px;
-
-  color: var(--text-secondary);
-
-  font-size: 12px;
-}
-
-.dashboard-ai-content {
-  color: var(--text-secondary);
-
-  font-size: 14px;
-
-  line-height: 1.6;
-}
-
-.dashboard-ai-content p {
-  margin-bottom: 12px;
-}
-
-.dashboard-ai-list {
-  margin-top: 20px;
-
-  padding-top: 16px;
-
-  border-top: 1px solid var(--border-color);
-}
-
-.dashboard-ai-list div {
-  display: flex;
-  gap: 8px;
-
-  margin-bottom: 8px;
-
-  color: var(--text-color);
-
-  font-size: 13px;
-}
-
-.dashboard-ai-list span {
-  color: var(--primary-color);
-  font-weight: 700;
-}
-
-
-/* =========================================================
    RESPONSIVE
    ========================================================= */
 
@@ -615,4 +513,63 @@
     font-size: 26px;
   }
 
+}
+
+/* =========================================================
+   TABLA DE PRODUCTOS
+   ========================================================= */
+
+.product-table td,
+.product-table th {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.product-table__thumb {
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.product-table__thumb--empty {
+  background: var(--background-color);
+}
+
+.product-table__product {
+  min-width: 160px;
+}
+
+.product-table__codes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.product-table__barcode {
+  font-family: monospace;
+  color: var(--text-secondary);
+}
+
+/* Portátiles pequeños y tablets en horizontal: algo más compacta
+   para que quepa sin scroll horizontal. */
+@media (max-width: 1199.98px) {
+
+  .product-table {
+    font-size: 0.875rem;
+  }
+
+  .product-table td,
+  .product-table th {
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
+  }
+
+  .product-table .btn-sm {
+    --bs-btn-padding-x: 0.4rem;
+  }
 }

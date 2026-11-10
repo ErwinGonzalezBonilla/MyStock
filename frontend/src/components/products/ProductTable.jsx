@@ -2,6 +2,7 @@ import { useState } from "react";
 import StockMovementModal from "./StockMovementModal";
 import { parseApiDate } from "../../utils/dates";
 import { STOCK_STATUS, getStockStatus } from "../../utils/stock";
+import { useMoney } from "../../hooks/useMoney";
 
 export default function ProductTable({
   products,
@@ -14,6 +15,8 @@ export default function ProductTable({
   // Qué puede hacer el rol del usuario (ver pages/Products.jsx).
   permissions = {},
 }) {
+  const formatMoney = useMoney();
+
   const [movementProduct, setMovementProduct] =
     useState(null);
 
@@ -93,21 +96,17 @@ export default function ProductTable({
 
       <div className="table-responsive">
 
-        <table className="table table-striped table-hover align-middle">
+        <table className="table table-striped table-hover align-middle product-table">
 
           <thead className="table-light">
             <tr>
-              <th>Imagen</th>
-              <th>SKU</th>
-              <th>Código de barras</th>
+              <th className="d-none d-xxl-table-cell">Imagen</th>
               <th>Producto</th>
               <th>Categoría</th>
               <th>Stock</th>
-              <th>Estado</th>
-              <th>Compra</th>
-              <th>Venta</th>
+              <th className="text-end">Precio</th>
               <th>Margen</th>
-              <th>Último movimiento</th>
+              <th className="d-none d-xl-table-cell">Último movimiento</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -118,7 +117,7 @@ export default function ProductTable({
 
               <tr>
                 <td
-                  colSpan="12"
+                  colSpan="8"
                   className="text-center text-muted"
                 >
                   No hay productos registrados.
@@ -173,88 +172,57 @@ export default function ProductTable({
 
                     {/* IMAGEN */}
 
-                    <td>
+                    <td className="d-none d-xxl-table-cell">
 
                       {item.image ? (
 
                         <img
                           src={item.image}
                           alt={item.name}
-                          style={{
-                            width: "60px",
-                            height: "60px",
-                            objectFit: "cover",
-                            borderRadius: "10px",
-                            border:
-                              "1px solid #ddd",
-                          }}
+                          className="product-table__thumb"
+                          style={{ objectFit: "cover" }}
                         />
 
                       ) : (
 
-                        <div
-                          style={{
-                            width: "60px",
-                            height: "60px",
-                            background:
-                              "#f2f2f2",
-                            borderRadius: "10px",
-                          }}
-                        />
+                        <div className="product-table__thumb product-table__thumb--empty" />
 
                       )}
 
                     </td>
 
-                    {/* SKU */}
+                    {/* PRODUCTO + SKU + CÓDIGO DE BARRAS */}
 
-                    <td>
+                    <td className="product-table__product">
 
-                      <span className="badge bg-dark">
-                        {item.sku ||
-                          "Sin SKU"}
-                      </span>
+                      <div className="fw-semibold">
+                        {item.name}
 
-                    </td>
+                        {archived && (
+                          <span className="badge bg-secondary ms-2">
+                            Archivado
+                          </span>
+                        )}
+                      </div>
 
-                    {/* CÓDIGO DE BARRAS */}
+                      <div className="product-table__codes">
 
-                    <td>
-
-                      {item.barcode ? (
+                        <span className="badge bg-dark">
+                          {item.sku || "Sin SKU"}
+                        </span>
 
                         <span
-                          className="badge bg-light text-dark border"
-                          style={{
-                            fontFamily:
-                              "monospace",
-                            fontSize:
-                              "0.85rem",
-                          }}
+                          className={
+                            item.barcode
+                              ? "product-table__barcode"
+                              : "text-muted"
+                          }
                         >
-                          {item.barcode}
+                          {item.barcode || "Sin código"}
                         </span>
 
-                      ) : (
+                      </div>
 
-                        <span className="text-muted">
-                          Sin código
-                        </span>
-
-                      )}
-
-                    </td>
-
-                    {/* PRODUCTO */}
-
-                    <td className="fw-semibold">
-                      {item.name}
-
-                      {archived && (
-                        <span className="badge bg-secondary ms-2">
-                          Archivado
-                        </span>
-                      )}
                     </td>
 
                     {/* CATEGORÍA */}
@@ -263,11 +231,11 @@ export default function ProductTable({
                       {item.category || "-"}
                     </td>
 
-                    {/* STOCK */}
+                    {/* STOCK + ESTADO */}
 
-                    <td>
+                    <td className="text-nowrap">
 
-                      <div className="d-flex align-items-center gap-2">
+                      <div className="d-flex align-items-center gap-2 flex-nowrap">
 
                         {permissions.moveStock && (
                         <button
@@ -311,30 +279,26 @@ export default function ProductTable({
 
                       </div>
 
-                    </td>
-
-                    {/* ESTADO */}
-
-                    <td>
-
                       <span
-                        className={`badge ${stockInfo.className}`}
+                        className={`badge mt-1 ${stockInfo.className}`}
                       >
                         {stockInfo.text}
                       </span>
 
                     </td>
 
-                    {/* COMPRA */}
+                    {/* PRECIO DE VENTA + COMPRA */}
 
-                    <td>
-                      € {buy.toFixed(2)}
-                    </td>
+                    <td className="text-end text-nowrap">
 
-                    {/* VENTA */}
+                      <div className="fw-semibold">
+                        {formatMoney(sell)}
+                      </div>
 
-                    <td>
-                      € {sell.toFixed(2)}
+                      <small className="text-muted">
+                        Compra {formatMoney(buy)}
+                      </small>
+
                     </td>
 
                     {/* MARGEN */}
@@ -357,7 +321,7 @@ export default function ProductTable({
 
                     {/* ÚLTIMO MOVIMIENTO */}
 
-                    <td>
+                    <td className="d-none d-xl-table-cell">
 
                       <small className="text-muted">
 
@@ -375,7 +339,7 @@ export default function ProductTable({
 
                     <td>
 
-                      <div className="d-flex gap-2">
+                      <div className="d-flex gap-2 flex-nowrap">
 
                         {!permissions.edit &&
                           !permissions.delete &&

@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 import { API_URL, apiFetch } from "../services/api";
-import { useAuth } from "../context/AuthContext";
+import { useMoney } from "../hooks/useMoney";
 import { STOCK_STATUS, getStockStatus } from "../utils/stock";
 
 // =========================================================
@@ -26,7 +26,6 @@ import { STOCK_STATUS, getStockStatus } from "../utils/stock";
 const STATUS = STOCK_STATUS;
 
 export default function Inventory() {
-  const { company } = useAuth();
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,10 +69,7 @@ export default function Inventory() {
     };
   }, []);
 
-  const currency = new Intl.NumberFormat("es-ES", {
-    style: "currency",
-    currency: company?.currency || "EUR",
-  });
+  const formatMoney = useMoney();
 
   const categories = useMemo(
     () =>
@@ -302,7 +298,7 @@ export default function Inventory() {
                           </span>
                         </td>
                         <td className="text-end">
-                          {currency.format(stock * (Number(product.buyPrice) || 0))}
+                          {formatMoney(stock * (Number(product.buyPrice) || 0))}
                         </td>
                       </tr>
                     );
