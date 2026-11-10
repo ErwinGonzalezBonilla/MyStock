@@ -172,8 +172,17 @@ def build_config(environ=None):
     }
 
     if not database_url.startswith("sqlite"):
-        # Descarta conexiones caídas del pool (PostgreSQL gestionado
-        # cierra las conexiones inactivas).
-        config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
+        config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+            # Descarta conexiones caídas del pool (PostgreSQL gestionado
+            # cierra las conexiones inactivas).
+            "pool_pre_ping": True,
+            # Sin esto, si la base de datos no responde, una petición
+            # (o el healthcheck) puede quedarse colgada indefinidamente.
+            "connect_args": {
+                "connect_timeout": int(
+                    environ.get("DATABASE_CONNECT_TIMEOUT") or "5"
+                ),
+            },
+        }
 
     return config

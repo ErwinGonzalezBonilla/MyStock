@@ -94,7 +94,10 @@ class BuildConfigTestCase(unittest.TestCase):
         self.assertTrue(
             config["SQLALCHEMY_DATABASE_URI"].startswith("postgresql+psycopg://")
         )
-        self.assertTrue(config["SQLALCHEMY_ENGINE_OPTIONS"]["pool_pre_ping"])
+        engine_options = config["SQLALCHEMY_ENGINE_OPTIONS"]
+        self.assertTrue(engine_options["pool_pre_ping"])
+        # Sin timeout, una base de datos caída cuelga las peticiones.
+        self.assertEqual(engine_options["connect_args"]["connect_timeout"], 5)
 
     def test_sqlite_url_is_kept(self):
         config = build_config({"DATABASE_URL": "sqlite:///otra.db"})
