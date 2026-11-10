@@ -3,6 +3,7 @@ import StockMovementModal from "./StockMovementModal";
 import { parseApiDate } from "../../utils/dates";
 import { STOCK_STATUS, getStockStatus } from "../../utils/stock";
 import { useMoney } from "../../hooks/useMoney";
+import { formatPercent } from "../../utils/money";
 
 export default function ProductTable({
   products,
@@ -139,10 +140,9 @@ export default function ProductTable({
 
                 const margin =
                   buy > 0
-                    ? (
-                        ((sell - buy) / buy) *
-                        100
-                      ).toFixed(0)
+                    ? Math.round(
+                        ((sell - buy) / buy) * 100
+                      )
                     : 0;
 
                 // Misma regla en toda la app (utils/stock.js).
@@ -314,7 +314,7 @@ export default function ProductTable({
                             : "badge bg-danger"
                         }
                       >
-                        {margin}%
+                        {formatPercent(margin, 0)}
                       </span>
 
                     </td>

@@ -573,3 +573,68 @@
     --bs-btn-padding-x: 0.4rem;
   }
 }
+
+
+/* =========================================================
+   DASHBOARD · ÚLTIMAS VENTAS Y STOCK BAJO
+   ========================================================= */
+
+.recent-sales-table__client {
+  display: block;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-sales-table__products {
+  min-width: 120px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.low-stock-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.low-stock-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.low-stock-item:last-child {
+  border-bottom: 0;
+}
+
+.low-stock-item__info {
+  min-width: 0;
+  flex: 1;
+}
+
+/* Hasta dos líneas; si no cabe, puntos suspensivos. */
+.low-stock-item__name {
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.low-stock-item__stock {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.low-stock-item__stock .badge {
+  margin-top: 2px;
+}

@@ -16,6 +16,7 @@ import LowStockProducts from "../components/common/LowStockProducts";
 import { parseApiDate } from "../utils/dates";
 import { needsRestock } from "../utils/stock";
 import { useMoney } from "../hooks/useMoney";
+import { formatPercent } from "../utils/money";
 
 
 export default function Dashboard() {
@@ -150,11 +151,7 @@ export default function Dashboard() {
 
   const potentialMargin =
     inventorySalesValue > 0
-      ? (
-          (potentialProfit /
-            inventorySalesValue) *
-          100
-        ).toFixed(1)
+      ? (potentialProfit / inventorySalesValue) * 100
       : 0;
 
   if (loading) {
@@ -447,7 +444,7 @@ export default function Dashboard() {
               </div>
 
               <div className="dashboard-profit-value">
-                {potentialMargin}%
+                {formatPercent(potentialMargin)}
               </div>
 
               <div className="dashboard-profit-description">

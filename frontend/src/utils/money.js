@@ -72,3 +72,27 @@ function getFormatter(currency, decimals) {
 export function formatMoney(value, currency = DEFAULT_CURRENCY, options = {}) {
   return getFormatter(currency, options.decimals).format(Number(value) || 0);
 }
+
+// =========================================================
+// PORCENTAJES
+// =========================================================
+// Formato español: 58,3 %. Recibe el porcentaje (58.3), no la
+// fracción (0.583).
+
+const percentFormatters = new Map();
+
+export function formatPercent(value, decimals = 1) {
+  if (!percentFormatters.has(decimals)) {
+    percentFormatters.set(
+      decimals,
+      new Intl.NumberFormat("es-ES", {
+        style: "percent",
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+        useGrouping: "always",
+      })
+    );
+  }
+
+  return percentFormatters.get(decimals).format((Number(value) || 0) / 100);
+}

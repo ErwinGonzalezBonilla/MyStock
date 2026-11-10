@@ -1,33 +1,41 @@
 import { STOCK_STATUS, getStockStatus, needsRestock } from "../../utils/stock";
 
-export default function LowStockProducts({
-  products,
-}) {
+// El amarillo de "text-warning" apenas se lee sobre blanco.
+const STOCK_TEXT_CLASS = {
+  out: "text-danger",
+  low: "text-warning-emphasis",
+};
+
+// products: productos de GET /api/products (los carga Dashboard).
+export default function LowStockProducts({ products = [] }) {
   // Sin stock o por debajo de su stock mínimo (utils/stock.js).
+  // Primero los agotados; después, los que tienen menos stock
+  // en proporción a su mínimo.
+  const urgency = (product) => {
+    const stock = Number(product.stock) || 0;
+    const minStock = Number(product.minStock) || 0;
+
+    return stock <= 0 ? -1 : stock / Math.max(minStock, 1);
+  };
+
   const lowStockProducts = products
     .filter(needsRestock)
-    .sort(
-      (a, b) =>
-        Number(a.stock) -
-        Number(b.stock)
-    );
+    .sort((a, b) => urgency(a) - urgency(b));
 
   return (
-    <div className="stat-card mb-4">
-
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <>
+      <div className="dashboard-panel-header d-flex justify-content-between align-items-start gap-3">
 
         <div>
-          <h4 className="mb-1">
-            ⚠️ Stock bajo
-          </h4>
-
-          <small className="text-muted">
-            Productos que necesitan reposición
-          </small>
+          <h2>Stock bajo</h2>
+          <p>Productos que necesitan reposición.</p>
         </div>
 
-        <span className="badge bg-warning text-dark">
+        <span
+          className={`badge ${
+            lowStockProducts.length ? "bg-warning text-dark" : "bg-success"
+          }`}
+        >
           {lowStockProducts.length}
         </span>
 
@@ -36,110 +44,60 @@ export default function LowStockProducts({
       {lowStockProducts.length === 0 ? (
 
         <div className="text-center py-4">
-
-          <div className="fs-1 mb-2">
-            ✅
-          </div>
-
-          <p className="fw-semibold mb-1">
-            Todo en orden
-          </p>
-
+          <div className="fs-1 mb-2" aria-hidden="true">✅</div>
+          <p className="fw-semibold mb-1">Todo en orden</p>
           <small className="text-muted">
             No hay productos con stock bajo.
           </small>
-
         </div>
 
       ) : (
 
-        <div>
+        <ul className="low-stock-list">
 
-          {lowStockProducts.map(
-            (product) => {
+          {lowStockProducts.map((product) => {
+            const stock = Number(product.stock) || 0;
+            const minStock = Number(product.minStock) || 0;
+            const statusKey = getStockStatus(product);
+            const status = STOCK_STATUS[statusKey];
 
-              const stock =
-                Number(product.stock) || 0;
+            return (
+              <li key={product.id} className="low-stock-item">
 
-              const status =
-                STOCK_STATUS[getStockStatus(product)];
+                <div className="low-stock-item__info">
 
-              return (
-                <div
-                  key={product.id}
-                  className="d-flex justify-content-between align-items-center border-bottom py-3"
-                >
-
-                  <div className="d-flex align-items-center gap-3">
-
-                    {product.image ? (
-
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        style={{
-                          width: "45px",
-                          height: "45px",
-                          objectFit: "cover",
-                          borderRadius: "8px",
-                          border:
-                            "1px solid #ddd",
-                        }}
-                      />
-
-                    ) : (
-
-                      <div
-                        style={{
-                          width: "45px",
-                          height: "45px",
-                          background:
-                            "#f2f2f2",
-                          borderRadius: "8px",
-                        }}
-                      />
-
-                    )}
-
-                    <div>
-
-                      <div className="fw-semibold">
-                        {product.name}
-                      </div>
-
-                      <small className="text-muted">
-                        {product.sku ||
-                          "Sin SKU"}
-                      </small>
-
-                    </div>
-
+                  <div
+                    className="low-stock-item__name"
+                    title={product.name}
+                  >
+                    {product.name}
                   </div>
 
-                  <div className="text-end">
-
-                    <div
-                      className={`fw-bold ${status.textClass}`}
-                    >
-                      {stock} unidades
-                    </div>
-
-                    <small className="text-muted">
-                      {status.label} · mín.{" "}
-                      {Number(product.minStock) || 0}
-                    </small>
-
-                  </div>
+                  <small className="text-muted">
+                    {product.sku || "Sin SKU"} · mín. {minStock}
+                  </small>
 
                 </div>
-              );
-            }
-          )}
 
-        </div>
+                <div className="low-stock-item__stock">
+
+                  <div className={`fw-bold ${STOCK_TEXT_CLASS[statusKey] || ""}`}>
+                    {stock} {stock === 1 ? "ud." : "uds."}
+                  </div>
+
+                  <span className={`badge ${status.badgeClass}`}>
+                    {status.label}
+                  </span>
+
+                </div>
+
+              </li>
+            );
+          })}
+
+        </ul>
 
       )}
-
-    </div>
+    </>
   );
 }
