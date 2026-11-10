@@ -34,5 +34,7 @@
 - [ ] Flask REST API
 - [ ] PostgreSQL
 - [ ] Authentication
+- [x] Forgot password (phase 1): link on the login page asking the user to contact their company administrator, who sets a new password from Users
+- [ ] Forgot password (phase 2, when deployed): password recovery by email with Resend or similar (time-limited single-use reset token, link to set a new password, no user enumeration)
 - [ ] Stripe subscriptions
 - [ ] SaaS deployment

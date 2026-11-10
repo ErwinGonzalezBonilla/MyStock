@@ -67,9 +67,14 @@ export default function Login() {
         </div>
 
         <div className="mb-4">
-          <label className="form-label" htmlFor="login-password">
-            Contraseña
-          </label>
+          <div className="d-flex justify-content-between align-items-baseline">
+            <label className="form-label" htmlFor="login-password">
+              Contraseña
+            </label>
+            <Link to="/forgot-password" className="small">
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
           <PasswordInput
             id="login-password"
             autoComplete="current-password"
