@@ -8,6 +8,7 @@ import os
 import sys
 import unittest
 
+os.environ["APP_ENV"] = "development"
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-with-at-least-32-bytes!!"
 

@@ -4,7 +4,7 @@ from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
-from config import Config
+from config import build_config
 from extensions import db, migrate
 from auth_protection import protect_api
 
@@ -27,8 +27,12 @@ from routes.auth import auth_bp
 MIGRATIONS_DIR = os.path.join(os.path.dirname(__file__), "migrations")
 
 
-def create_app(config_overrides=None):
+def create_app(config_overrides=None, environ=None):
     """
+    La configuración sale de variables de entorno (config.py). En
+    producción, si falta JWT_SECRET_KEY o DATABASE_URL, build_config
+    lanza ConfigError y el servidor no arranca.
+
     El esquema de la base de datos lo gestionan las migraciones
     (Flask-Migrate / Alembic), no create_app:
 
@@ -37,12 +41,17 @@ def create_app(config_overrides=None):
     """
     app = Flask(__name__)
 
-    app.config.from_object(Config)
+    app.config.update(build_config(environ))
 
     if config_overrides:
         app.config.update(config_overrides)
 
-    CORS(app)
+    # Solo la API, y solo desde los orígenes del frontend. La API usa
+    # token Bearer (no cookies), así que no hacen falta credenciales.
+    CORS(
+        app,
+        resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
+    )
 
     db.init_app(app)
 

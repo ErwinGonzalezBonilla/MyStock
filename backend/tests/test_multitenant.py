@@ -13,6 +13,7 @@ import sys
 import unittest
 
 # Base de datos en memoria ANTES de importar la app.
+os.environ["APP_ENV"] = "development"
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["JWT_SECRET_KEY"] = "test-secret-key-with-at-least-32-bytes!!"
 
