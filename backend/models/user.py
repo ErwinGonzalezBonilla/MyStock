@@ -1,6 +1,5 @@
-from datetime import datetime
-
 from extensions import db
+from timeutils import utc_now
 
 
 class User(db.Model):
@@ -20,7 +19,7 @@ class User(db.Model):
     )
 
     is_active = db.Column(db.Boolean, nullable=False, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=utc_now, nullable=False)
 
     def __repr__(self):
         return f"<User {self.email}>"

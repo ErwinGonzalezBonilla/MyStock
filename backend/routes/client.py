@@ -1,8 +1,7 @@
-from datetime import datetime
-
 from flask import Blueprint, jsonify, request
 
 from extensions import db
+from timeutils import utc_now
 from models import Client
 from tenant import (
     company_query,
@@ -111,7 +110,7 @@ def update_client(client_id):
         if field in data:
             setattr(client, attribute, clean_text(data.get(field)))
 
-    client.updated_at = datetime.utcnow()
+    client.updated_at = utc_now()
 
     db.session.commit()
 

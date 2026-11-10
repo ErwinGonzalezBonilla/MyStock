@@ -1,1 +1,1 @@
-__all__ = ["Company"]
+"""Blueprints de la API (se registran en app.create_app)."""

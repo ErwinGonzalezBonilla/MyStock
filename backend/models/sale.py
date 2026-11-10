@@ -1,6 +1,5 @@
-from datetime import datetime
-
 from extensions import db
+from timeutils import utc_now
 
 
 class Sale(db.Model):
@@ -22,7 +21,7 @@ class Sale(db.Model):
 
     created_at = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
+        default=utc_now,
         nullable=False
     )
 
