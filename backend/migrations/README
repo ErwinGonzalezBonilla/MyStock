@@ -1,0 +1,39 @@
+Migraciones de base de datos de MyStock (Flask-Migrate / Alembic)
+=================================================================
+
+Todos los comandos se ejecutan desde la carpeta backend/, con el
+entorno virtual activado. La base de datos es la de DATABASE_URL
+(por defecto backend/instance/mystock.db).
+
+Base de datos nueva (o PostgreSQL en producción)
+------------------------------------------------
+    flask db upgrade
+
+Base de datos creada ANTES de las migraciones (con db.create_all())
+--------------------------------------------------------------------
+Solo una vez. Haz antes una copia de seguridad del fichero .db.
+
+    flask db stamp b4ec8d26cf1c   # "ya tengo el esquema base"
+    flask db upgrade              # aplica el resto (no borra datos)
+    flask db check                # debe decir: No new upgrade operations detected.
+
+Después de cambiar un modelo
+----------------------------
+    flask db migrate -m "describe el cambio"
+    # Revisa el fichero generado en migrations/versions/ antes de aplicarlo:
+    # autogenerate no detecta todo (p. ej. renombrados de columnas).
+    flask db upgrade
+
+Ver el estado
+-------------
+    flask db current     # revisión aplicada
+    flask db history     # todas las revisiones
+
+Notas
+-----
+- render_as_batch está activado (ver app.py): en SQLite cada ALTER
+  recrea la tabla copiando los datos.
+- Usa expresiones portables en server_default (sa.true(), sa.func.now())
+  para que la misma migración funcione en SQLite y PostgreSQL.
+- tests/test_migrations.py falla si los modelos y las migraciones
+  dejan de coincidir.

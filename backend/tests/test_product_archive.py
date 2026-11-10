@@ -7,11 +7,7 @@ Ejecutar desde la carpeta backend:
 
 import unittest
 
-from sqlalchemy import inspect, text
-
 from helpers import ApiTestCase
-from extensions import db
-from schema_upgrades import apply_schema_upgrades
 
 
 class ProductArchiveTestCase(ApiTestCase):
@@ -171,29 +167,6 @@ class ProductArchiveTestCase(ApiTestCase):
         )
 
         self.assertEqual(response.status_code, 403)
-
-    # ---------- bases de datos antiguas ----------
-
-    def test_schema_upgrade_adds_is_active_to_existing_database(self):
-        product = self.create_product()
-
-        with self.app.app_context():
-            # Simula una mystock.db creada antes de este cambio.
-            with db.engine.begin() as connection:
-                connection.execute(text(
-                    "ALTER TABLE products DROP COLUMN is_active"
-                ))
-
-            apply_schema_upgrades()
-
-            columns = {
-                column["name"]
-                for column in inspect(db.engine).get_columns("products")
-            }
-
-        self.assertIn("is_active", columns)
-        # Los productos que ya existían quedan activos.
-        self.assertIn(product["id"], self.product_ids())
 
 
 if __name__ == "__main__":
