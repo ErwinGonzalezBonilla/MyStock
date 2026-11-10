@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { API_URL, apiFetch } from "../services/api";
+import PasswordInput from "../components/common/PasswordInput";
 import { useAuth } from "../context/AuthContext";
 import { ROLE_LABELS } from "../constants/roles";
 import { formatDate } from "../utils/dates";
@@ -518,11 +519,9 @@ export default function Users() {
                     <label className="form-label" htmlFor="user-password">
                       {editingUser ? "Nueva contraseña" : "Contraseña *"}
                     </label>
-                    <input
+                    <PasswordInput
                       id="user-password"
-                      type="password"
                       name="password"
-                      className="form-control"
                       value={form.password}
                       onChange={handleChange}
                       autoComplete="new-password"

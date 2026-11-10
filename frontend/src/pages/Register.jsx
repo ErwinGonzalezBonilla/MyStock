@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import AuthLayout from "../components/auth/AuthLayout";
+import PasswordInput from "../components/common/PasswordInput";
 import { useAuth } from "../context/AuthContext";
 
 const EMPTY_FORM = {
@@ -148,11 +149,9 @@ export default function Register() {
           <label className="form-label" htmlFor="register-password">
             Contraseña
           </label>
-          <input
+          <PasswordInput
             id="register-password"
             name="password"
-            type="password"
-            className="form-control"
             autoComplete="new-password"
             value={form.password}
             onChange={handleChange}
@@ -164,11 +163,9 @@ export default function Register() {
           <label className="form-label" htmlFor="register-confirm">
             Repite la contraseña
           </label>
-          <input
+          <PasswordInput
             id="register-confirm"
             name="confirmPassword"
-            type="password"
-            className="form-control"
             autoComplete="new-password"
             value={form.confirmPassword}
             onChange={handleChange}

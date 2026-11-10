@@ -23,3 +23,40 @@ body{
 
 }
 
+
+/* ========= PASSWORD INPUT ========= */
+
+.password-input{
+    position:relative;
+}
+
+.password-input .form-control{
+    padding-right:2.75rem;
+}
+
+.password-input__toggle{
+    position:absolute;
+    top:50%;
+    right:.375rem;
+    transform:translateY(-50%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:2rem;
+    height:2rem;
+    border:0;
+    border-radius:var(--radius-sm);
+    background:transparent;
+    color:var(--text-secondary);
+    cursor:pointer;
+}
+
+.password-input__toggle:hover{
+    color:var(--text-color);
+}
+
+.password-input__toggle:focus-visible{
+    outline:2px solid var(--primary-color);
+    outline-offset:1px;
+    color:var(--text-color);
+}

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import AuthLayout from "../components/auth/AuthLayout";
+import PasswordInput from "../components/common/PasswordInput";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
@@ -69,10 +70,8 @@ export default function Login() {
           <label className="form-label" htmlFor="login-password">
             Contraseña
           </label>
-          <input
+          <PasswordInput
             id="login-password"
-            type="password"
-            className="form-control"
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
