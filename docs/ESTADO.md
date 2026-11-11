@@ -24,7 +24,7 @@ MyStock es una aplicación SaaS multiempresa para que pequeños negocios gestion
 | **Clientes y proveedores** | CRUD completo; historial y métricas de compra por cliente. |
 | **Dashboard** | Datos reales: ventas, margen, gráfico de ventas, ventas recientes (con varios artículos) y productos con stock bajo. |
 | **Informes** | Ventas por día (7/30 días…), productos más vendidos y valor del stock. |
-| **Producción** | Configuración por variables de entorno, migraciones, gunicorn, `railway.json` con `flask db upgrade` en el pre-deploy y healthcheck `/api/health`. Guía en `docs/deployment.md`. |
+| **Producción** | Configuración por variables de entorno, migraciones, gunicorn (`gunicorn.conf.py`), `flask db upgrade` en el pre-deploy y healthcheck `/api/health`. El servicio de Railway se configura desde su interfaz (Config as Code está obsoleto); campos exactos en `docs/deployment.md`. |
 | **Tests** | 50 tests del backend, todos en verde (`python -m unittest discover -s tests` en `backend/`). |
 
 ## 3. A medias o con problemas conocidos
