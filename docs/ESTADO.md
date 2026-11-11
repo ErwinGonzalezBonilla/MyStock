@@ -32,17 +32,18 @@ MyStock es una aplicación SaaS multiempresa para que pequeños negocios gestion
 - **Ventas y compras no se pueden anular ni editar**: la API solo permite crearlas y listarlas. Un error hay que corregirlo con un ajuste de stock.
 - **Informes y dashboard se calculan en el navegador** descargando todas las ventas y productos. Sin paginación: irá lento cuando haya muchos datos.
 - **Sin tests del frontend.**
-- **Documentación desactualizada**: el `README.md` habla de FastAPI, Bootstrap y "Sprint 0"; `ROADMAP.md` marca como pendientes cosas ya hechas (editar/buscar productos, inventario, ventas, clientes, proveedores, API Flask, autenticación). `docs/architecture.md`, `api.md`, `database.md`, `roadmap.md`, etc. están vacíos.
+- **Documentos vacíos en `docs/`**: `architecture.md`, `api.md`, `database.md`, `roadmap.md`, etc. (el `README.md` y el `ROADMAP.md` ya están al día).
+- **Bundle del frontend de más de 500 kB**: Vite avisa al construir. Funciona, pero conviene dividirlo por páginas (`import()` dinámico).
 - **Recuperación de contraseña** solo en fase 1 (hay que pedírsela al administrador).
 
 ## 4. Qué falta para publicar
 
 1. **Backend en Railway**: crear el proyecto y la base PostgreSQL, definir `APP_ENV`, `DATABASE_URL`, `JWT_SECRET_KEY` y `CORS_ORIGINS`, generar dominio y comprobar `/api/health` (pasos en `docs/deployment.md`).
-2. **Frontend en Vercel**: Root Directory `frontend`, variable `VITE_API_URL` con la URL de Railway y **añadir `frontend/vercel.json` con el fallback SPA** (rewrite de todas las rutas a `index.html`); todavía no existe.
+2. **Frontend en Vercel**: importar el repo con Root Directory `frontend` y definir `VITE_API_URL` con la URL de Railway. `frontend/vercel.json` ya está listo (build de Vite, salida `dist/` y fallback SPA a `index.html`); pasos en `docs/deployment.md`.
 3. Poner la URL de Vercel en `CORS_ORIGINS` y probar registro, login, venta y compra de punta a punta.
 4. **Recuperación de contraseña por email** (fase 2): Resend o similar, token de un solo uso con caducidad, enlace para fijar la nueva contraseña y sin revelar si el email existe.
 5. Revisar copias de seguridad de PostgreSQL en Railway.
-6. Recomendable antes de abrir a clientes: anular ventas/compras, actualizar README y ROADMAP, aviso legal / política de privacidad.
+6. Recomendable antes de abrir a clientes: anular ventas/compras, aviso legal / política de privacidad.
 7. Más adelante: suscripciones con Stripe.
 
 ## 5. Ideas para después
@@ -75,4 +76,6 @@ Accesos: `laura@bellacosmetica.example` (administradora), `carmen@bellacosmetica
 
 ## 7. Último commit
 
-`b8d4ae2` — 10/11/2026 18:03 — _fix(dashboard): show multi-item recent sales, Spanish percentages and a tidier low stock card_
+`6e45f76` — 11/11/2026 15:41 — _docs: update README and ROADMAP to the real state and add vercel.json_
+
+(Este documento se actualiza en el commit siguiente.)
