@@ -470,7 +470,12 @@ def plan_purchases(rng, products, sales, today):
     return orders
 
 
-def seed(rng, admin_email, admin_password, staff_password):
+def seed(rng, admin_email, admin_password, staff_password, commit=True):
+    """
+    Añade la empresa demo y todos sus datos a la sesión. Con
+    commit=False solo hace flush: quien llama decide si confirma o
+    deshace (lo usa scripts/add_demo_company.py).
+    """
     from werkzeug.security import generate_password_hash
 
     from extensions import db
@@ -667,7 +672,10 @@ def seed(rng, admin_email, admin_password, staff_password):
                 created_at=created,
             ))
 
-    db.session.commit()
+    if commit:
+        db.session.commit()
+    else:
+        db.session.flush()
     return company, [p["model"] for p in products]
 
 

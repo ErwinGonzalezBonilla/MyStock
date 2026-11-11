@@ -25,7 +25,7 @@ MyStock es una aplicación SaaS multiempresa para que pequeños negocios gestion
 | **Dashboard** | Datos reales: ventas, margen, gráfico de ventas, ventas recientes (con varios artículos) y productos con stock bajo. |
 | **Informes** | Ventas por día (7/30 días…), productos más vendidos y valor del stock. |
 | **Producción** | Configuración por variables de entorno, migraciones, gunicorn (`gunicorn.conf.py`), `flask db upgrade` en el pre-deploy y healthcheck `/api/health`. El servicio de Railway se configura desde su interfaz (Config as Code está obsoleto); campos exactos en `docs/deployment.md`. |
-| **Tests** | 50 tests del backend, todos en verde (`python -m unittest discover -s tests` en `backend/`). |
+| **Tests** | 56 tests del backend, todos en verde (`python -m unittest discover -s tests` en `backend/`). |
 
 ## 3. A medias o con problemas conocidos
 
@@ -71,6 +71,8 @@ python app.py
 cd frontend
 npm run dev
 ```
+
+**En producción** (añadirla como una empresa más, sin tocar las existentes): `backend/scripts/add_demo_company.py`, con `--dry-run` primero. Pasos en `docs/deployment.md` → "Añadir la empresa demo en producción".
 
 Accesos: `laura@bellacosmetica.example` (administradora), `carmen@bellacosmetica.example` (encargada) y `daniel@bellacosmetica.example` (cajero). Las fechas son relativas al día en que se ejecuta: **regenera la base justo antes de grabar**. Para volver a tus datos normales, cierra la terminal o borra `$env:DATABASE_URL`.
 

@@ -108,3 +108,87 @@ cualquier ruta (SPA fallback).
 - Railway hace copias de seguridad de PostgreSQL según tu plan; revisa
   **Postgres → Backups** antes de abrir el servicio a clientes.
 - `gunicorn` no funciona en Windows. En local usa `python app.py`.
+
+## Añadir la empresa demo "Bella Cosmética" en producción
+
+`backend/scripts/add_demo_company.py` añade la demo como **una empresa más**,
+sin tocar las existentes:
+
+- Solo inserta. Nunca borra, vacía ni migra (si el esquema no está en la
+  última migración, se niega: despliega antes el backend).
+- Si ya existe una empresa "Bella Cosmética" (o su CIF `B00000000`), o alguno
+  de sus emails está en uso, no hace nada.
+- Una sola transacción: si algo falla, no queda nada a medias.
+- Antes de guardar calcula una huella de todas las filas de las demás
+  empresas y comprueba que no ha cambiado ninguna.
+- `--dry-run` lo hace todo y lo deshace al final. Sin `--yes` pide escribir
+  el nombre de la empresa para confirmar.
+- Contraseñas por variables de entorno (`DEMO_ADMIN_PASSWORD`,
+  `DEMO_STAFF_PASSWORD`, mínimo 8 caracteres). Nunca en el código ni en el chat.
+
+Usuarios que crea: `laura@bellacosmetica.example` (administradora; se puede
+cambiar con `DEMO_ADMIN_EMAIL`), `carmen@bellacosmetica.example` (encargada) y
+`daniel@bellacosmetica.example` (cajero). Las ventas son de los últimos 30 días
+contados desde el momento de ejecutarlo.
+
+### De dónde sale cada dato
+
+| Dato | Dónde |
+|---|---|
+| URL pública de la base de datos | Railway → servicio **Postgres** → **Variables** → `DATABASE_PUBLIC_URL` (icono de copiar). No uses `DATABASE_URL`: es la interna (`*.railway.internal`) y no funciona desde tu ordenador; el script la rechaza. Si `DATABASE_PUBLIC_URL` no aparece: Postgres → **Settings → Networking → TCP Proxy** y actívalo. |
+| Contraseñas de la demo | Las eliges tú. Guárdalas en tu gestor de contraseñas. |
+
+### Opción A: CLI de Railway (no copias la URL)
+
+```powershell
+# Una vez: instalar e iniciar sesión
+npm install -g @railway/cli
+railway login
+
+cd backend
+.\venv\Scripts\Activate.ps1
+railway link            # elige el proyecto de MyStock y el entorno production
+
+$env:DEMO_ADMIN_PASSWORD = Read-Host "Contraseña administradora demo"
+$env:DEMO_STAFF_PASSWORD = Read-Host "Contraseña encargada/cajero demo"
+
+# 1. Simulación: no guarda nada
+railway run --service Postgres python scripts/add_demo_company.py --dry-run
+# 2. De verdad (pide escribir "Bella Cosmética")
+railway run --service Postgres python scripts/add_demo_company.py
+```
+
+`railway run --service Postgres` ejecuta el comando en tu ordenador con las
+variables del servicio Postgres, entre ellas `DATABASE_PUBLIC_URL`, que es la
+que usa el script.
+
+### Opción B: con la URL copiada
+
+```powershell
+cd backend
+.\venv\Scripts\Activate.ps1
+$env:TARGET_DATABASE_URL = Read-Host "DATABASE_PUBLIC_URL de Railway"
+$env:DEMO_ADMIN_PASSWORD = Read-Host "Contraseña administradora demo"
+$env:DEMO_STAFF_PASSWORD = Read-Host "Contraseña encargada/cajero demo"
+
+python scripts/add_demo_company.py --dry-run
+python scripts/add_demo_company.py
+
+# Al terminar, borra la URL de la sesión
+Remove-Item Env:TARGET_DATABASE_URL, Env:DEMO_ADMIN_PASSWORD, Env:DEMO_STAFF_PASSWORD
+```
+
+### Antes y después
+
+1. Antes: Postgres → **Backups** → crea una copia manual (si tu plan lo permite).
+2. La salida del `--dry-run` debe mostrar tu base de Railway (`…proxy.rlwy.net…`,
+   sin contraseña), el número de empresas que ya tienes y
+   "Comprobado: los datos existentes no cambian".
+3. Después: entra en el frontend con tu cuenta (tus datos siguen igual) y con
+   `laura@bellacosmetica.example` (ves solo Bella Cosmética).
+4. Volver a ejecutarlo es seguro: responde "No se hace nada: ya existe…".
+
+Probado en local con `tests/test_add_demo_company.py` (otra empresa con
+productos, cliente, proveedor, venta y compra: ninguna fila cambia; segunda
+ejecución, `--dry-run`, contraseña que falta, email ocupado y esquema antiguo
+no modifican nada) y sobre una copia de `instance/mystock.db`.
