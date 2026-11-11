@@ -58,6 +58,15 @@ y añadir la URL del frontend a `CORS_ORIGINS` del backend. Si el frontend usa
 rutas como `/products`, configura el hosting para servir `index.html` en
 cualquier ruta (SPA fallback).
 
+### Vercel
+
+1. **Add New → Project** e importa este repositorio.
+2. **Root Directory = `frontend`**. Vercel lee `frontend/vercel.json`
+   (build de Vite, salida `dist/` y fallback SPA a `index.html`).
+3. **Environment Variables:** `VITE_API_URL` = URL del backend en Railway
+   (sin `/` final). Si la cambias, vuelve a desplegar: se incluye en el build.
+4. Despliega y añade la URL de Vercel a `CORS_ORIGINS` en Railway.
+
 ## Cambios de esquema
 
 1. En local, cambia el modelo y genera la migración:

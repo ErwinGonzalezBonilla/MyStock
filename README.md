@@ -2,15 +2,15 @@
 
 # 📦 MyStock
 
-### AI-Powered Inventory & Business Management Platform
+### Inventory & Business Management for Small Businesses
 
-Manage inventory, sales, purchases and business operations from one place.
+Manage inventory, sales, purchases, customers and suppliers from one place.
 
-Built with ❤️ using React, FastAPI, PostgreSQL and Artificial Intelligence.
+Built with React, Flask and PostgreSQL.
 
 ---
 
-🚧 **Project Status:** In Development
+🚧 **Project Status:** MVP complete — preparing the first deployment (Railway + Vercel)
 
 </div>
 
@@ -18,191 +18,114 @@ Built with ❤️ using React, FastAPI, PostgreSQL and Artificial Intelligence.
 
 # 📖 About
 
-MyStock is a modern SaaS platform designed to help small and medium-sized businesses manage their inventory, point of sale (POS), purchases, sales and business operations from a single platform.
+MyStock is a multi-company (multi-tenant) SaaS platform that helps small and medium-sized businesses manage their inventory, point of sale (POS), purchases, sales, customers and suppliers.
 
-Unlike traditional inventory software, MyStock integrates Artificial Intelligence and business automation to help business owners make better decisions and save time.
-
-The project is being developed as a real commercial product and not as an academic exercise.
+The project is being developed as a real commercial product. Artificial Intelligence and workflow automation are planned on top of the current core.
 
 ---
 
-# 🎯 Vision
+# ✅ Features (available today)
 
-Our vision is to build an intelligent business platform capable of automating repetitive tasks and providing business insights through Artificial Intelligence.
-
-Inventory is only the beginning.
-
-MyStock aims to become the central operating system for small businesses.
-
----
-
-# 🚀 Main Features
-
-- Multi-company (Multi-Tenant)
-- Inventory Management
-- Point of Sale (POS)
-- Products
-- Categories
-- Customers
-- Suppliers
-- Purchases
-- Sales
-- Inventory Movements
-- Dashboard
-- Reports
-- Barcode Support
-- AI Assistant
-- Workflow Automation
-- Cloud Ready
-
----
-
-# 🤖 Artificial Intelligence
-
-Artificial Intelligence is one of the core pillars of MyStock.
-
-Future AI capabilities include:
-
-- Smart inventory recommendations
-- Sales analysis
-- Automatic reports
-- Product demand forecasting
-- Business insights
-- Natural language queries
-- AI-powered assistant
-
----
-
-# ⚡ Automations
-
-MyStock will integrate with automation platforms such as:
-
-- n8n
-- Email
-- WhatsApp
-- Slack
-- Telegram
-
-Examples:
-
-- Low stock notifications
-- Automatic reports
-- Purchase reminders
-- Supplier notifications
+- **Multi-company:** every company only sees its own data.
+- **Authentication:** company + administrator sign-up, JWT login, show/hide password, "forgot password" page (the company administrator resets it).
+- **Roles & permissions:** Administrator, Manager, Cashier and Employee, enforced by the API and reflected in the UI.
+- **Users:** administrators create, edit, deactivate and delete users and reset their passwords.
+- **Company:** tax details, country and currency (used across the app).
+- **Products:** create, edit, search, automatic SKU, barcode, categories, per-product minimum stock, archive/restore.
+- **Inventory:** stock movements (in, out, adjustment) with a filterable history and low stock alerts.
+- **Sales (POS):** cart, SKU/barcode lookup, customer selection; stock is updated automatically.
+- **Purchases:** purchase cart by supplier and purchase details; stock is updated automatically.
+- **Customers & suppliers:** full management, customer purchase history and metrics.
+- **Dashboard:** sales, margin, sales chart, recent sales and low stock products.
+- **Reports:** sales per day, best-selling products and stock value.
 
 ---
 
 # 🛠 Tech Stack
 
-## Frontend
-
-- React
-- JavaScript
-- Vite
-- Bootstrap
-- Axios
-
-## Backend
-
-- FastAPI
-- SQLAlchemy
-- JWT Authentication
-
-## Database
-
-- PostgreSQL
-
-## Cloud
-
-- Cloudinary
-
-## AI
-
-- OpenAI
-- Claude
-- Gemini
-
-## Deployment
-
-- Vercel
-- Railway
+| Layer | Technology |
+|---|---|
+| Frontend | React 19, Vite, React Router, Recharts, lucide-react |
+| Backend | Python 3.13, Flask 3, Flask-SQLAlchemy, Flask-Migrate (Alembic), Flask-JWT-Extended, gunicorn |
+| Database | SQLite (local development), PostgreSQL (production) |
+| Deployment | Railway (API + PostgreSQL), Vercel (frontend) |
 
 ---
 
 # 🏗 Architecture
 
 ```text
-React
-
-↓
-
-FastAPI
-
-↓
-
-SQLAlchemy
-
-↓
-
-PostgreSQL
-
-↓
-
-Cloudinary
-
-↓
-
-AI Services
-
-↓
-
-Automation Services (n8n)
+React (Vite, Vercel)
+        │  REST + JWT
+        ▼
+Flask API (gunicorn, Railway)
+        │  SQLAlchemy
+        ▼
+PostgreSQL (Railway)  ·  SQLite in local development
 ```
+
+```text
+backend/    Flask API: models/, routes/, migrations/, tests/, scripts/seed_demo.py
+frontend/   React app: src/pages, src/components, src/services/api.js
+docs/       ESTADO.md (current status), deployment.md (Railway + Vercel)
+```
+
+---
+
+# 🚀 Getting Started (local)
+
+**Backend** (Windows PowerShell):
+
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+flask db upgrade          # creates instance/mystock.db
+python app.py             # http://127.0.0.1:5000
+```
+
+**Frontend:**
+
+```powershell
+cd frontend
+npm install
+npm run dev               # http://localhost:5173
+```
+
+Configuration is optional in development. See `.env.example` (backend) and `frontend/.env.example`.
+
+**Tests** (backend):
+
+```powershell
+cd backend
+python -m unittest discover -s tests
+```
+
+**Demo data:** `backend/scripts/seed_demo.py` creates a separate demo database ("Bella Cosmética"). See [docs/ESTADO.md](docs/ESTADO.md#6-demo-bella-cosmética).
+
+---
+
+# ☁️ Deployment
+
+- **Backend:** Railway with PostgreSQL. Migrations run automatically before each deploy and `/api/health` is used as healthcheck.
+- **Frontend:** Vercel with Root Directory `frontend` and `VITE_API_URL` pointing to the API. `frontend/vercel.json` handles the SPA routing.
+
+Step-by-step guide: [docs/deployment.md](docs/deployment.md).
 
 ---
 
 # 🗺 Roadmap
 
-- [x] Project Planning
-- [x] Repository Structure
-- [ ] Product Definition
-- [ ] Database Design
-- [ ] Backend Development
-- [ ] Frontend Development
-- [ ] Authentication
-- [ ] Inventory Module
-- [ ] POS Module
-- [ ] AI Module
-- [ ] Automation Module
-- [ ] Public Beta
+See [ROADMAP.md](ROADMAP.md). Next steps: first deployment, password recovery by email, voiding sales and purchases. Later: AI assistant, n8n automations and Stripe subscriptions.
 
 ---
 
 # 📂 Documentation
 
-Project documentation is available inside the `docs/` directory.
-
-- Architecture
-- Database
-- API
-- AI Services
-- Integrations
-- Roadmap
-- Changelog
-
----
-
-# 📌 Current Status
-
-Sprint 0
-
-Project foundation completed.
-
-The project structure and documentation have been created.
-
-Next step:
-
-Product definition and software architecture.
+- [docs/ESTADO.md](docs/ESTADO.md) — current status, known issues and demo (Spanish)
+- [docs/deployment.md](docs/deployment.md) — deployment on Railway + Vercel (Spanish)
+- [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -213,9 +136,3 @@ Product definition and software architecture.
 Full Stack Developer
 
 Madrid, Spain 🇪🇸
-
----
-
-# ⭐ MyStock
-
-Building the next generation of business management software powered by Artificial Intelligence.
