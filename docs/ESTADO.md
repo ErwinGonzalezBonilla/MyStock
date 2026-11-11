@@ -6,7 +6,9 @@ _Actualizado: 11/11/2026_
 
 MyStock es una aplicación SaaS multiempresa para que pequeños negocios gestionen inventario, ventas, compras, clientes y proveedores.
 **Frontend:** React 19 + Vite + React Router + Recharts. **Backend:** Flask 3 + SQLAlchemy + Flask-Migrate + JWT.
-**Base de datos:** SQLite en local y PostgreSQL en producción (Railway). El frontend irá a Vercel.
+**Base de datos:** SQLite en local y PostgreSQL en producción.
+
+**En producción:** frontend en Vercel → <https://my-stock-woad.vercel.app> · backend y PostgreSQL en Railway.
 
 ## 2. Hecho y funcionando
 
@@ -24,6 +26,7 @@ MyStock es una aplicación SaaS multiempresa para que pequeños negocios gestion
 | **Clientes y proveedores** | CRUD completo; historial y métricas de compra por cliente. |
 | **Dashboard** | Datos reales: ventas, margen, gráfico de ventas, ventas recientes (con varios artículos) y productos con stock bajo. |
 | **Informes** | Ventas por día (7/30 días…), productos más vendidos y valor del stock. |
+| **Despliegue** | Publicado: frontend en Vercel (<https://my-stock-woad.vercel.app>), backend Flask + PostgreSQL en Railway. El acceso público a PostgreSQL (TCP Proxy) está **desactivado**. |
 | **Producción** | Configuración por variables de entorno, migraciones, gunicorn (`gunicorn.conf.py`), `flask db upgrade` en el pre-deploy y healthcheck `/api/health`. El servicio de Railway se configura desde su interfaz (Config as Code está obsoleto); campos exactos en `docs/deployment.md`. |
 | **Tests** | 56 tests del backend, todos en verde (`python -m unittest discover -s tests` en `backend/`). |
 
@@ -35,16 +38,32 @@ MyStock es una aplicación SaaS multiempresa para que pequeños negocios gestion
 - **Documentos vacíos en `docs/`**: `architecture.md`, `api.md`, `database.md`, `roadmap.md`, etc. (el `README.md` y el `ROADMAP.md` ya están al día).
 - **Bundle del frontend de más de 500 kB**: Vite avisa al construir. Funciona, pero conviene dividirlo por páginas (`import()` dinámico).
 - **Recuperación de contraseña** solo en fase 1 (hay que pedírsela al administrador).
+- **Las fechas de la demo en producción envejecen**: las ventas son de los 30 días anteriores a la carga, así que con el tiempo el dashboard y los informes de "últimos 30 días" de Bella Cosmética se irán quedando vacíos. `add_demo_company.py` no la regenera (se niega si ya existe); para refrescarla haría falta un script nuevo.
 
-## 4. Qué falta para publicar
+## 4. Publicación
 
-1. **Backend en Railway**: crear el proyecto y la base PostgreSQL, definir `APP_ENV`, `DATABASE_URL`, `JWT_SECRET_KEY` y `CORS_ORIGINS`, generar dominio y comprobar `/api/health` (pasos en `docs/deployment.md`).
-2. **Frontend en Vercel**: importar el repo con Root Directory `frontend` y definir `VITE_API_URL` con la URL de Railway. `frontend/vercel.json` ya está listo (build de Vite, salida `dist/` y fallback SPA a `index.html`); pasos en `docs/deployment.md`.
-3. Poner la URL de Vercel en `CORS_ORIGINS` y probar registro, login, venta y compra de punta a punta.
-4. **Recuperación de contraseña por email** (fase 2): Resend o similar, token de un solo uso con caducidad, enlace para fijar la nueva contraseña y sin revelar si el email existe.
-5. Revisar copias de seguridad de PostgreSQL en Railway.
-6. Recomendable antes de abrir a clientes: anular ventas/compras, aviso legal / política de privacidad.
-7. Más adelante: suscripciones con Stripe.
+**Hecho:**
+
+- Backend en Railway con PostgreSQL, configurado desde la interfaz (campos en `docs/deployment.md`).
+- Frontend en Vercel: <https://my-stock-woad.vercel.app>.
+- Empresa demo **Bella Cosmética** cargada en producción como una empresa más (con `backend/scripts/add_demo_company.py`).
+- Acceso público a PostgreSQL desactivado.
+
+**Operaciones futuras sobre la base de datos de producción:** usar `railway connect` (desde `backend/`, tras `railway link`):
+
+```powershell
+railway connect Postgres     # abre una consola psql (necesita psql instalado)
+```
+
+No reactivar el acceso público de forma permanente. Si algún script tiene que ejecutarse desde el ordenador contra producción (p. ej. `add_demo_company.py`, que necesita `DATABASE_PUBLIC_URL`) y `railway connect` no basta, activar el TCP Proxy solo durante la operación y desactivarlo al terminar.
+
+**Pendiente antes de abrir a clientes:**
+
+1. **Recuperación de contraseña por email** (fase 2): Resend o similar, token de un solo uso con caducidad, enlace para fijar la nueva contraseña y sin revelar si el email existe.
+2. Revisar copias de seguridad de PostgreSQL en Railway (**Postgres → Backups**).
+3. Anular ventas/compras.
+4. Aviso legal y política de privacidad.
+5. Más adelante: suscripciones con Stripe.
 
 ## 5. Ideas para después
 
@@ -72,12 +91,12 @@ cd frontend
 npm run dev
 ```
 
-**En producción** (añadirla como una empresa más, sin tocar las existentes): `backend/scripts/add_demo_company.py`, con `--dry-run` primero. Pasos en `docs/deployment.md` → "Añadir la empresa demo en producción".
+**En producción ya está cargada** en <https://my-stock-woad.vercel.app>, como una empresa más. Se añadió con `backend/scripts/add_demo_company.py` (pasos en `docs/deployment.md` → "Añadir la empresa demo en producción"); volver a ejecutarlo no hace nada porque la empresa ya existe.
 
-Accesos: `laura@bellacosmetica.example` (administradora), `carmen@bellacosmetica.example` (encargada) y `daniel@bellacosmetica.example` (cajero). Las fechas son relativas al día en que se ejecuta: **regenera la base justo antes de grabar**. Para volver a tus datos normales, cierra la terminal o borra `$env:DATABASE_URL`.
+Accesos (local y producción): `laura@bellacosmetica.example` (administradora), `carmen@bellacosmetica.example` (encargada) y `daniel@bellacosmetica.example` (cajero). En local, las fechas son relativas al día en que se ejecuta: **regenera la base justo antes de grabar**. Para volver a tus datos normales, cierra la terminal o borra `$env:DATABASE_URL`.
 
 ## 7. Último commit
 
-`6e45f76` — 11/11/2026 15:41 — _docs: update README and ROADMAP to the real state and add vercel.json_
+`1519531` — 11/11/2026 18:19 — _feat(demo): add a production-safe script to add the demo company_
 
 (Este documento se actualiza en el commit siguiente.)
